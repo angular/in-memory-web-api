@@ -1,0 +1,5 @@
+in-memory-web-api
+gulpfile.js
+.gitignore
+.npmignore
+tsconfig.json

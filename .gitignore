@@ -1,0 +1,4 @@
+in-memory-web-api
+node_modules
+typings
+**/*.js.map
