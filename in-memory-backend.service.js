@@ -1,4 +1,4 @@
-System.register(['@igorminar/core', '@igorminar/http', 'rxjs/Observable', 'rxjs/add/operator/delay', './http-status-codes'], function(exports_1, context_1) {
+System.register(['@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay', './http-status-codes'], function(exports_1, context_1) {
     "use strict";
     var __moduleName = context_1 && context_1.id;
     var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {

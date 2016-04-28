@@ -72,15 +72,15 @@ function build(done) {
   var builder = new Builder({
       paths: {'*': '*.js'},
       map: {
-        '@igorminar': 'node_modules/@igorminar',
+        '@angular': 'node_modules/@angular',
         'rxjs': 'node_modules/rxjs'
       },
       meta: {
-        '@igorminar/*': { build: false  },
+        '@angular/*': { build: false  },
         'rxjs/*': { build: false  }
       },
       packages: {
-        '@igorminar': {
+        '@angular': {
           defaultExtension: 'js',
           main: 'core.js'
         },

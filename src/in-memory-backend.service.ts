@@ -1,5 +1,5 @@
-import { Inject, OpaqueToken, Optional } from '@igorminar/core';
-import { BaseResponseOptions, Headers, Request, RequestMethod, Response, ResponseOptions } from '@igorminar/http';
+import { Inject, OpaqueToken, Optional } from '@angular/core';
+import { BaseResponseOptions, Headers, Request, RequestMethod, Response, ResponseOptions } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Observer }   from 'rxjs/Observer';
 import 'rxjs/add/operator/delay';
