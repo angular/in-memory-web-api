@@ -1,3 +1,8 @@
+<a name="0.0.5"></a>
+# 0.0.5 (2016-05-01)
+* PROVISIONAL - refers to @angular packages
+* update to 0.0.0-5
+
 <a name="0.0.4"></a>
 # 0.0.4 (2016-04-30)
 * PROVISIONAL - refers to @angular packages
