@@ -1,3 +1,8 @@
+<a name="0.0.6"></a>
+# 0.0.6 (2016-05-03)
+* PROVISIONAL - refers to @angular packages
+* update to 2.0.0-rc.0
+
 <a name="0.0.5"></a>
 # 0.0.5 (2016-05-01)
 * PROVISIONAL - refers to @angular packages
@@ -23,4 +28,3 @@
 * DO NOT USE. Not adapted to new package system.
 * Initial cut for Angular 2 repackaged
   * target forthcoming Angular 2 RC
-
