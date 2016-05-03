@@ -28,13 +28,7 @@ compiling your application project.
 - `npm install` the new package(s) (make sure they really do install!)<br>
    `npm list --depth=0`
 
-- consider updating typings:
-
-  Iterate looking for SHAs of
-  `https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/{pkg}/{pkg}.d.ts`
-
-  Update `typings.json` and run `npm run typings -- install`
-  OR install individually:
+- consider updating typings, install individually/several:
   `npm run typings -- install packagename --ambient --save`
 
    **NB: Do not add to `npm postinstall` as that screws up consumers!**
