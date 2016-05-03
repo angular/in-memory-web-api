@@ -1,6 +1,11 @@
+<a name="0.0.7"></a>
+# 0.0.7 (2016-05-03)
+* RC1
+* update to 2.0.0-rc.1
+
 <a name="0.0.6"></a>
 # 0.0.6 (2016-05-03)
-* PROVISIONAL - refers to @angular packages
+* RC0
 * update to 2.0.0-rc.0
 
 <a name="0.0.5"></a>
