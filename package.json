@@ -57,8 +57,6 @@
     "gulp-task-listing": "^1.0.1",
     "gulp-util": "^3.0.7",
 
-    "systemjs": "0.19.26",
-    "systemjs-builder": "^0.15.15",
     "yargs": "^4.6.0"
   }
 }
