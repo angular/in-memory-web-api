@@ -1,3 +1,8 @@
+<a name="0.0.8"></a>
+# 0.0.8 (2016-05-19)
+* systemjs -> commonjs
+* replace es6-shim typings w/ core-js typings
+
 <a name="0.0.7"></a>
 # 0.0.7 (2016-05-03)
 * RC1

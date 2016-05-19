@@ -57,6 +57,7 @@ export let STATUS = {
   NETWORK_AUTHENTICATION_REQUIRED: 511
 };
 
+/*tslint:disable:quotemark max-line-length one-line */
 export let STATUS_CODE_INFO =
   {
     "100": {

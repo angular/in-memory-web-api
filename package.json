@@ -1,6 +1,6 @@
 {
   "name": "angular2-in-memory-web-api",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "An in-memory web api for demos and tests",
   "scripts": {
     "tsc": "tsc",
@@ -57,8 +57,6 @@
     "gulp-task-listing": "^1.0.1",
     "gulp-util": "^3.0.7",
 
-    "systemjs": "0.19.26",
-    "systemjs-builder": "^0.15.15",
     "yargs": "^4.6.0"
   }
 }

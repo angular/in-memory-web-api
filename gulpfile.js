@@ -5,7 +5,6 @@ var cp = require('child_process');
 var del = require('del');
 
 var path = require("path");
-var Builder = require('systemjs-builder');
 
 var tsOutput = './in-memory-web-api/';
 var jsCopySrc = [tsOutput+'*.js', tsOutput+'*.d.ts']
@@ -20,17 +19,13 @@ gulp.task('help', $.taskListing.withFilters(function (taskName) {
   return shouldRemove;
 }));
 
-gulp.task('build', ['tsc'], build);
-
-gulp.task('build-only', build);
-
-gulp.task('tsc', ['tsc-only'], function(){
+gulp.task('build', ['tsc'], function(){
   return gulp
     .src(jsCopySrc)
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('tsc-only',['clean'], function(done) {
+gulp.task('tsc',['clean'], function(done) {
     runTSC('./', done);
 });
 
@@ -67,44 +62,6 @@ gulp.task('bump', function() {
         .pipe(gulp.dest('./'));
 });
 //////////
-
-function build(done) {
-  var builder = new Builder({
-      paths: {'*': '*.js'},
-      map: {
-        '@angular': 'node_modules/@angular',
-        'rxjs': 'node_modules/rxjs'
-      },
-      meta: {
-        '@angular/*': { build: false  },
-        'rxjs/*': { build: false  }
-      },
-      packages: {
-        '@angular': {
-          defaultExtension: 'js',
-          main: 'core.js'
-        },
-        'rxjs': {
-          defaultExtension: 'js',
-          main: 'rx.js'
-        }
-      }
-    });
-
-  builder
-   // start building with the root module file in the folder with the intended module name
-  .bundle('in-memory-web-api/core', 'web-api.js')
-  .then(function(output) {
-    console.log('Build complete');
-  })
-
-  .catch(function(err) {
-    console.log('Build error');
-    console.log(err);
-  })
-
-  .finally(done);
-}
 
 function clean(path, done) {
     log('Cleaning: ' + $.util.colors.blue(path));
