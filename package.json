@@ -1,6 +1,6 @@
 {
   "name": "angular2-in-memory-web-api",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "An in-memory web api for demos and tests",
   "scripts": {
     "tsc": "tsc",

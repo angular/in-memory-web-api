@@ -4,4 +4,4 @@ function __export(m) {
 }
 __export(require('./in-memory-backend.service'));
 __export(require('./http-status-codes'));
-//# sourceMappingURL=core.js.map
+//# sourceMappingURL=index.js.map

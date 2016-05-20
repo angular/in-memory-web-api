@@ -1,3 +1,7 @@
+<a name="0.0.9"></a>
+# 0.0.9 (2016-05-19)
+* renamed the barrel core.js -> index.js
+
 <a name="0.0.8"></a>
 # 0.0.8 (2016-05-19)
 * systemjs -> commonjs
