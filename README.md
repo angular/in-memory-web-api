@@ -33,6 +33,8 @@ compiling your application project.
 
    **NB: Do not add to `npm postinstall` as that screws up consumers!**
 
+- `npm run typings install`
+
 - `npm run tsc` to confirm the project compiles w/o error (sanity check)
 
  -- NO TESTS YET ... BAD --

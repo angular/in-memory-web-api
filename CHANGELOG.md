@@ -1,3 +1,11 @@
+<a name="0.0.10"></a>
+# 0.0.10 (2016-05-21)
+* added "main:index.js" to package.json
+* updated to typings v.1.0.4 (a breaking release)
+* dependencies -> peerDependencies|devDependencies
+* no es6-shim dependency.
+* use core-js as devDependency.
+
 <a name="0.0.9"></a>
 # 0.0.9 (2016-05-19)
 * renamed the barrel core.js -> index.js

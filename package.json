@@ -1,7 +1,9 @@
 {
   "name": "angular2-in-memory-web-api",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "An in-memory web api for demos and tests",
+  "main":"index.js",
+  "jsnext:main": "esm/index.js",
   "scripts": {
     "tsc": "tsc",
     "tsc:w": "tsc -w",
@@ -25,19 +27,25 @@
     "url": "https://github.com/angular/in-memory-web-api/issues"
   },
   "homepage": "https://github.com/angular/in-memory-web-api#readme",
-  "dependencies": {
+  "peerDependencies": {
     "@angular/core": "2.0.0-rc.1",
     "@angular/http": "2.0.0-rc.1",
-    "es6-shim": "^0.35.0",
     "reflect-metadata": "^0.1.3",
     "rxjs": "5.0.0-beta.6",
     "zone.js": "^0.6.12"
   },
   "devDependencies": {
+    "@angular/core": "2.0.0-rc.1",
+    "@angular/http": "2.0.0-rc.1",
+    "reflect-metadata": "^0.1.3",
+    "rxjs": "5.0.0-beta.6",
+    "zone.js": "^0.6.12",
+
     "concurrently": "^2.0.0",
+    "core-js": "^2.4.0",
     "lite-server": "^2.2.0",
     "typescript": "^1.8.10",
-    "typings": "^0.8.1",
+    "typings": "^1.0.4",
 
     "canonical-path": "0.0.2",
     "http-server": "^0.9.0",
