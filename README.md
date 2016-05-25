@@ -4,6 +4,16 @@ An in-memory web api for Angular 2 demos and tests.
 See usage in the Angular.io
 [Server Communication](https://angular.io/docs/ts/latest/guide/server-communication.html) chapter.
 
+# Simple Query String Support
+Custom filters can be passed as a regex pattern via query string. 
+The query string defines which property and value to match against.
+
+Format: `/app/heroes/?propertyName=regexPattern`
+
+In the following example we are matching on all names containing the letter 'j' in the heroes collection.
+
+`/app/heroes/?name=j+`
+
 # To Do
 * add  documentation
 * add tests (shameful omission!)
