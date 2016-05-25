@@ -1,3 +1,8 @@
+<a name="0.0.11"></a>
+# 0.0.11 (2016-05-27)
+* add RegExp query support
+* find-by-id is sensitive to string ids that look like numbers
+
 <a name="0.0.10"></a>
 # 0.0.10 (2016-05-21)
 * added "main:index.js" to package.json

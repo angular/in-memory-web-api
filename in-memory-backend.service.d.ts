@@ -1,6 +1,5 @@
 import { OpaqueToken } from '@angular/core';
-import { Headers, Request, Response, ResponseOptions } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
+import { Connection, Headers, Request, Response, ResponseOptions, URLSearchParams } from '@angular/http';
 import 'rxjs/add/operator/delay';
 /**
 * Seed data for in-memory database
@@ -66,6 +65,7 @@ export interface ReqInfo {
     collectionName: string;
     headers: Headers;
     id: any;
+    query: URLSearchParams;
     resourceUrl: string;
 }
 export declare const isSuccess: (status: number) => boolean;
@@ -77,21 +77,21 @@ export declare const isSuccess: (status: number) => boolean;
  *
  * ### Usage
  *
- * Create InMemoryDataService class the implements IInMemoryDataService.
+ * Create InMemoryDataService class the implements InMemoryDataService.
  * Register both this service and the seed data as in:
  * ```
  * // other imports
- * import { HTTP_PROVIDERS, XHRBackend } from 'angular2/http';
- * import { InMemoryBackendConfig, InMemoryBackendService, SEED_DATA } from '../in-memory-backend/in-memory-backend.service';
+ * import { HTTPPROVIDERS, XHRBackend } from 'angular2/http';
+ * import { InMemoryBackendConfig, InMemoryBackendService, SEEDDATA } from '../in-memory-backend/in-memory-backend.service';
  * import { InMemoryStoryService } from '../api/in-memory-story.service';
  *
  * @Component({
  *   selector: ...,
  *   templateUrl: ...,
  *   providers: [
- *     HTTP_PROVIDERS,
+ *     HTTPPROVIDERS,
  *     provide(XHRBackend, { useClass: InMemoryBackendService }),
- *     provide(SEED_DATA, { useClass: InMemoryStoryService }),
+ *     provide(SEEDDATA, { useClass: InMemoryStoryService }),
  *     provide(InMemoryBackendConfig, { useValue: { delay: 600 } }),
  *   ]
  * })
@@ -99,26 +99,33 @@ export declare const isSuccess: (status: number) => boolean;
  * ```
  */
 export declare class InMemoryBackendService {
-    private _seedData;
-    protected _config: InMemoryBackendConfigArgs;
-    protected _db: {};
-    constructor(_seedData: InMemoryDbService, config: InMemoryBackendConfigArgs);
-    createConnection(req: Request): {
-        response: Observable<{}>;
-    };
+    private seedData;
+    protected config: InMemoryBackendConfigArgs;
+    protected db: {};
+    constructor(seedData: InMemoryDbService, config: InMemoryBackendConfigArgs);
+    createConnection(req: Request): Connection;
     /**
      * Process Request and return an Http Response object
      * in the manner of a RESTy web api.
      *
      * Expect URI pattern in the form :base/:collectionName/:id?
      * Examples:
-     *   api/characters
-     *   api/characters/42
-     *   api/characters.json/42   // ignores the ".json"
-     *   commands/resetDb  // resets the "database"
+     *   // for store with a 'characters' collection
+     *   GET api/characters          // all characters
+     *   GET api/characters/42       // the character with id=42
+     *   GET api/characters?name=^j  // 'j' is a regex; returns characters whose name contains 'j' or 'J'
+     *   GET api/characters.json/42  // ignores the ".json"
+     *
+     *   POST commands/resetDb  // resets the "database"
      */
-    protected _handleRequest(req: Request): Response;
-    protected _clone(data: any): any;
+    protected handleRequest(req: Request): Response;
+    /**
+     * Apply query/search parameters as a filter over the collection
+     * This impl only supports RegExp queries on string properties of the collection
+     * ANDs the conditions together
+     */
+    protected applyQuery(collection: any[], query: URLSearchParams): any[];
+    protected clone(data: any): any;
     /**
      * When the `base`="commands", the `collectionName` is the command
      * Example URLs:
@@ -131,27 +138,30 @@ export declare class InMemoryBackendService {
      *   http.get('commands/config');
      *   http.post('commands/config', '{"delay":1000}');
      */
-    protected _commands(reqInfo: ReqInfo): ResponseOptions;
-    protected _createErrorResponse(status: number, message: string): ResponseOptions;
-    protected _delete({id, collection, collectionName, headers}: ReqInfo): ResponseOptions;
-    protected _findById(collection: any[], id: number): any;
-    protected _genId(collection: any): any;
-    protected _get({id, collection, collectionName, headers}: ReqInfo): ResponseOptions;
-    protected _getLocation(href: string): HTMLAnchorElement;
-    protected _indexOf(collection: any[], id: number): number;
-    protected _parseId(id: string): any;
-    protected _parseUrl(url: string): {
+    protected commands(reqInfo: ReqInfo): ResponseOptions;
+    protected createErrorResponse(status: number, message: string): ResponseOptions;
+    protected delete({id, collection, collectionName, headers}: ReqInfo): ResponseOptions;
+    protected findById(collection: any[], id: number | string): any;
+    protected genId(collection: any): any;
+    protected get({id, query, collection, collectionName, headers}: ReqInfo): ResponseOptions;
+    protected getLocation(href: string): HTMLAnchorElement;
+    protected indexOf(collection: any[], id: number): number;
+    protected parseId(collection: {
+        id: any;
+    }[], id: string): any;
+    protected parseUrl(url: string): {
         base: string;
         id: string;
         collectionName: string;
         resourceUrl: string;
+        query: URLSearchParams;
     };
-    protected _post({collection, headers, id, req, resourceUrl}: ReqInfo): ResponseOptions;
-    protected _put({id, collection, collectionName, headers, req}: ReqInfo): ResponseOptions;
-    protected _removeById(collection: any[], id: number): boolean;
+    protected post({collection, headers, id, req, resourceUrl}: ReqInfo): ResponseOptions;
+    protected put({id, collection, collectionName, headers, req}: ReqInfo): ResponseOptions;
+    protected removeById(collection: any[], id: number): boolean;
     /**
      * Reset the "database" to its original state
      */
-    protected _resetDb(): void;
-    protected _setStatusText(options: ResponseOptions): ResponseOptions;
+    protected resetDb(): void;
+    protected setStatusText(options: ResponseOptions): ResponseOptions;
 }

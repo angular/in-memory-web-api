@@ -47,21 +47,21 @@ exports.isSuccess = function (status) { return (status >= 200 && status < 300); 
  *
  * ### Usage
  *
- * Create InMemoryDataService class the implements IInMemoryDataService.
+ * Create InMemoryDataService class the implements InMemoryDataService.
  * Register both this service and the seed data as in:
  * ```
  * // other imports
- * import { HTTP_PROVIDERS, XHRBackend } from 'angular2/http';
- * import { InMemoryBackendConfig, InMemoryBackendService, SEED_DATA } from '../in-memory-backend/in-memory-backend.service';
+ * import { HTTPPROVIDERS, XHRBackend } from 'angular2/http';
+ * import { InMemoryBackendConfig, InMemoryBackendService, SEEDDATA } from '../in-memory-backend/in-memory-backend.service';
  * import { InMemoryStoryService } from '../api/in-memory-story.service';
  *
  * @Component({
  *   selector: ...,
  *   templateUrl: ...,
  *   providers: [
- *     HTTP_PROVIDERS,
+ *     HTTPPROVIDERS,
  *     provide(XHRBackend, { useClass: InMemoryBackendService }),
- *     provide(SEED_DATA, { useClass: InMemoryStoryService }),
+ *     provide(SEEDDATA, { useClass: InMemoryStoryService }),
  *     provide(InMemoryBackendConfig, { useValue: { delay: 600 } }),
  *   ]
  * })
@@ -69,17 +69,17 @@ exports.isSuccess = function (status) { return (status >= 200 && status < 300); 
  * ```
  */
 var InMemoryBackendService = (function () {
-    function InMemoryBackendService(_seedData, config) {
-        this._seedData = _seedData;
-        this._config = new InMemoryBackendConfig();
-        this._resetDb();
-        var loc = this._getLocation('./');
-        this._config.host = loc.host;
-        this._config.rootPath = loc.pathname;
-        Object.assign(this._config, config);
+    function InMemoryBackendService(seedData, config) {
+        this.seedData = seedData;
+        this.config = new InMemoryBackendConfig();
+        this.resetDb();
+        var loc = this.getLocation('./');
+        this.config.host = loc.host;
+        this.config.rootPath = loc.pathname;
+        Object.assign(this.config, config);
     }
     InMemoryBackendService.prototype.createConnection = function (req) {
-        var res = this._handleRequest(req);
+        var res = this.handleRequest(req);
         var response = new Observable_1.Observable(function (responseObserver) {
             if (exports.isSuccess(res.status)) {
                 responseObserver.next(res);
@@ -90,8 +90,12 @@ var InMemoryBackendService = (function () {
             }
             return function () { }; // unsubscribe function
         });
-        response = response.delay(this._config.delay || 500);
-        return { response: response };
+        response = response.delay(this.config.delay || 500);
+        return {
+            readyState: http_1.ReadyState.Done,
+            request: req,
+            response: response
+        };
     };
     ////  protected /////
     /**
@@ -100,61 +104,93 @@ var InMemoryBackendService = (function () {
      *
      * Expect URI pattern in the form :base/:collectionName/:id?
      * Examples:
-     *   api/characters
-     *   api/characters/42
-     *   api/characters.json/42   // ignores the ".json"
-     *   commands/resetDb  // resets the "database"
+     *   // for store with a 'characters' collection
+     *   GET api/characters          // all characters
+     *   GET api/characters/42       // the character with id=42
+     *   GET api/characters?name=^j  // 'j' is a regex; returns characters whose name contains 'j' or 'J'
+     *   GET api/characters.json/42  // ignores the ".json"
+     *
+     *   POST commands/resetDb  // resets the "database"
      */
-    InMemoryBackendService.prototype._handleRequest = function (req) {
-        var _a = this._parseUrl(req.url), base = _a.base, collectionName = _a.collectionName, id = _a.id, resourceUrl = _a.resourceUrl;
+    InMemoryBackendService.prototype.handleRequest = function (req) {
+        var _a = this.parseUrl(req.url), base = _a.base, collectionName = _a.collectionName, id = _a.id, resourceUrl = _a.resourceUrl, query = _a.query;
+        var collection = this.db[collectionName];
         var reqInfo = {
             req: req,
             base: base,
-            collection: this._db[collectionName],
+            collection: collection,
             collectionName: collectionName,
             headers: new http_1.Headers({ 'Content-Type': 'application/json' }),
-            id: this._parseId(id),
+            id: this.parseId(collection, id),
+            query: query,
             resourceUrl: resourceUrl
         };
         var options;
         try {
             if ('commands' === reqInfo.base.toLowerCase()) {
-                options = this._commands(reqInfo);
+                options = this.commands(reqInfo);
             }
             else if (reqInfo.collection) {
                 switch (req.method) {
                     case http_1.RequestMethod.Get:
-                        options = this._get(reqInfo);
+                        options = this.get(reqInfo);
                         break;
                     case http_1.RequestMethod.Post:
-                        options = this._post(reqInfo);
+                        options = this.post(reqInfo);
                         break;
                     case http_1.RequestMethod.Put:
-                        options = this._put(reqInfo);
+                        options = this.put(reqInfo);
                         break;
                     case http_1.RequestMethod.Delete:
-                        options = this._delete(reqInfo);
+                        options = this.delete(reqInfo);
                         break;
                     default:
-                        options = this._createErrorResponse(http_status_codes_1.STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+                        options = this.createErrorResponse(http_status_codes_1.STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
                         break;
                 }
             }
             else {
-                options = this._createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
+                options = this.createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
             }
         }
         catch (error) {
             var err = error.message || error;
-            options = this._createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "" + err);
+            options = this.createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "" + err);
         }
-        options = this._setStatusText(options);
-        if (this._config.defaultResponseOptions) {
-            options = this._config.defaultResponseOptions.merge(options);
+        options = this.setStatusText(options);
+        if (this.config.defaultResponseOptions) {
+            options = this.config.defaultResponseOptions.merge(options);
         }
         return new http_1.Response(options);
     };
-    InMemoryBackendService.prototype._clone = function (data) {
+    /**
+     * Apply query/search parameters as a filter over the collection
+     * This impl only supports RegExp queries on string properties of the collection
+     * ANDs the conditions together
+     */
+    InMemoryBackendService.prototype.applyQuery = function (collection, query) {
+        // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
+        var conditions = [];
+        query.paramsMap.forEach(function (value, name) {
+            value.forEach(function (v) { return conditions.push({ name: name, rx: new RegExp(decodeURI(v), 'i') }); });
+        });
+        var len = conditions.length;
+        if (!len) {
+            return collection;
+        }
+        // AND the RegExp conditions
+        return collection.filter(function (row) {
+            var ok = true;
+            var i = len;
+            while (ok && i) {
+                i -= 1;
+                var cond = conditions[i];
+                ok = cond.rx.test(row[cond.name]);
+            }
+            return ok;
+        });
+    };
+    InMemoryBackendService.prototype.clone = function (data) {
         return JSON.parse(JSON.stringify(data));
     };
     /**
@@ -169,56 +205,56 @@ var InMemoryBackendService = (function () {
      *   http.get('commands/config');
      *   http.post('commands/config', '{"delay":1000}');
      */
-    InMemoryBackendService.prototype._commands = function (reqInfo) {
+    InMemoryBackendService.prototype.commands = function (reqInfo) {
         var command = reqInfo.collectionName.toLowerCase();
         var method = reqInfo.req.method;
         var options;
         switch (command) {
             case 'resetdb':
-                this._resetDb();
+                this.resetDb();
                 options = new http_1.ResponseOptions({ status: http_status_codes_1.STATUS.OK });
                 break;
             case 'config':
                 if (method === http_1.RequestMethod.Get) {
                     options = new http_1.ResponseOptions({
-                        body: this._clone(this._config),
+                        body: this.clone(this.config),
                         status: http_status_codes_1.STATUS.OK
                     });
                 }
                 else {
                     // Be nice ... any other method is a config update
                     var body = JSON.parse(reqInfo.req.text() || '{}');
-                    Object.assign(this._config, body);
+                    Object.assign(this.config, body);
                     options = new http_1.ResponseOptions({ status: http_status_codes_1.STATUS.NO_CONTENT });
                 }
                 break;
             default:
-                options = this._createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
+                options = this.createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
         return options;
     };
-    InMemoryBackendService.prototype._createErrorResponse = function (status, message) {
+    InMemoryBackendService.prototype.createErrorResponse = function (status, message) {
         return new http_1.ResponseOptions({
             body: { 'error': "" + message },
             headers: new http_1.Headers({ 'Content-Type': 'application/json' }),
             status: status
         });
     };
-    InMemoryBackendService.prototype._delete = function (_a) {
+    InMemoryBackendService.prototype.delete = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers;
         if (!id) {
-            return this._createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
+            return this.createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
         }
-        var exists = this._removeById(collection, id);
+        var exists = this.removeById(collection, id);
         return new http_1.ResponseOptions({
             headers: headers,
-            status: (exists || !this._config.delete404) ? http_status_codes_1.STATUS.NO_CONTENT : http_status_codes_1.STATUS.NOT_FOUND
+            status: (exists || !this.config.delete404) ? http_status_codes_1.STATUS.NO_CONTENT : http_status_codes_1.STATUS.NOT_FOUND
         });
     };
-    InMemoryBackendService.prototype._findById = function (collection, id) {
+    InMemoryBackendService.prototype.findById = function (collection, id) {
         return collection.find(function (item) { return item.id === id; });
     };
-    InMemoryBackendService.prototype._genId = function (collection) {
+    InMemoryBackendService.prototype.genId = function (collection) {
         // assumes numeric ids
         var maxId = 0;
         collection.reduce(function (prev, item) {
@@ -226,41 +262,52 @@ var InMemoryBackendService = (function () {
         }, null);
         return maxId + 1;
     };
-    InMemoryBackendService.prototype._get = function (_a) {
-        var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers;
-        var data = (id) ? this._findById(collection, id) : collection;
+    InMemoryBackendService.prototype.get = function (_a) {
+        var id = _a.id, query = _a.query, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers;
+        var data = collection;
+        if (id) {
+            data = this.findById(collection, id);
+        }
+        else if (query) {
+            data = this.applyQuery(collection, query);
+        }
         if (!data) {
-            return this._createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
+            return this.createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
         }
         return new http_1.ResponseOptions({
-            body: { data: this._clone(data) },
+            body: { data: this.clone(data) },
             headers: headers,
             status: http_status_codes_1.STATUS.OK
         });
     };
-    InMemoryBackendService.prototype._getLocation = function (href) {
+    InMemoryBackendService.prototype.getLocation = function (href) {
         var l = document.createElement('a');
         l.href = href;
         return l;
     };
     ;
-    InMemoryBackendService.prototype._indexOf = function (collection, id) {
+    InMemoryBackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
     };
-    // tries to parse id as integer; returns input id if not an integer.
-    InMemoryBackendService.prototype._parseId = function (id) {
+    // tries to parse id as number if collection item.id is a number.
+    // returns the original param id otherwise.
+    InMemoryBackendService.prototype.parseId = function (collection, id) {
         if (!id) {
             return null;
         }
-        var idNum = parseInt(id, 10);
-        return isNaN(idNum) ? id : idNum;
+        var isNumberId = collection[0] && typeof collection[0].id === 'number';
+        if (isNumberId) {
+            var idNum = parseFloat(id);
+            return isNaN(idNum) ? id : idNum;
+        }
+        return id;
     };
-    InMemoryBackendService.prototype._parseUrl = function (url) {
+    InMemoryBackendService.prototype.parseUrl = function (url) {
         try {
-            var loc = this._getLocation(url);
-            var drop = this._config.rootPath.length;
+            var loc = this.getLocation(url);
+            var drop = this.config.rootPath.length;
             var urlRoot = '';
-            if (loc.host !== this._config.host) {
+            if (loc.host !== this.config.host) {
                 // url for a server on a different host!
                 // assume it's collection is actually here too.
                 drop = 1; // the leading slash
@@ -270,23 +317,24 @@ var InMemoryBackendService = (function () {
             var _a = path.split('/'), base = _a[0], collectionName = _a[1], id = _a[2];
             var resourceUrl = urlRoot + base + '/' + collectionName + '/';
             collectionName = collectionName.split('.')[0]; // ignore anything after the '.', e.g., '.json'
-            return { base: base, id: id, collectionName: collectionName, resourceUrl: resourceUrl };
+            var query = loc.search && new http_1.URLSearchParams(loc.search.substr(1));
+            return { base: base, id: id, collectionName: collectionName, resourceUrl: resourceUrl, query: query };
         }
         catch (err) {
             var msg = "unable to parse url '" + url + "'; original error: " + err.message;
             throw new Error(msg);
         }
     };
-    InMemoryBackendService.prototype._post = function (_a) {
+    InMemoryBackendService.prototype.post = function (_a) {
         var collection = _a.collection, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl;
         var item = JSON.parse(req.text());
         if (!item.id) {
-            item.id = id || this._genId(collection);
+            item.id = id || this.genId(collection);
         }
         // ignore the request id, if any. Alternatively,
         // could reject request if id differs from item.id
         id = item.id;
-        var existingIx = this._indexOf(collection, id);
+        var existingIx = this.indexOf(collection, id);
         if (existingIx > -1) {
             collection[existingIx] = item;
             return new http_1.ResponseOptions({
@@ -299,21 +347,21 @@ var InMemoryBackendService = (function () {
             headers.set('Location', resourceUrl + '/' + id);
             return new http_1.ResponseOptions({
                 headers: headers,
-                body: { data: this._clone(item) },
+                body: { data: this.clone(item) },
                 status: http_status_codes_1.STATUS.CREATED
             });
         }
     };
-    InMemoryBackendService.prototype._put = function (_a) {
+    InMemoryBackendService.prototype.put = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
         var item = JSON.parse(req.text());
         if (!id) {
-            return this._createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
+            return this.createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
         }
         if (id !== item.id) {
-            return this._createErrorResponse(http_status_codes_1.STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
+            return this.createErrorResponse(http_status_codes_1.STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
         }
-        var existingIx = this._indexOf(collection, id);
+        var existingIx = this.indexOf(collection, id);
         if (existingIx > -1) {
             collection[existingIx] = item;
             return new http_1.ResponseOptions({
@@ -324,14 +372,14 @@ var InMemoryBackendService = (function () {
         else {
             collection.push(item);
             return new http_1.ResponseOptions({
-                body: { data: this._clone(item) },
+                body: { data: this.clone(item) },
                 headers: headers,
                 status: http_status_codes_1.STATUS.CREATED
             });
         }
     };
-    InMemoryBackendService.prototype._removeById = function (collection, id) {
-        var ix = this._indexOf(collection, id);
+    InMemoryBackendService.prototype.removeById = function (collection, id) {
+        var ix = this.indexOf(collection, id);
         if (ix > -1) {
             collection.splice(ix, 1);
             return true;
@@ -341,10 +389,10 @@ var InMemoryBackendService = (function () {
     /**
      * Reset the "database" to its original state
      */
-    InMemoryBackendService.prototype._resetDb = function () {
-        this._db = this._seedData.createDb();
+    InMemoryBackendService.prototype.resetDb = function () {
+        this.db = this.seedData.createDb();
     };
-    InMemoryBackendService.prototype._setStatusText = function (options) {
+    InMemoryBackendService.prototype.setStatusText = function (options) {
         try {
             var statusCode = http_status_codes_1.STATUS_CODE_INFO[options.status];
             options['statusText'] = statusCode ? statusCode.text : 'Unknown Status';
