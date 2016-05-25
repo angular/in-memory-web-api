@@ -80,6 +80,7 @@ export interface ReqInfo {
   collectionName: string;
   headers: Headers;
   id: any;
+  query: any;
   resourceUrl: string;
 }
 
@@ -162,7 +163,7 @@ export class InMemoryBackendService {
    *   commands/resetDb  // resets the "database"
    */
   protected _handleRequest(req: Request) {
-    let {base, collectionName, id, resourceUrl} = this._parseUrl(req.url);
+    let {base, collectionName, id, resourceUrl, query} = this._parseUrl(req.url);
 
     let reqInfo: ReqInfo = {
       req: req,
@@ -171,6 +172,7 @@ export class InMemoryBackendService {
       collectionName: collectionName,
       headers: new Headers({ 'Content-Type': 'application/json' }),
       id: this._parseId(id),
+      query: query,
       resourceUrl: resourceUrl
     };
 
@@ -294,8 +296,17 @@ export class InMemoryBackendService {
     return maxId + 1;
   }
 
-  protected _get({id, collection, collectionName, headers}: ReqInfo) {
-    let data = (id) ? this._findById(collection, id) : collection;
+  protected _get({id, query, collection, collectionName, headers}: ReqInfo) {
+    let data = collection;
+
+    if(id) {
+      data = this._findById(collection, id)
+    }
+
+    else if(query) {
+      data = collection.filter(row => query.pattern.test(row[query.name]));
+    }
+
     if (!data) {
       return this._createErrorResponse(STATUS.NOT_FOUND,
         `'${collectionName}' with id='${id}' not found`);
@@ -339,11 +350,20 @@ export class InMemoryBackendService {
       let [base, collectionName, id] = path.split('/');
       let resourceUrl = urlRoot + base + '/' + collectionName + '/';
       [collectionName] = collectionName.split('.'); // ignore anything after the '.', e.g., '.json'
-      return { base, id, collectionName, resourceUrl };
+      let query = this._parseQuery(loc.search);
+      return { base, id, collectionName, resourceUrl, query };
     } catch (err) {
       let msg = `unable to parse url '${url}'; original error: ${err.message}`;
       throw new Error(msg);
     }
+  }
+
+  private _parseQuery(search: string) {
+    if(search){
+      let query = search.substring(1).split('=');
+      return {name: query[0], pattern: new RegExp(query[1],'i')};
+    }
+    return null;
   }
 
   protected _post({collection, /* collectionName, */ headers, id, req, resourceUrl}: ReqInfo) {
