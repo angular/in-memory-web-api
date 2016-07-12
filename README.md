@@ -180,11 +180,7 @@ compiling your application project.
    `npm list --depth=0`
 
 - consider updating typings, install individually/several:
-  `npm run typings -- install packagename --ambient --save`
-
-   **NB: Do not add to `npm postinstall` as that screws up consumers!**
-
-- `npm run typings install`
+  `npm install @types/{core-js,jasmine,node} --save-dev`
 
 - `npm run tsc` to confirm the project compiles w/o error (sanity check)
 
