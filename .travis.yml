@@ -15,7 +15,6 @@ before_script:
 install:
   - npm install -g gulp
   - npm install
-  - npm run typings install
 script:
   - npm run lint
   - npm run tsc
