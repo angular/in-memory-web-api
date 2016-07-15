@@ -7,7 +7,7 @@ var del = require('del');
 var path = require("path");
 
 var tsOutput = './in-memory-web-api/';
-var jsCopySrc = [tsOutput+'*.js', tsOutput+'*.d.ts']
+var jsCopySrc = [tsOutput+'*.js', tsOutput+'*.js.map', tsOutput+'*.d.ts']
 
 gulp.task('default', ['help']);
 
@@ -30,7 +30,7 @@ gulp.task('tsc',['clean'], function(done) {
 });
 
 gulp.task('clean', function(done) {
-  clean([tsOutput+'*.*', '*.js','*.d.ts','!gulpfile.js'], done);
+  clean([tsOutput+'*.*', '*.js', '*.js.map', '*.d.ts', '!gulpfile.js'], done);
 });
 
 /**
