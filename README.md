@@ -1,21 +1,102 @@
-# angular2 in-memory-web-api
-An in-memory web api for Angular 2 demos and tests.
+# Angular 2 in-memory-web-api
 
-See usage in the Angular.io
-[Server Communication](https://angular.io/docs/ts/latest/guide/server-communication.html) chapter.
+>**UPDATE NOTICE**
+>
+>This is the last of the npm packages under the name `angular2-in-memory-web-api`. 
+The new package name is (or soon will be) `angular-in-memory-web-api`. 
+All versions after 0.0.21 are (or soon will be) shipped under this new name.
+**Be sure to update your `package.json` and import statements accordingly**.
 
-# Simple Query String Support
-Custom filters can be passed as a regex pattern via query string. 
-The query string defines which property and value to match against.
+An in-memory web api for Angular demos and tests.
+
+It will intercept HTTP requests that would otherwise go to the remote server
+via the Angular `XHRBackend` service
+
+This in-memory web api service processes an HTTP request and 
+returns an `Observable` of HTTP `Response` object
+in the manner of a RESTy web api.
+It natively handles URI patterns in the form :base/:collectionName/:id?
+
+Examples:
+```
+  // for store with a 'heroes' collection
+  GET api/heroes          // all heroes
+  GET api/heroes/42       // the character with id=42
+  GET api/heroes?name=^j  // 'j' is a regex; returns heroes whose name contains 'j' or 'J'
+  GET api/heroes.json/42  // ignores the ".json"
+```
+Also accepts
+  "commands":
+  ```
+    POST "resetDb",
+    GET/POST "config"" - get or (re)set the config
+  ```
+
+## Basic usage
+Create an `InMemoryDataService` class that implements `InMemoryDataService`.
+
+At minimum it must implement `createDb` which 
+creates a "database" hash whose keys are collection names
+and whose values are arrays of collection objects to return or update.
+For example:
+```
+import { InMemoryDbService } from 'angular-in-memory-web-api';
+
+export class InMemHeroService implements InMemoryDbService {
+  createDb() {
+    let heroes = [
+      { id: '1', name: 'Windstorm' },
+      { id: '2', name: 'Bombasto' },
+      { id: '3', name: 'Magneta' },
+      { id: '4', name: 'Tornado' }
+    ];
+    return {heroes};
+  }
+}
+```
+
+Register this module and your service implementation in `AppModule.imports`
+calling the `forRoot` static method with this service class and optional configuration object:
+```
+// other imports
+import { HttpModule }           from '@angular/http';
+import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+
+import { InMemHeroService }     from '../app/hero-data';
+@NgModule({
+ imports: [
+   HttpModule,
+   InMemoryWebApiModule.forRoot(InMemHeroService),
+   ...
+ ],
+ ...
+})
+export class AppModule { ... }
+```
+
+See examples in the Angular.io such as the
+[Server Communication](https://angular.io/docs/ts/latest/guide/server-communication.html) and
+[Tour of Heroes](https://angular.io/docs/ts/latest/tutorial/toh-pt6.html) chapters.
+
+# Bonus Features
+Some features are not readily apparent in the basic usage example.
+
+The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
+```
+   InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 500 }),
+```
+
+## Simple query strings
+Pass custom filters as a regex pattern via query string. 
+The query string defines which property and value to match.
 
 Format: `/app/heroes/?propertyName=regexPattern`
 
-In the following example we are matching on all names containing the letter 'j' in the heroes collection.
+The following example matches all names containing the letter 'j' in the heroes collection.
 
 `/app/heroes/?name=j+`
 
 # To Do
-* add  documentation
 * add tests (shameful omission!)
 
 # Build Instructions
