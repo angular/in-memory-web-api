@@ -8,7 +8,7 @@ import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 /**
-* Seed data for in-memory database
+* Class that creates seed data for in-memory database
 * Must implement InMemoryDbService.
 */
 export const SEED_DATA = new OpaqueToken('seedData');

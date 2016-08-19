@@ -1,3 +1,8 @@
+<a name="0.0.17"></a>
+# 0.0.17 (2016-08-19)
+* fix `forRoot` type constraint
+* clarify `forRoot` param
+
 <a name="0.0.16"></a>
 # 0.0.16 (2016-08-19)
 * No longer exports `HttpModule`

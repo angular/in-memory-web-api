@@ -2,7 +2,7 @@ import { OpaqueToken } from '@angular/core';
 import { Connection, Headers, Request, Response, ResponseOptions, URLSearchParams } from '@angular/http';
 import 'rxjs/add/operator/delay';
 /**
-* Seed data for in-memory database
+* Class that creates seed data for in-memory database
 * Must implement InMemoryDbService.
 */
 export declare const SEED_DATA: OpaqueToken;

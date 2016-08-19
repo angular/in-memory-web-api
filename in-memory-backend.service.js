@@ -17,7 +17,7 @@ var Observable_1 = require('rxjs/Observable');
 require('rxjs/add/operator/delay');
 var http_status_codes_1 = require('./http-status-codes');
 /**
-* Seed data for in-memory database
+* Class that creates seed data for in-memory database
 * Must implement InMemoryDbService.
 */
 exports.SEED_DATA = new core_1.OpaqueToken('seedData');
