@@ -1,3 +1,9 @@
+<a name="0.0.16"></a>
+# 0.0.16 (2016-08-19)
+* No longer exports `HttpModule`
+* Can specify configuration options in 2nd param of `forRoot`
+* jsDocs for `forRoot`
+
 <a name="0.0.15"></a>
 # 0.0.15 (2016-08-09)
 * RC5
