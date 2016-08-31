@@ -25,7 +25,7 @@ export class InMemoryWebApiModule {
   * InMemoryWebApiModule.forRoot(dbCreator);
   * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
   */
-  static forRoot(dbCreator: Type, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
+  static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
 
     let providers: any[] = [
         { provide: XHRBackend, useClass: InMemoryBackendService },

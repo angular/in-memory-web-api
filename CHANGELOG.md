@@ -1,3 +1,7 @@
+<a name="0.0.18"></a>
+# 0.0.18 (2016-08-31)
+* RC6 (doesn't work with older versions)
+
 <a name="0.0.17"></a>
 # 0.0.17 (2016-08-19)
 * fix `forRoot` type constraint
