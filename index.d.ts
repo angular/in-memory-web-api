@@ -1,7 +1,7 @@
 export * from './http-status-codes';
 export * from './in-memory-backend.service';
 import { ModuleWithProviders, Type } from '@angular/core';
-import { InMemoryBackendConfigArgs } from './in-memory-backend.service';
+import { InMemoryBackendConfigArgs, InMemoryDbService } from './in-memory-backend.service';
 export declare class InMemoryWebApiModule {
     /**
     *  Prepare in-memory-web-api in the root/boot application module
@@ -14,5 +14,5 @@ export declare class InMemoryWebApiModule {
     * InMemoryWebApiModule.forRoot(dbCreator);
     * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
     */
-    static forRoot(dbCreator: Type, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
+    static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
 }
