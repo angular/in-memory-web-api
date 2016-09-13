@@ -1,3 +1,7 @@
+<a name="0.0.19"></a>
+# 0.0.19 (2016-09-13)
+* RC7
+
 <a name="0.0.18"></a>
 # 0.0.18 (2016-08-31)
 * RC6 (doesn't work with older versions)
