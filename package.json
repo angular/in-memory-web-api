@@ -47,7 +47,7 @@
     "concurrently": "^2.1.0",
     "core-js": "^2.4.1",
     "lite-server": "^2.2.0",
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.2",
     "typings": "^1.2.0",
 
     "canonical-path": "0.0.2",
