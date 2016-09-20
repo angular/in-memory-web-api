@@ -10,9 +10,10 @@ The query string defines which property and value to match against.
 
 Format: `/app/heroes/?propertyName=regexPattern`
 
-In the following example we are matching on all names containing the letter 'j' in the heroes collection.
+Note that pattern matches are case insensitive.
+The following example will match all heroes with a name containing the letter `j` or `J`:
 
-`/app/heroes/?name=j+`
+`/app/heroes/?name=j`
 
 # To Do
 * add  documentation
