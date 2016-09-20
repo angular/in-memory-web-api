@@ -56,6 +56,6 @@ compiling your application project.
 
 - Fix and validate angular.io docs samples
 
-- Add two tags to the release commit with for npmcdn
+- Add two tags to the release commit with for unpkg
   - the version number
   - 'latest'
