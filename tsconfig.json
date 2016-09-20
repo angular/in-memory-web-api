@@ -4,6 +4,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "sourceMap": true,
+    "sourceRoot": "./src",
     "outDir": "./in-memory-web-api",
     "declaration": true,
     "emitDecoratorMetadata": true,
