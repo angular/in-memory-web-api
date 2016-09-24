@@ -8,16 +8,10 @@ import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 /**
-* Class that creates seed data for in-memory database
-* Must implement InMemoryDbService.
-*/
-export const SEED_DATA = new OpaqueToken('seedData');
-
-/**
 * Interface for a class that creates an in-memory database
 * Safe for consuming service to morph arrays and objects.
 */
-export interface InMemoryDbService {
+export abstract class InMemoryDbService {
   /**
   * Creates "database" object hash whose keys are collection names
   * and whose values are arrays of the collection objects.
@@ -26,7 +20,7 @@ export interface InMemoryDbService {
   * This condition allows InMemoryBackendService to morph the arrays and objects
   * without touching the original source data.
   */
-  createDb(): {};
+  abstract createDb(): {};
 }
 
 /**
@@ -123,7 +117,7 @@ export class InMemoryBackendService {
   protected db: {};
 
   constructor(
-    @Inject(SEED_DATA) private seedData: InMemoryDbService,
+    private seedData: InMemoryDbService,
     @Inject(InMemoryBackendConfig) @Optional() config: InMemoryBackendConfigArgs) {
     this.resetDb();
 

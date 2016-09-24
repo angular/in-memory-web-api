@@ -8,9 +8,13 @@ import {
   InMemoryBackendConfigArgs,
   InMemoryBackendConfig,
   InMemoryBackendService,
-  InMemoryDbService,
-  SEED_DATA
+  InMemoryDbService
 } from './in-memory-backend.service';
+
+export function customHttpBackendFactory(dbService: InMemoryDbService, options: InMemoryBackendConfig) : XHRBackend {
+  let backend: any = new InMemoryBackendService(dbService, options);
+  return (<XHRBackend>backend);
+}
 
 @NgModule({})
 export class InMemoryWebApiModule {
@@ -25,20 +29,14 @@ export class InMemoryWebApiModule {
   * InMemoryWebApiModule.forRoot(dbCreator);
   * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
   */
-  static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
-
-    let providers: any[] = [
-        { provide: XHRBackend, useClass: InMemoryBackendService },
-        { provide: SEED_DATA,  useClass: dbCreator }
-    ];
-
-    if (options) {
-      providers.push({provide: InMemoryBackendConfig, useValue: options})
-    }
-
+  static forRoot(dbCreator: Type<InMemoryDbService>, options? : InMemoryBackendConfigArgs) : ModuleWithProviders  {
     return {
       ngModule: InMemoryWebApiModule,
-      providers: providers
+      providers: [
+        { provide: InMemoryDbService,  useClass: dbCreator },
+        { provide: InMemoryBackendConfig, useValue: options || {} },
+        { provide: XHRBackend, useFactory: customHttpBackendFactory, deps: [InMemoryDbService, InMemoryBackendConfig] }
+      ]
     };
   }
 }
