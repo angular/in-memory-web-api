@@ -1,7 +1,7 @@
 {
-  "name": "angular2-in-memory-web-api",
-  "version": "0.0.21",
-  "description": "An in-memory web api for Angular 2 demos and tests",
+  "name": "angular-in-memory-web-api",
+  "version": "0.1.0",
+  "description": "An in-memory web api for Angular demos and tests",
   "main":"index.js",
   "jsnext:main": "esm/index.js",
   "scripts": {

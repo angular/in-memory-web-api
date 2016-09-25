@@ -1,3 +1,12 @@
+# "angular-in-memory-web-api" versions
+
+<a name="0.1.0"></a>
+## 0.1.0 (2016-09-25)
+* Renamed package to "angular-in-memory-web-api"
+* Added "passThruUnknownUrl" options
+* Simplified `forRoot` and made it acceptable to AoT
+* Support case sensitive search (PR #16)
+
 # "angular2-in-memory-web-api" versions
 The last npm package named "angular2-in-memory-web-api" was v.0.0.21
 
