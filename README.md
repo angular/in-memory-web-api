@@ -1,11 +1,10 @@
-# Angular 2 in-memory-web-api
+# Angular in-memory-web-api
 
 >**UPDATE NOTICE**
 >
->This is the last of the npm packages under the name `angular2-in-memory-web-api`. 
-The new package name is (or soon will be) `angular-in-memory-web-api`. 
-All versions after 0.0.21 are (or soon will be) shipped under this new name.
-**Be sure to update your `package.json` and import statements accordingly**.
+>As of v.0.1.0, the npm package was renamed from `angular2-in-memory-web-api` to its current name,
+`angular-in-memory-web-api`. All versions after 0.0.21 are shipped under this name.
+**Be sure to update your `package.json` and import statements**.
 
 An in-memory web api for Angular demos and tests.
 
@@ -22,14 +21,14 @@ Examples:
   // for store with a 'heroes' collection
   GET api/heroes          // all heroes
   GET api/heroes/42       // the character with id=42
-  GET api/heroes?name=^j  // 'j' is a regex; returns heroes whose name contains 'j' or 'J'
+  GET api/heroes?name=^j  // 'j' is a regex; returns heroes whose name starting with 'j' or 'J'
   GET api/heroes.json/42  // ignores the ".json"
 ```
 Also accepts
   "commands":
   ```
     POST "resetDb",
-    GET/POST "config"" - get or (re)set the config
+    GET/POST "config" - get or (re)set the config
   ```
 
 ## Basic usage
@@ -92,10 +91,38 @@ The query string defines which property and value to match.
 
 Format: `/app/heroes/?propertyName=regexPattern`
 
-The following example matches all names containing the letter 'j' in the heroes collection.
+The following example matches all names start with the letter 'j'  or 'J' in the heroes collection.
 
-`/app/heroes/?name=j+`
+`/app/heroes/?name=^j`
 
+>Search pattern matches are case insensitive by default. 
+Set `config.caseSensitiveSearch = true` if needed.
+
+## Pass thru to a live XHRBackend
+
+If an existing, running remote server should handle requests for collections 
+that are not in the in-memory database, set `Config.passThruUnknownUrl: true`.
+This service will forward unrecognized requests via a base version of the Angular XHRBackend.
+
+## HTTP method interceptors
+
+If you make requests this service can't handle but still want an in-memory database to hold values,
+override the way this service handles any HTTP method by implementing a method in
+your `InMemoryDbService` that does the job.
+
+The `InMemoryDbService` method name must be the same as the HTTP method name but all lowercase.
+This service calls it with an `HttpMethodInterceptorArgs` object.
+For example, your HTTP GET interceptor would be called like this:
+e.g., `yourInMemDbService["get"](interceptorArgs)`.
+Your method must return an `Observable<Response>`
+
+The `HttpMethodInterceptorArgs` (as of this writing) are:
+```
+requestInfo: RequestInfo;           // parsed request
+db: Object;                         // the current in-mem database collections
+config: InMemoryBackendConfigArgs;  // the current config
+passThruBackend: ConnectionBackend; // pass through backend, if it exists
+```
 # To Do
 * add tests (shameful omission!)
 

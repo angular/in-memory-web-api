@@ -1,6 +1,8 @@
-import { Inject, OpaqueToken, Optional } from '@angular/core';
-import { BaseResponseOptions, Connection, Headers, ReadyState, Request, RequestMethod,
-         Response, ResponseOptions, URLSearchParams } from '@angular/http';
+import { Inject, Injector, Optional } from '@angular/core';
+import { BaseResponseOptions, BrowserXhr, Connection, ConnectionBackend,
+         Headers, ReadyState, Request, RequestMethod,
+         Response, ResponseOptions, URLSearchParams,
+         XHRBackend, XSRFStrategy } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { Observer }   from 'rxjs/Observer';
 import 'rxjs/add/operator/delay';
@@ -8,31 +10,36 @@ import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 /**
-* Class that creates seed data for in-memory database
-* Must implement InMemoryDbService.
-*/
-export const SEED_DATA = new OpaqueToken('seedData');
-
-/**
 * Interface for a class that creates an in-memory database
-* Safe for consuming service to morph arrays and objects.
+*
+* Its `createDb` method creates a hash of named collections that represents the database
+*
+* For maximum flexibility, the service may define HTTP method overrides.
+* Such methods must match the spelling of an HTTP method in lower case (e.g, "get").
+* If a request has a matching method, it will be called as in
+* `get(info: requestInfo, db: {})` where `db` is the database object described above.
 */
-export interface InMemoryDbService {
+export abstract class InMemoryDbService {
   /**
-  * Creates "database" object hash whose keys are collection names
-  * and whose values are arrays of the collection objects.
+  * Creates a "database" hash whose keys are collection names
+  * and whose values are arrays of collection objects to return or update.
   *
-  * It must be safe to call again and should return new arrays with new objects.
+  * This method must be safe to call repeatedly.
+  * Each time it should return a new object with new arrays containing new item objects.
   * This condition allows InMemoryBackendService to morph the arrays and objects
   * without touching the original source data.
   */
-  createDb(): {};
+  abstract createDb(): {};
 }
 
 /**
 * Interface for InMemoryBackend configuration options
 */
 export interface InMemoryBackendConfigArgs {
+  /**
+   * false (default) if search match should be case insensitive
+   */
+  caseSensitiveSearch?: boolean;
   /**
    * default response options
    */
@@ -46,6 +53,10 @@ export interface InMemoryBackendConfigArgs {
    */
   delete404?: boolean;
   /**
+   * false (default) if should pass unrecognized request URL through to original backend; else 404
+   */
+  passThruUnknownUrl?: boolean;
+  /**
    * host for this service
    */
   host?: string;
@@ -58,14 +69,22 @@ export interface InMemoryBackendConfigArgs {
 /**
 *  InMemoryBackendService configuration options
 *  Usage:
-*    provide(InMemoryBackendConfig, {useValue: {delay:600}}),
+*    InMemoryWebApiModule.forRoot(InMemHeroService, {delay: 600})
+*
+*  or if providing separately:
+*    provide(InMemoryBackendConfig, {useValue: {delay: 600}}),
 */
 export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
   constructor(config: InMemoryBackendConfigArgs = {}) {
     Object.assign(this, {
+      // default config:
+      caseSensitiveSearch: false,
       defaultResponseOptions: new BaseResponseOptions(),
       delay: 500,
-      delete404: false
+      delete404: false,
+      passThruUnknownUrl: false,
+      host: '',
+      rootPath: ''
     }, config);
   }
 }
@@ -74,7 +93,7 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
 * Interface for object w/ info about the current request url
 * extracted from an Http Request
 */
-export interface ReqInfo {
+export interface RequestInfo {
   req: Request;
   base: string;
   collection: any[];
@@ -83,6 +102,16 @@ export interface ReqInfo {
   id: any;
   query: URLSearchParams;
   resourceUrl: string;
+}
+
+/**
+* Interface for object passed to an HTTP method override method
+*/
+export interface HttpMethodInterceptorArgs {
+  requestInfo: RequestInfo;           // parsed request
+  db: Object;                         // the current in-mem database collections
+  config: InMemoryBackendConfigArgs;  // the current config
+  passThruBackend: ConnectionBackend; // pass through backend, if it exists
 }
 
 export const isSuccess = (status: number): boolean => (status >= 200 && status < 300);
@@ -95,58 +124,49 @@ export const isSuccess = (status: number): boolean => (status >= 200 && status <
  *
  * ### Usage
  *
- * Create InMemoryDataService class the implements InMemoryDataService.
- * Register both this service and the seed data as in:
+ * Create `InMemoryDataService` class that implements `InMemoryDataService`.
+ * Call `forRoot` static method with this service class and optional configuration object:
  * ```
  * // other imports
- * import { HTTPPROVIDERS, XHRBackend } from 'angular2/http';
- * import { InMemoryBackendConfig, InMemoryBackendService, SEEDDATA } from '../in-memory-backend/in-memory-backend.service';
- * import { InMemoryStoryService } from '../api/in-memory-story.service';
+ * import { HttpModule }           from '@angular/http';
+ * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
  *
- * @Component({
- *   selector: ...,
- *   templateUrl: ...,
- *   providers: [
- *     HTTPPROVIDERS,
- *     provide(XHRBackend, { useClass: InMemoryBackendService }),
- *     provide(SEEDDATA, { useClass: InMemoryStoryService }),
- *     provide(InMemoryBackendConfig, { useValue: { delay: 600 } }),
- *   ]
+ * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
+ * @NgModule({
+ *  imports: [
+ *    HttpModule,
+ *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
+ *    ...
+ *  ],
+ *  ...
  * })
- * export class AppComponent { ... }
+ * export class AppModule { ... }
  * ```
  */
 
 export class InMemoryBackendService {
-
+  protected passThruBackend: ConnectionBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
-  protected db: {};
+  protected db: Object;
 
   constructor(
-    @Inject(SEED_DATA) private seedData: InMemoryDbService,
-    @Inject(InMemoryBackendConfig) @Optional() config: InMemoryBackendConfigArgs) {
+    private injector: Injector,
+    private inMemDbService: InMemoryDbService,
+    @Inject(InMemoryBackendConfig) @Optional() config: InMemoryBackendConfigArgs
+    ) {
     this.resetDb();
 
-    let loc = this.getLocation('./');
+    const loc = this.getLocation('./');
     this.config.host = loc.host;
     this.config.rootPath = loc.pathname;
-    Object.assign(this.config, config);
+    Object.assign(this.config, config || {});
+
+    this.setPassThruBackend();
   }
 
+
   createConnection(req: Request): Connection {
-    let res = this.handleRequest(req);
-
-    let response = new Observable<Response>((responseObserver: Observer<Response>) => {
-      if (isSuccess(res.status)) {
-        responseObserver.next(res);
-        responseObserver.complete();
-      } else {
-        responseObserver.error(res);
-      }
-      return () => { }; // unsubscribe function
-    });
-
-    response = response.delay(this.config.delay || 500);
+    const response = this.handleRequest(req);
     return {
       readyState: ReadyState.Done,
       request: req,
@@ -157,7 +177,7 @@ export class InMemoryBackendService {
   ////  protected /////
 
   /**
-   * Process Request and return an Http Response object
+   * Process Request and return an Observable of Http Response object
    * in the manner of a RESTy web api.
    *
    * Expect URI pattern in the form :base/:collectionName/:id?
@@ -165,15 +185,24 @@ export class InMemoryBackendService {
    *   // for store with a 'characters' collection
    *   GET api/characters          // all characters
    *   GET api/characters/42       // the character with id=42
-   *   GET api/characters?name=^j  // 'j' is a regex; returns characters whose name contains 'j' or 'J'
+   *   GET api/characters?name=^j  // 'j' is a regex; returns characters whose name starts with 'j' or 'J'
    *   GET api/characters.json/42  // ignores the ".json"
    *
-   *   POST commands/resetDb  // resets the "database"
+   * Also accepts
+   *   "commands":
+   *     POST "resetDb",
+   *     GET/POST "config"" - get or (re)set the config
+   *
+   *   HTTP overrides:
+   *     If the injected inMemDbService defines an HTTP method (lowercase)
+   *     The request is forwarded to that method as in
+   *     `inMemDbService.get(httpMethodInterceptorArgs)`
+   *     which must return an `Observable<Response>`
    */
-  protected handleRequest(req: Request) {
-    let {base, collectionName, id, resourceUrl, query} = this.parseUrl(req.url);
-    let collection = this.db[collectionName];
-    let reqInfo: ReqInfo = {
+  protected handleRequest(req: Request): Observable<Response> {
+    const {base, collectionName, id, resourceUrl, query} = this.parseUrl(req.url);
+    const collection = this.db[collectionName];
+    const reqInfo: RequestInfo = {
       req: req,
       base: base,
       collection: collection,
@@ -184,46 +213,43 @@ export class InMemoryBackendService {
       resourceUrl: resourceUrl
     };
 
-    let options: ResponseOptions;
+    const reqMethodName = RequestMethod[req.method || 0].toLowerCase();
+    let resOptions: ResponseOptions;
 
     try {
       if ('commands' === reqInfo.base.toLowerCase()) {
-        options = this.commands(reqInfo);
+        return this.commands(reqInfo);
+
+      } else if (this.inMemDbService[reqMethodName]) {
+        // If service has an interceptor for an HTTP method, call it
+        const interceptorArgs: HttpMethodInterceptorArgs = {
+          requestInfo: reqInfo,
+          db: this.db,
+          config: this.config,
+          passThruBackend: this.passThruBackend
+        };
+        // The result which must be Observable<Response>
+        return this.inMemDbService[reqMethodName](interceptorArgs);
 
       } else if (reqInfo.collection) {
-        switch (req.method) {
-          case RequestMethod.Get:
-            options = this.get(reqInfo);
-            break;
-          case RequestMethod.Post:
-            options = this.post(reqInfo);
-            break;
-          case RequestMethod.Put:
-            options = this.put(reqInfo);
-            break;
-          case RequestMethod.Delete:
-            options = this.delete(reqInfo);
-            break;
-          default:
-            options = this.createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
-            break;
-        }
+        return this.collectionHandler(reqInfo);
+
+      } else if (this.passThruBackend) {
+        // Passes request thru to a "real" backend which returns an Observable<Response>
+        // BAIL OUT with this Observable<Response>
+        return this.passThruBackend.createConnection(req).response;
 
       } else {
-        options = this.createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
+        resOptions = this.createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
+        return this.createObservableResponse(resOptions);
       }
 
     } catch (error) {
-      let err = error.message || error;
-      options = this.createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      const err = error.message || error;
+      resOptions = this.createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      return this.createObservableResponse(resOptions);
     }
 
-    options = this.setStatusText(options);
-    if (this.config.defaultResponseOptions) {
-      options = this.config.defaultResponseOptions.merge(options);
-    }
-
-    return new Response(options);
   }
 
   /**
@@ -233,12 +259,13 @@ export class InMemoryBackendService {
    */
   protected applyQuery(collection: any[], query: URLSearchParams) {
     // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
-    let conditions: {name: string, rx: RegExp}[] = [];
+    const conditions: {name: string, rx: RegExp}[] = [];
+    const caseSensitive = this.config.caseSensitiveSearch ? undefined : 'i';
     query.paramsMap.forEach((value: string[], name: string) => {
-      value.forEach(v => conditions.push({name, rx: new RegExp(decodeURI(v), 'i')}));
+      value.forEach(v => conditions.push({name, rx: new RegExp(decodeURI(v), caseSensitive)}));
     });
 
-    let len = conditions.length;
+    const len = conditions.length;
     if (!len) { return collection; }
 
     // AND the RegExp conditions
@@ -247,7 +274,7 @@ export class InMemoryBackendService {
       let i = len;
       while (ok && i) {
         i -= 1;
-        let cond = conditions[i];
+        const cond = conditions[i];
         ok = cond.rx.test(row[cond.name]);
       }
       return ok;
@@ -256,6 +283,30 @@ export class InMemoryBackendService {
 
   protected clone(data: any) {
     return JSON.parse(JSON.stringify(data));
+  }
+
+  protected collectionHandler(reqInfo: RequestInfo): Observable<Response> {
+    const req = reqInfo.req;
+    let resOptions: ResponseOptions;
+
+    switch (req.method) {
+      case RequestMethod.Get:
+        resOptions = this.get(reqInfo);
+        break;
+      case RequestMethod.Post:
+        resOptions = this.post(reqInfo);
+        break;
+      case RequestMethod.Put:
+        resOptions = this.put(reqInfo);
+        break;
+      case RequestMethod.Delete:
+        resOptions = this.delete(reqInfo);
+        break;
+      default:
+        resOptions = this.createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+        break;
+    }
+    return this.createObservableResponse(resOptions);
   }
 
   /**
@@ -270,37 +321,38 @@ export class InMemoryBackendService {
    *   http.get('commands/config');
    *   http.post('commands/config', '{"delay":1000}');
    */
-  protected commands(reqInfo: ReqInfo) {
-    let command = reqInfo.collectionName.toLowerCase();
-    let method = reqInfo.req.method;
-    let options: ResponseOptions;
+  protected commands(reqInfo: RequestInfo): Observable<Response> {
+    const command = reqInfo.collectionName.toLowerCase();
+    const method  = reqInfo.req.method;
+    let resOptions: ResponseOptions;
 
     switch (command) {
       case 'resetdb':
         this.resetDb();
-        options = new ResponseOptions({ status: STATUS.OK });
+        resOptions = new ResponseOptions({ status: STATUS.OK });
         break;
       case 'config':
         if (method === RequestMethod.Get) {
-          options = new ResponseOptions({
+          resOptions = new ResponseOptions({
             body: this.clone(this.config),
             status: STATUS.OK
           });
         } else {
           // Be nice ... any other method is a config update
-          let body = JSON.parse(<string>reqInfo.req.text() || '{}');
+          const body = JSON.parse(<string>reqInfo.req.text() || '{}');
           Object.assign(this.config, body);
-          options = new ResponseOptions({ status: STATUS.NO_CONTENT });
+          this.setPassThruBackend();
+          resOptions = new ResponseOptions({ status: STATUS.NO_CONTENT });
         }
         break;
       default:
-        options = this.createErrorResponse(
+        resOptions = this.createErrorResponse(
           STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
     }
-    return options;
+    return this.createObservableResponse(resOptions);
   }
 
-  protected createErrorResponse(status: number, message: string) {
+  protected createErrorResponse(status: number, message: string)  {
     return new ResponseOptions({
       body: { 'error': `${message}` },
       headers: new Headers({ 'Content-Type': 'application/json' }),
@@ -308,11 +360,31 @@ export class InMemoryBackendService {
     });
   }
 
-  protected delete({id, collection, collectionName, headers /*, req */}: ReqInfo) {
+  protected createObservableResponse(resOptions: ResponseOptions): Observable<Response> {
+      resOptions = this.setStatusText(resOptions);
+      if (this.config.defaultResponseOptions) {
+        resOptions = this.config.defaultResponseOptions.merge(resOptions);
+      }
+
+      const res = new Response(resOptions);
+
+      return new Observable<Response>((responseObserver: Observer<Response>) => {
+        if (isSuccess(res.status)) {
+          responseObserver.next(res);
+          responseObserver.complete();
+        } else {
+          responseObserver.error(res);
+        }
+        return () => { }; // unsubscribe function
+      })
+      .delay(this.config.delay || 500);
+  }
+
+  protected delete({id, collection, collectionName, headers /*, req */}: RequestInfo) {
     if (!id) {
       return this.createErrorResponse(STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
-    let exists = this.removeById(collection, id);
+    const exists = this.removeById(collection, id);
     return new ResponseOptions({
       headers: headers,
       status: (exists || !this.config.delete404) ? STATUS.NO_CONTENT : STATUS.NOT_FOUND
@@ -332,7 +404,7 @@ export class InMemoryBackendService {
     return maxId + 1;
   }
 
-  protected get({id, query, collection, collectionName, headers}: ReqInfo) {
+  protected get({id, query, collection, collectionName, headers}: RequestInfo) {
     let data = collection;
 
     if (id) {
@@ -353,7 +425,7 @@ export class InMemoryBackendService {
   }
 
   protected getLocation(href: string) {
-    let l = document.createElement('a');
+    const l = document.createElement('a');
     l.href = href;
     return l;
   };
@@ -366,9 +438,9 @@ export class InMemoryBackendService {
   // returns the original param id otherwise.
   protected parseId(collection: {id: any}[], id: string): any {
     if (!id) { return null; }
-    let isNumberId =  collection[0] && typeof collection[0].id === 'number';
+    const isNumberId =  collection[0] && typeof collection[0].id === 'number';
     if (isNumberId) {
-      let idNum = parseFloat(id);
+      const idNum = parseFloat(id);
       return isNaN(idNum) ? id : idNum;
     }
     return id;
@@ -376,7 +448,7 @@ export class InMemoryBackendService {
 
   protected parseUrl(url: string) {
     try {
-      let loc = this.getLocation(url);
+      const loc = this.getLocation(url);
       let drop = this.config.rootPath.length;
       let urlRoot = '';
       if (loc.host !== this.config.host) {
@@ -385,27 +457,27 @@ export class InMemoryBackendService {
         drop = 1; // the leading slash
         urlRoot = loc.protocol + '//' + loc.host + '/';
       }
-      let path = loc.pathname.substring(drop);
+      const path = loc.pathname.substring(drop);
       let [base, collectionName, id] = path.split('/');
-      let resourceUrl = urlRoot + base + '/' + collectionName + '/';
+      const resourceUrl = urlRoot + base + '/' + collectionName + '/';
       [collectionName] = collectionName.split('.'); // ignore anything after the '.', e.g., '.json'
-      let query = loc.search && new URLSearchParams(loc.search.substr(1));
+      const query = loc.search && new URLSearchParams(loc.search.substr(1));
       return { base, id, collectionName, resourceUrl, query };
     } catch (err) {
-      let msg = `unable to parse url '${url}'; original error: ${err.message}`;
+      const msg = `unable to parse url '${url}'; original error: ${err.message}`;
       throw new Error(msg);
     }
   }
 
-  protected post({collection, /* collectionName, */ headers, id, req, resourceUrl}: ReqInfo) {
-    let item = JSON.parse(<string>req.text());
+  protected post({collection, /* collectionName, */ headers, id, req, resourceUrl}: RequestInfo) {
+    const item = JSON.parse(<string>req.text());
     if (!item.id) {
       item.id = id || this.genId(collection);
     }
     // ignore the request id, if any. Alternatively,
     // could reject request if id differs from item.id
     id = item.id;
-    let existingIx = this.indexOf(collection, id);
+    const existingIx = this.indexOf(collection, id);
     if (existingIx > -1) {
       collection[existingIx] = item;
       return new ResponseOptions({
@@ -423,8 +495,8 @@ export class InMemoryBackendService {
     }
   }
 
-  protected put({id, collection, collectionName, headers, req}: ReqInfo) {
-    let item = JSON.parse(<string>req.text());
+  protected put({id, collection, collectionName, headers, req}: RequestInfo) {
+    const item = JSON.parse(<string>req.text());
     if (!id) {
       return this.createErrorResponse(STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
@@ -432,7 +504,7 @@ export class InMemoryBackendService {
       return this.createErrorResponse(STATUS.BAD_REQUEST,
         `"${collectionName}" id does not match item.id`);
     }
-    let existingIx = this.indexOf(collection, id);
+    const existingIx = this.indexOf(collection, id);
     if (existingIx > -1) {
       collection[existingIx] = item;
       return new ResponseOptions({
@@ -450,7 +522,7 @@ export class InMemoryBackendService {
   }
 
   protected removeById(collection: any[], id: number) {
-    let ix = this.indexOf(collection, id);
+    const ix = this.indexOf(collection, id);
     if (ix > -1) {
       collection.splice(ix, 1);
       return true;
@@ -462,12 +534,28 @@ export class InMemoryBackendService {
    * Reset the "database" to its original state
    */
   protected resetDb() {
-    this.db = this.seedData.createDb();
+    this.db = this.inMemDbService.createDb();
+  }
+
+  protected setPassThruBackend() {
+    this.passThruBackend = undefined;
+    if (this.config.passThruUnknownUrl) {
+      try {
+        // copied from @angular/http/backends/xhr_backend
+        const browserXhr = this.injector.get(BrowserXhr);
+        const baseResponseOptions = this.injector.get(ResponseOptions);
+        const xsrfStrategy = this.injector.get(XSRFStrategy);
+        this.passThruBackend = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
+      } catch (ex) {
+        ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
+        throw ex;
+      }
+    }
   }
 
   protected setStatusText(options: ResponseOptions) {
     try {
-      let statusCode = STATUS_CODE_INFO[options.status];
+      const statusCode = STATUS_CODE_INFO[options.status];
       options['statusText'] = statusCode ? statusCode.text : 'Unknown Status';
       return options;
     } catch (err) {

@@ -7,7 +7,7 @@ var del = require('del');
 var path = require("path");
 
 var tsOutput = './in-memory-web-api/';
-var jsCopySrc = [tsOutput+'*.js', tsOutput+'*.js.map', tsOutput+'*.d.ts']
+var jsCopySrc = ['*.js', '*.js.map', '*.d.ts'].map(ext => tsOutput + ext);
 
 gulp.task('default', ['help']);
 
