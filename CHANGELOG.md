@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.1"></a>
+## 0.1.1 (2016-09-26)
+* Exclude src folder and its TS files from npm package
+
 <a name="0.1.0"></a>
 ## 0.1.0 (2016-09-25)
 * Renamed package to "angular-in-memory-web-api"
