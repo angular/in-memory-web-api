@@ -7,7 +7,7 @@ var del = require('del');
 var path = require("path");
 
 var tsOutput = './in-memory-web-api/';
-var jsCopySrc = ['*.js', '*.js.map', '*.d.ts'].map(ext => tsOutput + ext);
+var jsCopySrc = ['*.js', '*.js.map', '*.d.ts', '*.metadata.json'].map(ext => tsOutput + ext);
 
 gulp.task('default', ['help']);
 
@@ -19,18 +19,18 @@ gulp.task('help', $.taskListing.withFilters(function (taskName) {
   return shouldRemove;
 }));
 
-gulp.task('build', ['tsc'], function(){
+gulp.task('build', ['ngc'], function(){
   return gulp
     .src(jsCopySrc)
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('tsc',['clean'], function(done) {
-    runTSC('./', done);
+gulp.task('ngc',['clean'], function(done) {
+  runNGC('./', done);
 });
 
 gulp.task('clean', function(done) {
-  clean([tsOutput+'*.*', '*.js', '*.js.map', '*.d.ts', '!gulpfile.js'], done);
+  clean([tsOutput+'*.*', '*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json'], done);
 });
 
 /**
@@ -83,9 +83,9 @@ function log(msg) {
         $.util.log($.util.colors.blue(msg));
     }
 }
-function runTSC(directory, done) {
+function runNGC(directory, done) {
     directory = directory || './';
-    var tscjs = path.join(process.cwd(), 'node_modules/typescript/bin/tsc');
+    var tscjs = path.join(process.cwd(), 'node_modules/.bin/ngc');
     var childProcess = cp.spawn('node', [tscjs, '-p', directory], { cwd: process.cwd() });
     childProcess.stdout.on('data', function (data) {
         console.log(data.toString());
