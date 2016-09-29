@@ -5,7 +5,6 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "sourceRoot": "./src",
-    "outDir": "./in-memory-web-api",
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -18,5 +17,9 @@
     "in-memory-web-api",
     "typings/main",
     "typings/main.d.ts"
-  ]
+  ],
+  "angularCompilerOptions": {
+    "genDir": "aot",
+    "skipMetadataEmit" : false
+  }
 }
