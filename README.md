@@ -65,6 +65,10 @@ import { InMemHeroService }     from '../app/hero-data';
 @NgModule({
  imports: [
    HttpModule,
+   // Important that importing InMemoryWebApiModule comes after any HttpModule
+   // import. If not, the im-memory service will not be used. It's probably
+   // best to put this import last, as other third-party modules could also
+   // import HttpModule without our knowing.
    InMemoryWebApiModule.forRoot(InMemHeroService),
    ...
  ],
