@@ -220,7 +220,7 @@ export class InMemoryBackendService {
       if ('commands' === reqInfo.base.toLowerCase()) {
         return this.commands(reqInfo);
 
-      } else if (this.inMemDbService[reqMethodName]) {
+      } else if (this.inMemDbService[reqMethodName] && reqInfo.collection) {
         // If service has an interceptor for an HTTP method, call it
         const interceptorArgs: HttpMethodInterceptorArgs = {
           requestInfo: reqInfo,
@@ -437,7 +437,7 @@ export class InMemoryBackendService {
   // tries to parse id as number if collection item.id is a number.
   // returns the original param id otherwise.
   protected parseId(collection: {id: any}[], id: string): any {
-    if (!id) { return null; }
+    if (!collection || !id) { return null; }
     const isNumberId =  collection[0] && typeof collection[0].id === 'number';
     if (isNumberId) {
       const idNum = parseFloat(id);
