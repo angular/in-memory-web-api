@@ -337,7 +337,7 @@ var InMemoryBackendService = (function () {
     // tries to parse id as number if collection item.id is a number.
     // returns the original param id otherwise.
     InMemoryBackendService.prototype.parseId = function (collection, id) {
-        if (!id) {
+        if (!collection || !id) {
             return null;
         }
         var isNumberId = collection[0] && typeof collection[0].id === 'number';

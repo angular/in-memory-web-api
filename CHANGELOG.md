@@ -1,5 +1,15 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.2"></a>
+## 0.1.3 (2016-09-29)
+* Fix typos
+
+<a name="0.1.2"></a>
+## 0.1.2 (2016-09-29)
+* AoT support from Tor PR #36
+* Update npm packages
+* `parseId` fix from PR #33
+
 <a name="0.1.1"></a>
 ## 0.1.1 (2016-09-26)
 * Exclude src folder and its TS files from npm package
