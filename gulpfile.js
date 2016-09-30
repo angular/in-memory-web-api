@@ -6,8 +6,8 @@ var del = require('del');
 
 var path = require("path");
 
-var tsOutput = './in-memory-web-api/';
-var jsCopySrc = ['*.js', '*.js.map', '*.d.ts'].map(ext => tsOutput + ext);
+var ngcOutput = './src/';
+var jsCopySrc = ['*.js', '*.js.map', '*.d.ts', '*.metadata.json'].map(ext => ngcOutput + ext);
 
 gulp.task('default', ['help']);
 
@@ -19,18 +19,18 @@ gulp.task('help', $.taskListing.withFilters(function (taskName) {
   return shouldRemove;
 }));
 
-gulp.task('build', ['tsc'], function(){
+gulp.task('build', ['ngc'], function(){
   return gulp
     .src(jsCopySrc)
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('tsc',['clean'], function(done) {
-    runTSC('./', done);
+gulp.task('ngc',['clean'], function(done) {
+    runNgc('./', done);
 });
 
 gulp.task('clean', function(done) {
-  clean([tsOutput+'*.*', '*.js', '*.js.map', '*.d.ts', '!gulpfile.js'], done);
+  clean([ngcOutput+'*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json'], done);
 });
 
 /**
@@ -83,10 +83,12 @@ function log(msg) {
         $.util.log($.util.colors.blue(msg));
     }
 }
-function runTSC(directory, done) {
+function runNgc(directory, done) {
     directory = directory || './';
-    var tscjs = path.join(process.cwd(), 'node_modules/typescript/bin/tsc');
-    var childProcess = cp.spawn('node', [tscjs, '-p', directory], { cwd: process.cwd() });
+    //var ngcjs = path.join(process.cwd(), 'node_modules/typescript/bin/tsc');
+    //ngcjs = path.join(process.cwd(), 'node_modules/.bin/ngc');
+    var ngcjs = './node_modules/@angular/compiler-cli/src/main.js';
+    var childProcess = cp.spawn('node', [ngcjs, '-p', directory], { cwd: process.cwd() });
     childProcess.stdout.on('data', function (data) {
         console.log(data.toString());
     });
