@@ -1,6 +1,9 @@
 # "angular-in-memory-web-api" versions
+<a name="0.1.4"></a>
+## 0.1.4 (2016-10-03)
+* project.json license is "MIT"
 
-<a name="0.1.2"></a>
+<a name="0.1.3"></a>
 ## 0.1.3 (2016-09-29)
 * Fix typos
 
