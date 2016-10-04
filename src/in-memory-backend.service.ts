@@ -220,7 +220,7 @@ export class InMemoryBackendService {
       if ('commands' === reqInfo.base.toLowerCase()) {
         return this.commands(reqInfo);
 
-      } else if (this.inMemDbService[reqMethodName]) {
+      } else if (this.inMemDbService[reqMethodName] && reqInfo.collection) {
         // If service has an interceptor for an HTTP method, call it
         const interceptorArgs: HttpMethodInterceptorArgs = {
           requestInfo: reqInfo,
