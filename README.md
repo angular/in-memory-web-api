@@ -104,6 +104,16 @@ If an existing, running remote server should handle requests for collections
 that are not in the in-memory database, set `Config.passThruUnknownUrl: true`.
 This service will forward unrecognized requests via a base version of the Angular XHRBackend.
 
+## _parseUrl_ override
+
+The `parseUrl` method breaks down the request URL into a `ParsedUrl` object.
+`ParsedUrl` is a public interface whose properties guide the in-memory web api
+as it processes the request.
+
+Request URLs for your api may not match the api imagined by the default `parseUrl` and may even cause it to throw an error.
+You can override the default by implementing a `parseUrl` method in your `InMemoryDbService`.
+Such a method must take the incoming request URL string and return a `ParsedUrl` object. 
+
 ## HTTP method interceptors
 
 If you make requests this service can't handle but still want an in-memory database to hold values,
@@ -123,6 +133,25 @@ db: Object;                         // the current in-mem database collections
 config: InMemoryBackendConfigArgs;  // the current config
 passThruBackend: ConnectionBackend; // pass through backend, if it exists
 ```
+## Examples
+
+The file `examples/hero-data.service.ts` is an example of a Hero-oriented `InMemoryDbService`,
+derived from the [HTTP Client](https://angular.io/docs/ts/latest/guide/server-communication.html) 
+sample in the Angular documentation.
+
+Add the following line to `AppModule.imports`
+```
+InMemoryWebApiModule.forRoot(HeroDataService)
+```
+  
+That file also has a `HeroDataOverrideService` derived class that demonstrates overriding
+the `parseUrl` method and an HTTP GET interceptor.
+
+Add the following line to `AppModule.imports` to see it in action:
+```
+InMemoryWebApiModule.forRoot(HeroDataOverrideService)
+```
+
 # To Do
 * add tests (shameful omission!)
 

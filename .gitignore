@@ -6,3 +6,7 @@ src/*.d.ts
 src/*.js
 src/*.js.map
 src/*.metadata.json
+examples/*.d.ts
+examples/*.js
+examples/*.js.map
+examples/*.metadata.json

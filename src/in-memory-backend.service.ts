@@ -1,13 +1,57 @@
 import { Inject, Injector, Optional } from '@angular/core';
+
 import { BaseResponseOptions, BrowserXhr, Connection, ConnectionBackend,
          Headers, ReadyState, Request, RequestMethod,
          Response, ResponseOptions, URLSearchParams,
          XHRBackend, XSRFStrategy } from '@angular/http';
+
 import { Observable } from 'rxjs/Observable';
 import { Observer }   from 'rxjs/Observer';
 import 'rxjs/add/operator/delay';
 
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
+
+////////////  HELPERS ///////////
+
+/**
+ * Create an error Response from an HTTP status code and error message
+ */
+export function createErrorResponse(status: number, message: string)  {
+  return new ResponseOptions({
+    body: { 'error': `${message}` },
+    headers: new Headers({ 'Content-Type': 'application/json' }),
+    status: status
+  });
+}
+
+/**
+ * Create an Observable response from response options:
+ */
+export function createObservableResponse(resOptions: ResponseOptions): Observable<Response> {
+    resOptions = setStatusText(resOptions);
+
+    const res = new Response(resOptions);
+
+    return new Observable<Response>((responseObserver: Observer<Response>) => {
+      if (isSuccess(res.status)) {
+        responseObserver.next(res);
+        responseObserver.complete();
+      } else {
+        responseObserver.error(res);
+      }
+      return () => { }; // unsubscribe function
+    });
+}
+
+/**
+* Interface for object passed to an HTTP method override method
+*/
+export interface HttpMethodInterceptorArgs {
+  requestInfo: RequestInfo;           // parsed request
+  db: Object;                         // the current in-mem database collections
+  config: InMemoryBackendConfigArgs;  // the current config
+  passThruBackend: ConnectionBackend; // pass through backend, if it exists
+}
 
 /**
 * Interface for a class that creates an in-memory database
@@ -90,6 +134,11 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
 }
 
 /**
+ * Returns true if the the Http Status Code is 200-299 (success)
+ */
+export function isSuccess(status: number): boolean { return status >= 200 && status < 300; };
+
+/**
 * Interface for object w/ info about the current request url
 * extracted from an Http Request
 */
@@ -105,17 +154,40 @@ export interface RequestInfo {
 }
 
 /**
-* Interface for object passed to an HTTP method override method
-*/
-export interface HttpMethodInterceptorArgs {
-  requestInfo: RequestInfo;           // parsed request
-  db: Object;                         // the current in-mem database collections
-  config: InMemoryBackendConfigArgs;  // the current config
-  passThruBackend: ConnectionBackend; // pass through backend, if it exists
+ * Set the status text in a response:
+ */
+export function setStatusText(options: ResponseOptions) {
+  try {
+    const statusCode = STATUS_CODE_INFO[options.status];
+    options['statusText'] = statusCode ? statusCode.text : 'Unknown Status';
+    return options;
+  } catch (err) {
+    return new ResponseOptions({
+      status: STATUS.INTERNAL_SERVER_ERROR,
+      statusText: 'Invalid Server Operation'
+    });
+  }
 }
 
-export const isSuccess = (status: number): boolean => (status >= 200 && status < 300);
+/**
+ *
+ * Interface for the result of the parseUrl method:
+ *   Given URL "http://localhost:8080/api/characters/42?foo=1 the default implementation returns
+ *     base: 'api'
+ *     collectionName: 'characters'
+ *     id: '42'
+ *     query: new URLSearchParams('foo=1')
+ *     resourceUrl: 'api/characters/42?foo=1'
+ */
+export interface ParsedUrl {
+  base: string;           // the "base" of the resource
+  collectionName: string; // the name of the collection of data items
+  id: string;             // the id of the item in the collection
+  query: URLSearchParams; // the query as an Angular `Http` client request's URLSearchParams object
+  resourceUrl: string;    // the effective URL for the resource
+}
 
+////////////  InMemoryBackendService ///////////
 /**
  * Simulate the behavior of a RESTy web api
  * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
@@ -143,7 +215,6 @@ export const isSuccess = (status: number): boolean => (status >= 200 && status <
  * export class AppModule { ... }
  * ```
  */
-
 export class InMemoryBackendService {
   protected passThruBackend: ConnectionBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
@@ -200,7 +271,14 @@ export class InMemoryBackendService {
    *     which must return an `Observable<Response>`
    */
   protected handleRequest(req: Request): Observable<Response> {
-    const {base, collectionName, id, resourceUrl, query} = this.parseUrl(req.url);
+
+    const parsed = this.inMemDbService['parseUrl'] ?
+      // parse with override method
+      this.inMemDbService['parseUrl'](req.url) as ParsedUrl :
+      // parse with default url parser
+      this.parseUrl(req.url);
+
+    const { base, collectionName, id, query, resourceUrl } = parsed;
     const collection = this.db[collectionName];
     const reqInfo: RequestInfo = {
       req: req,
@@ -240,14 +318,14 @@ export class InMemoryBackendService {
         return this.passThruBackend.createConnection(req).response;
 
       } else {
-        resOptions = this.createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-        return this.createObservableResponse(resOptions);
+        resOptions = createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
+        return createObservableResponse(resOptions);
       }
 
     } catch (error) {
       const err = error.message || error;
-      resOptions = this.createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
-      return this.createObservableResponse(resOptions);
+      resOptions = createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      return createObservableResponse(resOptions);
     }
 
   }
@@ -303,10 +381,10 @@ export class InMemoryBackendService {
         resOptions = this.delete(reqInfo);
         break;
       default:
-        resOptions = this.createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+        resOptions = createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
         break;
     }
-    return this.createObservableResponse(resOptions);
+    return createObservableResponse(resOptions);
   }
 
   /**
@@ -346,43 +424,15 @@ export class InMemoryBackendService {
         }
         break;
       default:
-        resOptions = this.createErrorResponse(
+        resOptions = createErrorResponse(
           STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
     }
-    return this.createObservableResponse(resOptions);
-  }
-
-  protected createErrorResponse(status: number, message: string)  {
-    return new ResponseOptions({
-      body: { 'error': `${message}` },
-      headers: new Headers({ 'Content-Type': 'application/json' }),
-      status: status
-    });
-  }
-
-  protected createObservableResponse(resOptions: ResponseOptions): Observable<Response> {
-      resOptions = this.setStatusText(resOptions);
-      if (this.config.defaultResponseOptions) {
-        resOptions = this.config.defaultResponseOptions.merge(resOptions);
-      }
-
-      const res = new Response(resOptions);
-
-      return new Observable<Response>((responseObserver: Observer<Response>) => {
-        if (isSuccess(res.status)) {
-          responseObserver.next(res);
-          responseObserver.complete();
-        } else {
-          responseObserver.error(res);
-        }
-        return () => { }; // unsubscribe function
-      })
-      .delay(this.config.delay || 500);
+    return createObservableResponse(resOptions);
   }
 
   protected delete({id, collection, collectionName, headers /*, req */}: RequestInfo) {
     if (!id) {
-      return this.createErrorResponse(STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
+      return createErrorResponse(STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
     const exists = this.removeById(collection, id);
     return new ResponseOptions({
@@ -414,7 +464,7 @@ export class InMemoryBackendService {
     }
 
     if (!data) {
-      return this.createErrorResponse(STATUS.NOT_FOUND,
+      return createErrorResponse(STATUS.NOT_FOUND,
         `'${collectionName}' with id='${id}' not found`);
     }
     return new ResponseOptions({
@@ -446,7 +496,7 @@ export class InMemoryBackendService {
     return id;
   }
 
-  protected parseUrl(url: string) {
+  protected parseUrl(url: string): ParsedUrl {
     try {
       const loc = this.getLocation(url);
       let drop = this.config.rootPath.length;
@@ -462,7 +512,7 @@ export class InMemoryBackendService {
       const resourceUrl = urlRoot + base + '/' + collectionName + '/';
       [collectionName] = collectionName.split('.'); // ignore anything after the '.', e.g., '.json'
       const query = loc.search && new URLSearchParams(loc.search.substr(1));
-      return { base, id, collectionName, resourceUrl, query };
+      return { base, collectionName, id, query, resourceUrl };
     } catch (err) {
       const msg = `unable to parse url '${url}'; original error: ${err.message}`;
       throw new Error(msg);
@@ -498,10 +548,10 @@ export class InMemoryBackendService {
   protected put({id, collection, collectionName, headers, req}: RequestInfo) {
     const item = JSON.parse(<string>req.text());
     if (!id) {
-      return this.createErrorResponse(STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
+      return createErrorResponse(STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
     if (id !== item.id) {
-      return this.createErrorResponse(STATUS.BAD_REQUEST,
+      return createErrorResponse(STATUS.BAD_REQUEST,
         `"${collectionName}" id does not match item.id`);
     }
     const existingIx = this.indexOf(collection, id);
@@ -553,16 +603,4 @@ export class InMemoryBackendService {
     }
   }
 
-  protected setStatusText(options: ResponseOptions) {
-    try {
-      const statusCode = STATUS_CODE_INFO[options.status];
-      options['statusText'] = statusCode ? statusCode.text : 'Unknown Status';
-      return options;
-    } catch (err) {
-      return new ResponseOptions({
-        status: STATUS.INTERNAL_SERVER_ERROR,
-        statusText: 'Invalid Server Operation'
-      });
-    }
-  }
 }
