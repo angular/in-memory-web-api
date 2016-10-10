@@ -3,6 +3,23 @@ import { Connection, ConnectionBackend, Headers, Request, Response, ResponseOpti
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/delay';
 /**
+ * Create an error Response from an HTTP status code and error message
+ */
+export declare function createErrorResponse(status: number, message: string): ResponseOptions;
+/**
+ * Create an Observable response from response options:
+ */
+export declare function createObservableResponse(resOptions: ResponseOptions): Observable<Response>;
+/**
+* Interface for object passed to an HTTP method override method
+*/
+export interface HttpMethodInterceptorArgs {
+    requestInfo: RequestInfo;
+    db: Object;
+    config: InMemoryBackendConfigArgs;
+    passThruBackend: ConnectionBackend;
+}
+/**
 * Interface for a class that creates an in-memory database
 *
 * Its `createDb` method creates a hash of named collections that represents the database
@@ -69,6 +86,10 @@ export declare class InMemoryBackendConfig implements InMemoryBackendConfigArgs 
     constructor(config?: InMemoryBackendConfigArgs);
 }
 /**
+ * Returns true if the the Http Status Code is 200-299 (success)
+ */
+export declare function isSuccess(status: number): boolean;
+/**
 * Interface for object w/ info about the current request url
 * extracted from an Http Request
 */
@@ -83,15 +104,26 @@ export interface RequestInfo {
     resourceUrl: string;
 }
 /**
-* Interface for object passed to an HTTP method override method
-*/
-export interface HttpMethodInterceptorArgs {
-    requestInfo: RequestInfo;
-    db: Object;
-    config: InMemoryBackendConfigArgs;
-    passThruBackend: ConnectionBackend;
+ * Set the status text in a response:
+ */
+export declare function setStatusText(options: ResponseOptions): ResponseOptions;
+/**
+ *
+ * Interface for the result of the parseUrl method:
+ *   Given URL "http://localhost:8080/api/characters/42?foo=1 the default implementation returns
+ *     base: 'api'
+ *     collectionName: 'characters'
+ *     id: '42'
+ *     query: new URLSearchParams('foo=1')
+ *     resourceUrl: 'api/characters/42?foo=1'
+ */
+export interface ParsedUrl {
+    base: string;
+    collectionName: string;
+    id: string;
+    query: URLSearchParams;
+    resourceUrl: string;
 }
-export declare const isSuccess: (status: number) => boolean;
 /**
  * Simulate the behavior of a RESTy web api
  * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
@@ -172,8 +204,6 @@ export declare class InMemoryBackendService {
      *   http.post('commands/config', '{"delay":1000}');
      */
     protected commands(reqInfo: RequestInfo): Observable<Response>;
-    protected createErrorResponse(status: number, message: string): ResponseOptions;
-    protected createObservableResponse(resOptions: ResponseOptions): Observable<Response>;
     protected delete({id, collection, collectionName, headers}: RequestInfo): ResponseOptions;
     protected findById(collection: any[], id: number | string): any;
     protected genId(collection: any): any;
@@ -183,13 +213,7 @@ export declare class InMemoryBackendService {
     protected parseId(collection: {
         id: any;
     }[], id: string): any;
-    protected parseUrl(url: string): {
-        base: string;
-        id: string;
-        collectionName: string;
-        resourceUrl: string;
-        query: URLSearchParams;
-    };
+    protected parseUrl(url: string): ParsedUrl;
     protected post({collection, headers, id, req, resourceUrl}: RequestInfo): ResponseOptions;
     protected put({id, collection, collectionName, headers, req}: RequestInfo): ResponseOptions;
     protected removeById(collection: any[], id: number): boolean;
@@ -198,5 +222,4 @@ export declare class InMemoryBackendService {
      */
     protected resetDb(): void;
     protected setPassThruBackend(): void;
-    protected setStatusText(options: ResponseOptions): ResponseOptions;
 }

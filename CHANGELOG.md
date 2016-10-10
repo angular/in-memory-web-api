@@ -1,4 +1,15 @@
 # "angular-in-memory-web-api" versions
+<a name="0.1.6"></a>
+## 0.1.6 (2016-10-09)
+* Do not add delay to observable if delay value === 0 (issue #47)
+* Can override `parseUrl` method in your db service class (issue #46, #35)
+* README.md explains `parseUrl` override.
+* Exports functions helpful for custom HTTP Method Interceptors
+  * `createErrorResponse`
+  * `createObservableResponse`
+  * `setStatusText`
+* Added `examples/hero-data.service.ts` to show overrides (issue #44)
+
 <a name="0.1.5"></a>
 ## 0.1.5 (2016-10-03)
 * project.json license changed again to match angular.io package.json
