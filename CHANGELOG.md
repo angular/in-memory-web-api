@@ -1,4 +1,9 @@
 # "angular-in-memory-web-api" versions
+
+<a name="0.1.7"></a>
+## 0.1.7 (2016-10-12)
+* Angular 2.1.x support.
+
 <a name="0.1.6"></a>
 ## 0.1.6 (2016-10-09)
 * Do not add delay to observable if delay value === 0 (issue #47)

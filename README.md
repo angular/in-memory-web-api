@@ -3,7 +3,7 @@
 >**UPDATE NOTICE**
 >
 >As of v.0.1.0, the npm package was renamed from `angular2-in-memory-web-api` to its current name,
-`angular-in-memory-web-api`. All versions after 0.0.21 are shipped under this name.
+`angular-in-memory-web-api`. All versions ***after 0.0.21*** are shipped under this name.
 **Be sure to update your `package.json` and import statements**.
 
 An in-memory web api for Angular demos and tests.
