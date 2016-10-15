@@ -1,4 +1,5 @@
 # Angular in-memory-web-api
+[![Build Status][travis-badge]][travis-badge-url]
 
 >**UPDATE NOTICE**
 >
@@ -196,3 +197,6 @@ compiling your application project.
 - Add two tags to the release commit with for unpkg
   - the version number
   - 'latest'
+
+[travis-badge]: https://travis-ci.org/angular/in-memory-web-api.svg?branch=master
+[travis-badge-url]: https://travis-ci.org/angular/in-memory-web-api
