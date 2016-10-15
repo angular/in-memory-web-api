@@ -1,5 +1,5 @@
 import { Injector, NgModule, ModuleWithProviders, Type } from '@angular/core';
-import { HttpModule, XHRBackend }              from '@angular/http';
+import { XHRBackend } from '@angular/http';
 
 import {
   InMemoryBackendConfigArgs,
@@ -9,7 +9,11 @@ import {
 } from './in-memory-backend.service';
 
 // AoT requires factory to be exported
-export function inMemoryBackendServiceFactory(injector: Injector, dbService: InMemoryDbService, options: InMemoryBackendConfig) : XHRBackend {
+export function inMemoryBackendServiceFactory(
+  injector: Injector,
+  dbService: InMemoryDbService,
+  options: InMemoryBackendConfig
+): XHRBackend {
   let backend: any = new InMemoryBackendService(injector, dbService, options);
   return (<XHRBackend>backend);
 }

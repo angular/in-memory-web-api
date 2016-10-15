@@ -7,7 +7,7 @@
   "scripts": {
     "tsc": "tsc",
     "tsc:w": "tsc -w",
-    "lint": "tslint ./src/*.ts -t verbose",
+    "lint": "tslint ./src/*.ts -t verbose -e ./src/*.d.ts",
     "lite": "lite-server",
     "live": "live-server",
     "start": "concurrently \"npm run tsc:w\" \"npm run lite\" ",
