@@ -2,8 +2,8 @@
   "name": "angular-in-memory-web-api",
   "version": "0.1.7",
   "description": "An in-memory web api for Angular demos and tests",
-  "main":"index.js",
-  "jsnext:main": "esm/index.js",
+  "main":"bundles/in-memory-web-api.umd.js",
+  "module": "index.js",
   "scripts": {
     "tsc": "tsc",
     "tsc:w": "tsc -w",
@@ -78,6 +78,10 @@
     "gulp-task-listing": "^1.0.1",
     "gulp-util": "^3.0.7",
 
-    "yargs": "^5.0.0"
+    "yargs": "^5.0.0",
+
+    "vinyl-source-stream": "^1.1.0",
+    "rollup": "^0.36.0",
+    "rollup-stream": "^1.14.0"
   }
 }
