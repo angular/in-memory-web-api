@@ -39,7 +39,7 @@ At minimum it must implement `createDb` which
 creates a "database" hash whose keys are collection names
 and whose values are arrays of collection objects to return or update.
 For example:
-```
+```ts
 import { InMemoryDbService } from 'angular-in-memory-web-api';
 
 export class InMemHeroService implements InMemoryDbService {
@@ -57,7 +57,7 @@ export class InMemHeroService implements InMemoryDbService {
 
 Register this module and your service implementation in `AppModule.imports`
 calling the `forRoot` static method with this service class and optional configuration object:
-```
+```ts
 // other imports
 import { HttpModule }           from '@angular/http';
 import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
@@ -82,7 +82,7 @@ See examples in the Angular.io such as the
 Some features are not readily apparent in the basic usage example.
 
 The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
-```
+```ts
    InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 500 }),
 ```
 
@@ -141,7 +141,7 @@ derived from the [HTTP Client](https://angular.io/docs/ts/latest/guide/server-co
 sample in the Angular documentation.
 
 Add the following line to `AppModule.imports`
-```
+```ts
 InMemoryWebApiModule.forRoot(HeroDataService)
 ```
   
@@ -149,7 +149,7 @@ That file also has a `HeroDataOverrideService` derived class that demonstrates o
 the `parseUrl` method and an HTTP GET interceptor.
 
 Add the following line to `AppModule.imports` to see it in action:
-```
+```ts
 InMemoryWebApiModule.forRoot(HeroDataOverrideService)
 ```
 
