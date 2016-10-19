@@ -307,7 +307,7 @@ export class InMemoryBackendService {
           passThruBackend: this.passThruBackend
         };
         // The result which must be Observable<Response>
-        return this.inMemDbService[reqMethodName](interceptorArgs);
+        return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
 
       } else if (reqInfo.collection) {
         return this.collectionHandler(reqInfo);
@@ -319,15 +319,23 @@ export class InMemoryBackendService {
 
       } else {
         resOptions = createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-        return createObservableResponse(resOptions);
+        return this.createDelayedObservableResponse(resOptions);
       }
 
     } catch (error) {
       const err = error.message || error;
       resOptions = createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
-      return createObservableResponse(resOptions);
+      return this.createDelayedObservableResponse(resOptions);
     }
 
+  }
+
+  /**
+   * Add configured delay to response observable unless delay === 0
+   */
+  protected addDelay(response: Observable<Response>) {
+    const delay = this.config.delay;
+    return delay === 0 ? response : response.delay(delay || 500);
   }
 
   /**
@@ -384,7 +392,7 @@ export class InMemoryBackendService {
         resOptions = createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
         break;
     }
-    return createObservableResponse(resOptions);
+    return this.createDelayedObservableResponse(resOptions);
   }
 
   /**
@@ -428,6 +436,10 @@ export class InMemoryBackendService {
           STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
     }
     return createObservableResponse(resOptions);
+  }
+
+  protected createDelayedObservableResponse(resOptions: ResponseOptions): Observable<Response> {
+    return this.addDelay(createObservableResponse(resOptions));
   }
 
   protected delete({id, collection, collectionName, headers /*, req */}: RequestInfo) {

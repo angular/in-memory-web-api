@@ -203,7 +203,7 @@ var InMemoryBackendService = (function () {
                     passThruBackend: this.passThruBackend
                 };
                 // The result which must be Observable<Response>
-                return this.inMemDbService[reqMethodName](interceptorArgs);
+                return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
             }
             else if (reqInfo.collection) {
                 return this.collectionHandler(reqInfo);
@@ -215,14 +215,21 @@ var InMemoryBackendService = (function () {
             }
             else {
                 resOptions = createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
-                return createObservableResponse(resOptions);
+                return this.createDelayedObservableResponse(resOptions);
             }
         }
         catch (error) {
             var err = error.message || error;
             resOptions = createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "" + err);
-            return createObservableResponse(resOptions);
+            return this.createDelayedObservableResponse(resOptions);
         }
+    };
+    /**
+     * Add configured delay to response observable unless delay === 0
+     */
+    InMemoryBackendService.prototype.addDelay = function (response) {
+        var delay = this.config.delay;
+        return delay === 0 ? response : response.delay(delay || 500);
     };
     /**
      * Apply query/search parameters as a filter over the collection
@@ -275,7 +282,7 @@ var InMemoryBackendService = (function () {
                 resOptions = createErrorResponse(http_status_codes_1.STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
                 break;
         }
-        return createObservableResponse(resOptions);
+        return this.createDelayedObservableResponse(resOptions);
     };
     /**
      * When the `base`="commands", the `collectionName` is the command
@@ -317,6 +324,9 @@ var InMemoryBackendService = (function () {
                 resOptions = createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
         return createObservableResponse(resOptions);
+    };
+    InMemoryBackendService.prototype.createDelayedObservableResponse = function (resOptions) {
+        return this.addDelay(createObservableResponse(resOptions));
     };
     InMemoryBackendService.prototype.delete = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers;

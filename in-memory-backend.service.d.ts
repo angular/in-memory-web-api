@@ -184,6 +184,10 @@ export declare class InMemoryBackendService {
      */
     protected handleRequest(req: Request): Observable<Response>;
     /**
+     * Add configured delay to response observable unless delay === 0
+     */
+    protected addDelay(response: Observable<Response>): Observable<Response>;
+    /**
      * Apply query/search parameters as a filter over the collection
      * This impl only supports RegExp queries on string properties of the collection
      * ANDs the conditions together
@@ -204,6 +208,7 @@ export declare class InMemoryBackendService {
      *   http.post('commands/config', '{"delay":1000}');
      */
     protected commands(reqInfo: RequestInfo): Observable<Response>;
+    protected createDelayedObservableResponse(resOptions: ResponseOptions): Observable<Response>;
     protected delete({id, collection, collectionName, headers}: RequestInfo): ResponseOptions;
     protected findById(collection: any[], id: number | string): any;
     protected genId(collection: any): any;

@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.8"></a>
+## 0.1.8 (2016-10-18)
+* Restore delay option, issue #53.
+
 <a name="0.1.7"></a>
 ## 0.1.7 (2016-10-12)
 * Angular 2.1.x support.
