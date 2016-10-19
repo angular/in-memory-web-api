@@ -18,7 +18,7 @@ in the manner of a RESTy web api.
 It natively handles URI patterns in the form :base/:collectionName/:id?
 
 Examples:
-```
+```ts
   // for store with a 'heroes' collection
   GET api/heroes          // all heroes
   GET api/heroes/42       // the character with id=42
@@ -128,7 +128,7 @@ e.g., `yourInMemDbService["get"](interceptorArgs)`.
 Your method must return an `Observable<Response>`
 
 The `HttpMethodInterceptorArgs` (as of this writing) are:
-```
+```ts
 requestInfo: RequestInfo;           // parsed request
 db: Object;                         // the current in-mem database collections
 config: InMemoryBackendConfigArgs;  // the current config
