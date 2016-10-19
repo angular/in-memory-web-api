@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.10"></a>
+## 0.1.10 (2016-10-19)
+* Catch a `handleRequest` error and return as a failed server response.
+
 <a name="0.1.9"></a>
 ## 0.1.9 (2016-10-18)
 * Restore delay option, issue #53.

@@ -139,7 +139,15 @@ var InMemoryBackendService = (function () {
         this.setPassThruBackend();
     }
     InMemoryBackendService.prototype.createConnection = function (req) {
-        var response = this.handleRequest(req);
+        var response;
+        try {
+            response = this.handleRequest(req);
+        }
+        catch (error) {
+            var err = error.message || error;
+            var options = createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "" + err);
+            response = this.createDelayedObservableResponse(options);
+        }
         return {
             readyState: http_1.ReadyState.Done,
             request: req,
@@ -190,37 +198,30 @@ var InMemoryBackendService = (function () {
         };
         var reqMethodName = http_1.RequestMethod[req.method || 0].toLowerCase();
         var resOptions;
-        try {
-            if ('commands' === reqInfo.base.toLowerCase()) {
-                return this.commands(reqInfo);
-            }
-            else if (this.inMemDbService[reqMethodName]) {
-                // If service has an interceptor for an HTTP method, call it
-                var interceptorArgs = {
-                    requestInfo: reqInfo,
-                    db: this.db,
-                    config: this.config,
-                    passThruBackend: this.passThruBackend
-                };
-                // The result which must be Observable<Response>
-                return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
-            }
-            else if (reqInfo.collection) {
-                return this.collectionHandler(reqInfo);
-            }
-            else if (this.passThruBackend) {
-                // Passes request thru to a "real" backend which returns an Observable<Response>
-                // BAIL OUT with this Observable<Response>
-                return this.passThruBackend.createConnection(req).response;
-            }
-            else {
-                resOptions = createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
-                return this.createDelayedObservableResponse(resOptions);
-            }
+        if ('commands' === reqInfo.base.toLowerCase()) {
+            return this.commands(reqInfo);
         }
-        catch (error) {
-            var err = error.message || error;
-            resOptions = createErrorResponse(http_status_codes_1.STATUS.INTERNAL_SERVER_ERROR, "" + err);
+        else if (this.inMemDbService[reqMethodName]) {
+            // If service has an interceptor for an HTTP method, call it
+            var interceptorArgs = {
+                requestInfo: reqInfo,
+                db: this.db,
+                config: this.config,
+                passThruBackend: this.passThruBackend
+            };
+            // The result which must be Observable<Response>
+            return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
+        }
+        else if (reqInfo.collection) {
+            return this.collectionHandler(reqInfo);
+        }
+        else if (this.passThruBackend) {
+            // Passes request thru to a "real" backend which returns an Observable<Response>
+            // BAIL OUT with this Observable<Response>
+            return this.passThruBackend.createConnection(req).response;
+        }
+        else {
+            resOptions = createErrorResponse(http_status_codes_1.STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
             return this.createDelayedObservableResponse(resOptions);
         }
     };

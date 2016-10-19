@@ -235,9 +235,15 @@ export class InMemoryBackendService {
     this.setPassThruBackend();
   }
 
-
   createConnection(req: Request): Connection {
-    const response = this.handleRequest(req);
+    let response: Observable<Response>;
+    try {
+      response = this.handleRequest(req);
+    } catch (error) {
+      const err = error.message || error;
+      const options = createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      response = this.createDelayedObservableResponse(options);
+    }
     return {
       readyState: ReadyState.Done,
       request: req,
@@ -294,40 +300,32 @@ export class InMemoryBackendService {
     const reqMethodName = RequestMethod[req.method || 0].toLowerCase();
     let resOptions: ResponseOptions;
 
-    try {
-      if ('commands' === reqInfo.base.toLowerCase()) {
-        return this.commands(reqInfo);
+    if ('commands' === reqInfo.base.toLowerCase()) {
+      return this.commands(reqInfo);
 
-      } else if (this.inMemDbService[reqMethodName]) {
-        // If service has an interceptor for an HTTP method, call it
-        const interceptorArgs: HttpMethodInterceptorArgs = {
-          requestInfo: reqInfo,
-          db: this.db,
-          config: this.config,
-          passThruBackend: this.passThruBackend
-        };
-        // The result which must be Observable<Response>
-        return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
+    } else if (this.inMemDbService[reqMethodName]) {
+      // If service has an interceptor for an HTTP method, call it
+      const interceptorArgs: HttpMethodInterceptorArgs = {
+        requestInfo: reqInfo,
+        db: this.db,
+        config: this.config,
+        passThruBackend: this.passThruBackend
+      };
+      // The result which must be Observable<Response>
+      return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
 
-      } else if (reqInfo.collection) {
-        return this.collectionHandler(reqInfo);
+    } else if (reqInfo.collection) {
+      return this.collectionHandler(reqInfo);
 
-      } else if (this.passThruBackend) {
-        // Passes request thru to a "real" backend which returns an Observable<Response>
-        // BAIL OUT with this Observable<Response>
-        return this.passThruBackend.createConnection(req).response;
+    } else if (this.passThruBackend) {
+      // Passes request thru to a "real" backend which returns an Observable<Response>
+      // BAIL OUT with this Observable<Response>
+      return this.passThruBackend.createConnection(req).response;
 
-      } else {
-        resOptions = createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-        return this.createDelayedObservableResponse(resOptions);
-      }
-
-    } catch (error) {
-      const err = error.message || error;
-      resOptions = createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+    } else {
+      resOptions = createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
       return this.createDelayedObservableResponse(resOptions);
     }
-
   }
 
   /**
