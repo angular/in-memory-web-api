@@ -78,6 +78,9 @@ See examples in the Angular.io such as the
 [Server Communication](https://angular.io/docs/ts/latest/guide/server-communication.html) and
 [Tour of Heroes](https://angular.io/docs/ts/latest/tutorial/toh-pt6.html) chapters.
 
+>Always import the `InMemoryWebApiModule` _after_ the `HttpModule` to ensure that 
+the `XHRBackend` provider of the `InMemoryWebApiModule` supersedes all others.
+
 # Bonus Features
 Some features are not readily apparent in the basic usage example.
 
