@@ -10,3 +10,5 @@ tslint.json
 typings
 typings.json
 .editorconfig
+rollup.config.js
+.travis.yml

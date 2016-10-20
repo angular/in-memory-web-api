@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.12"></a>
+## 0.1.12 (2016-10-19)
+* exclude travis.yml and rollup.config.js from npm package
+
 <a name="0.1.11"></a>
 ## 0.1.11 (2016-10-19)
 * npm publish as esm + an umd bundle
