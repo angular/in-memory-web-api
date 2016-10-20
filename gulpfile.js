@@ -3,6 +3,8 @@ var $ = require('gulp-load-plugins')({lazy: true});
 var args = require('yargs').argv;
 var cp = require('child_process');
 var del = require('del');
+var rollup = require('rollup-stream');
+var source = require('vinyl-source-stream');
 
 var path = require("path");
 
@@ -19,18 +21,25 @@ gulp.task('help', $.taskListing.withFilters(function (taskName) {
   return shouldRemove;
 }));
 
-gulp.task('build', ['ngc'], function(){
+gulp.task('build', ['umd'], function(){
   return gulp
     .src(jsCopySrc)
     .pipe(gulp.dest('./'));
 });
 
-gulp.task('ngc',['clean'], function(done) {
+gulp.task('ngc', ['clean'], function(done) {
     runNgc('./', done);
 });
 
+// Uses rollup-stream plugin https://www.npmjs.com/package/rollup-stream
+gulp.task('umd', ['ngc'], function(done) {
+    return rollup('rollup.config.js')
+    .pipe(source('in-memory-web-api.umd.js'))
+    .pipe(gulp.dest('./bundles'));
+});
+
 gulp.task('clean', function(done) {
-  clean([ngcOutput+'*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json'], done);
+  clean([ngcOutput+'*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json', './bundles/in-memory-web-api.umd.js'], done);
 });
 
 /**

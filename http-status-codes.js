@@ -1,5 +1,4 @@
-"use strict";
-exports.STATUS = {
+export var STATUS = {
     CONTINUE: 100,
     SWITCHING_PROTOCOLS: 101,
     OK: 200,
@@ -58,7 +57,7 @@ exports.STATUS = {
     NETWORK_AUTHENTICATION_REQUIRED: 511
 };
 /*tslint:disable:quotemark max-line-length one-line */
-exports.STATUS_CODE_INFO = {
+export var STATUS_CODE_INFO = {
     '100': {
         'code': 100,
         'text': 'Continue',

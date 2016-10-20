@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.11"></a>
+## 0.1.11 (2016-10-19)
+* npm publish as esm + an umd bundle
+
 <a name="0.1.10"></a>
 ## 0.1.10 (2016-10-19)
 * Catch a `handleRequest` error and return as a failed server response.
