@@ -108,18 +108,3 @@ function runNgc(directory, done) {
         done();
     });
 }
-
-// WILL THIS WORK? DOES IT PROMPT?
-function runTypings(done) {
-    var typingsjs = path.join(process.cwd(), 'node_modules/typings/dist/bin/typings');
-    var childProcess = cp.spawn('node', [typingsjs, 'install'], { cwd: process.cwd() });
-    childProcess.stdout.on('data', function (data) {
-        console.log(data.toString());
-    });
-    childProcess.stderr.on('data', function (data) {
-        console.log(data.toString());
-    });
-    childProcess.on('close', function () {
-        done();
-    });
-}
