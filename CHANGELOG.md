@@ -1,12 +1,35 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.13"></a>
+## 0.1.13 (2016-10-20)
+* Update README for 0.1.11 breaking change: npm publish as `esm` and a `umd` bundle
+
+  Going to `umd` changes your `systemjs.config` and the way you import the library.
+
+  In `systemjs.config.js` you should change the mapping to:
+  ```
+  'angular-in-memory-web-api': 'npm:angular-in-memory-web-api/bundles/in-memory-web-api.umd.js'
+  ```
+  then delete from `packages`:
+  ```
+  'angular-in-memory-web-api': {		
+    main: './index.js',		
+    defaultExtension: 'js'		
+  }
+  ```
+  You must ES import the in-mem module (typically in `AppModule`) like this:
+  ```
+  import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+  ```
 <a name="0.1.12"></a>
 ## 0.1.12 (2016-10-19)
 * exclude travis.yml and rollup.config.js from npm package
 
 <a name="0.1.11"></a>
 ## 0.1.11 (2016-10-19)
-* npm publish as esm + an umd bundle
+* BREAKING CHANGE: npm publish as `esm` and a `umd` bundle.
+Does not change the API but does change the way you register and import the
+in-mem module. Documented in later release, v.0.1.13
 
 <a name="0.1.10"></a>
 ## 0.1.10 (2016-10-19)
