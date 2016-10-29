@@ -1,6 +1,6 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
@@ -36,7 +36,7 @@
     "@angular/http": "^2.0.0",
     "reflect-metadata": "~0.1.8",
     "rxjs": "5.0.0-beta.12",
-    "zone.js": "^0.6.25"
+    "zone.js": "^0.6.26"
   },
   "devDependencies": {
     "@angular/common": "~2.1.0",
@@ -49,7 +49,7 @@
     "@types/core-js": "^0.9.34",
     "@types/jasmine": "^2.5.36",
     "@types/node": "^6.0.46",
-    "angular-in-memory-web-api": "~0.1.12",
+    "angular-in-memory-web-api": "~0.1.13",
     "canonical-path": "0.0.2",
     "concurrently": "^3.0.0",
     "core-js": "^2.4.1",

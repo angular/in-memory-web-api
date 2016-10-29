@@ -154,6 +154,15 @@ export interface RequestInfo {
 }
 
 /**
+ * The `responseInterceptor` can morph the response from `collectionHandler`
+ * Default just returns the response.
+ * Override with an `responseInterceptor` method in your `inMemDbService`
+ */
+export function responseInterceptor(res: ResponseOptions, ri: RequestInfo): ResponseOptions {
+  return res;
+}
+
+/**
  * Set the status text in a response:
  */
 export function setStatusText(options: ResponseOptions) {
@@ -219,6 +228,7 @@ export class InMemoryBackendService {
   protected passThruBackend: ConnectionBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
+  private responseInterceptor: typeof responseInterceptor;
 
   constructor(
     private injector: Injector,
@@ -232,6 +242,7 @@ export class InMemoryBackendService {
     this.config.rootPath = loc.pathname;
     Object.assign(this.config, config || {});
 
+    this.responseInterceptor = inMemDbService[`responseInterceptor`] || responseInterceptor;
     this.setPassThruBackend();
   }
 
@@ -390,6 +401,8 @@ export class InMemoryBackendService {
         resOptions = createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
         break;
     }
+
+    resOptions = this.responseInterceptor(resOptions, reqInfo);
     return this.createDelayedObservableResponse(resOptions);
   }
 

@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.14"></a>
+## 0.1.14 (2016-10-29)
+* Add `responseInterceptor` for [issue #61](https://github.com/angular/in-memory-web-api/issues/61)
+
 <a name="0.1.13"></a>
 ## 0.1.13 (2016-10-20)
 * Update README for 0.1.11 breaking change: npm publish as `esm` and a `umd` bundle

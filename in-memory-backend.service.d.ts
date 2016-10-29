@@ -105,6 +105,12 @@ export interface RequestInfo {
     resourceUrl: string;
 }
 /**
+ * The `responseInterceptor` can morph the response from `collectionHandler`
+ * Default just returns the response.
+ * Override with an `responseInterceptor` method in your `inMemDbService`
+ */
+export declare function responseInterceptor(res: ResponseOptions, ri: RequestInfo): ResponseOptions;
+/**
  * Set the status text in a response:
  */
 export declare function setStatusText(options: ResponseOptions): ResponseOptions;
@@ -158,6 +164,7 @@ export declare class InMemoryBackendService {
     protected passThruBackend: ConnectionBackend;
     protected config: InMemoryBackendConfigArgs;
     protected db: Object;
+    private responseInterceptor;
     constructor(injector: Injector, inMemDbService: InMemoryDbService, config: InMemoryBackendConfigArgs);
     createConnection(req: Request): Connection;
     /**

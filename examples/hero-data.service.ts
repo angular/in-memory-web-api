@@ -6,10 +6,11 @@
  */
 import {
   InMemoryDbService,
-  createErrorResponse, createObservableResponse, HttpMethodInterceptorArgs, ParsedUrl, STATUS
+  createErrorResponse, createObservableResponse, HttpMethodInterceptorArgs,
+  ParsedUrl, RequestInfo, STATUS
 } from 'angular-in-memory-web-api';
 
-import { ResponseOptions, URLSearchParams } from '@angular/http';
+import { RequestMethod, ResponseOptions, URLSearchParams } from '@angular/http';
 
 // For AoT compile
 /* tslint:disable:no-unused-variable */
@@ -59,6 +60,14 @@ export class HeroDataOverrideService extends HeroDataService {
       const msg = `unable to parse url '${url}'; original error: ${err.message}`;
       throw new Error(msg);
     }
+  }
+
+  // intercept response from the default HTTP method handlers
+  responseInterceptor(response: ResponseOptions, reqInfo: RequestInfo) {
+    const method = RequestMethod[reqInfo.req.method].toUpperCase();
+    const body = JSON.stringify(response.body);
+    console.log(`responseInterceptor: ${method} ${reqInfo.req.url}: \n${body}`);
+    return response;
   }
 
   // HTTP GET interceptor

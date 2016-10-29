@@ -118,6 +118,15 @@ Request URLs for your api may not match the api imagined by the default `parseUr
 You can override the default by implementing a `parseUrl` method in your `InMemoryDbService`.
 Such a method must take the incoming request URL string and return a `ParsedUrl` object. 
 
+## _responseInterceptor_
+
+You can morph the response returned by the default HTTP methods, called by `collectionHandler`, 
+to suit your needs by adding a `responseInterceptor` method to your `InMemoryDbService` class. 
+The `collectionHandler` calls your interceptor like this:
+```ts
+responseOptions = this.responseInterceptor(responseOptions, requestInfo);
+```
+
 ## HTTP method interceptors
 
 If you make requests this service can't handle but still want an in-memory database to hold values,

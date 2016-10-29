@@ -531,6 +531,14 @@ var InMemoryBackendConfig = (function () {
 function isSuccess(status) { return status >= 200 && status < 300; }
 
 /**
+ * The `responseInterceptor` can morph the response from `collectionHandler`
+ * Default just returns the response.
+ * Override with an `responseInterceptor` method in your `inMemDbService`
+ */
+function responseInterceptor(res, ri) {
+    return res;
+}
+/**
  * Set the status text in a response:
  */
 function setStatusText(options) {
@@ -584,6 +592,7 @@ var InMemoryBackendService = (function () {
         this.config.host = loc.host;
         this.config.rootPath = loc.pathname;
         Object.assign(this.config, config || {});
+        this.responseInterceptor = inMemDbService["responseInterceptor"] || responseInterceptor;
         this.setPassThruBackend();
     }
     InMemoryBackendService.prototype.createConnection = function (req) {
@@ -731,6 +740,7 @@ var InMemoryBackendService = (function () {
                 resOptions = createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
                 break;
         }
+        resOptions = this.responseInterceptor(resOptions, reqInfo);
         return this.createDelayedObservableResponse(resOptions);
     };
     /**
@@ -1003,6 +1013,7 @@ exports.createObservableResponse = createObservableResponse;
 exports.InMemoryDbService = InMemoryDbService;
 exports.InMemoryBackendConfig = InMemoryBackendConfig;
 exports.isSuccess = isSuccess;
+exports.responseInterceptor = responseInterceptor;
 exports.setStatusText = setStatusText;
 exports.InMemoryBackendService = InMemoryBackendService;
 exports.inMemoryBackendServiceFactory = inMemoryBackendServiceFactory;
