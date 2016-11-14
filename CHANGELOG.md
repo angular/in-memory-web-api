@@ -1,5 +1,9 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.15"></a>
+## 0.1.15 (2016-11-14)
+Update to Angular 2.2.0.
+
 <a name="0.1.14"></a>
 ## 0.1.14 (2016-10-29)
 * Add `responseInterceptor` for [issue #61](https://github.com/angular/in-memory-web-api/issues/61)
