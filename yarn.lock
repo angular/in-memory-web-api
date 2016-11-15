@@ -44,11 +44,11 @@
   version "0.9.34"
   resolved "https://registry.yarnpkg.com/@types/core-js/-/core-js-0.9.34.tgz#72c521d8e59fdaa8b65f76db71fa53c82c7c21c5"
 
-"@types/jasmine@^2.5.35":
-  version "2.5.36"
-  resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.5.36.tgz#6d804b79a57e9380d766a2680e9362c17d9556d2"
+"@types/jasmine@^2.5.36":
+  version "2.5.37"
+  resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.5.37.tgz#15f16040b1106941ec4aeefa3cd9c55342a0dcbb"
 
-"@types/node@^6.0.45":
+"@types/node@^6.0.46":
   version "6.0.46"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.46.tgz#8d9e48572831f05b11cc4c793754d43437219d62"
 
@@ -78,9 +78,9 @@ amdefine@>=0.0.4:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.0.tgz#fd17474700cb5cc9c2b709f0be9d23ce3c198c33"
 
-angular-in-memory-web-api@~0.1.12:
-  version "0.1.13"
-  resolved "https://registry.yarnpkg.com/angular-in-memory-web-api/-/angular-in-memory-web-api-0.1.13.tgz#24a8abafe8ec647f98ee3269be0832d307ab240f"
+angular-in-memory-web-api@~0.1.13:
+  version "0.1.14"
+  resolved "https://registry.yarnpkg.com/angular-in-memory-web-api/-/angular-in-memory-web-api-0.1.14.tgz#278401d93dfcfd4ecee81090872cb9d4c96d9fbd"
 
 ansi-cyan@^0.1.1:
   version "0.1.1"
