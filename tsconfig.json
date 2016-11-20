@@ -10,13 +10,13 @@
     "experimentalDecorators": true,
     "removeComments": false,
     "noImplicitAny": true,
-    "suppressImplicitAnyIndexErrors": true
+    "suppressImplicitAnyIndexErrors": true,
+    "lib": ["es2015", "dom"]
   },
+
   "exclude": [
     "node_modules",
-    "in-memory-web-api",
-    "typings/main",
-    "typings/main.d.ts"
+    "in-memory-web-api"
   ],
   "angularCompilerOptions": {
     "genDir": "aot",
