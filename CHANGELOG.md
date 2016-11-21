@@ -1,8 +1,12 @@
 # "angular-in-memory-web-api" versions
 
+<a name="0.1.16"></a>
+## 0.1.16 (2016-11-20)
+* Swap `"lib": [ "es2015", "dom" ]` in `tsconfig.json` for @types/core-js` in `package.json` issue #288
+
 <a name="0.1.15"></a>
 ## 0.1.15 (2016-11-14)
-Update to Angular 2.2.0.
+* Update to Angular 2.2.0.
 
 <a name="0.1.14"></a>
 ## 0.1.14 (2016-10-29)

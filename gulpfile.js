@@ -39,6 +39,7 @@ gulp.task('umd', ['ngc'], function(done) {
 });
 
 gulp.task('clean', function(done) {
+  clean(['aot/**/*.*']);
   clean([ngcOutput+'*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json', './bundles/in-memory-web-api.umd.js'], done);
 });
 

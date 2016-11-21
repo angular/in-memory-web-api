@@ -1,4 +1,4 @@
-import { Inject, Injector, Optional } from '@angular/core';
+import { Inject, Injectable, Injector, Optional } from '@angular/core';
 
 import { BaseResponseOptions, BrowserXhr, Connection, ConnectionBackend,
          Headers, ReadyState, Request, RequestMethod,
@@ -118,6 +118,7 @@ export interface InMemoryBackendConfigArgs {
 *  or if providing separately:
 *    provide(InMemoryBackendConfig, {useValue: {delay: 600}}),
 */
+@Injectable()
 export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
   constructor(config: InMemoryBackendConfigArgs = {}) {
     Object.assign(this, {
@@ -224,6 +225,7 @@ export interface ParsedUrl {
  * export class AppModule { ... }
  * ```
  */
+@Injectable()
 export class InMemoryBackendService {
   protected passThruBackend: ConnectionBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();

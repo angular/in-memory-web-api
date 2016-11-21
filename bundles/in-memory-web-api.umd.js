@@ -523,6 +523,13 @@ var InMemoryBackendConfig = (function () {
             rootPath: ''
         }, config);
     }
+    InMemoryBackendConfig.decorators = [
+        { type: _angular_core.Injectable },
+    ];
+    /** @nocollapse */
+    InMemoryBackendConfig.ctorParameters = [
+        null,
+    ];
     return InMemoryBackendConfig;
 }());
 /**
@@ -955,6 +962,9 @@ var InMemoryBackendService = (function () {
             }
         }
     };
+    InMemoryBackendService.decorators = [
+        { type: _angular_core.Injectable },
+    ];
     /** @nocollapse */
     InMemoryBackendService.ctorParameters = [
         { type: _angular_core.Injector, },
