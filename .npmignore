@@ -10,3 +10,4 @@ tslint.json
 .editorconfig
 rollup.config.js
 .travis.yml
+yarn.lock
