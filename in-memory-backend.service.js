@@ -1,4 +1,4 @@
-import { Inject, Injector, Optional } from '@angular/core';
+import { Inject, Injectable, Injector, Optional } from '@angular/core';
 import { BaseResponseOptions, BrowserXhr, Headers, ReadyState, RequestMethod, Response, ResponseOptions, URLSearchParams, XHRBackend, XSRFStrategy } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/delay';
@@ -68,6 +68,13 @@ export var InMemoryBackendConfig = (function () {
             rootPath: ''
         }, config);
     }
+    InMemoryBackendConfig.decorators = [
+        { type: Injectable },
+    ];
+    /** @nocollapse */
+    InMemoryBackendConfig.ctorParameters = [
+        null,
+    ];
     return InMemoryBackendConfig;
 }());
 /**
@@ -500,6 +507,9 @@ export var InMemoryBackendService = (function () {
             }
         }
     };
+    InMemoryBackendService.decorators = [
+        { type: Injectable },
+    ];
     /** @nocollapse */
     InMemoryBackendService.ctorParameters = [
         { type: Injector, },

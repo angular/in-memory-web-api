@@ -1,4 +1,3 @@
-/// <reference types="core-js" />
 import { Injector } from '@angular/core';
 import { Connection, ConnectionBackend, Headers, Request, Response, ResponseOptions, URLSearchParams } from '@angular/http';
 import { Observable } from 'rxjs/Observable';

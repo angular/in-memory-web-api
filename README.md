@@ -190,8 +190,10 @@ compiling your application project.
 
 - consider updating typings, install individually/several:
 ```
-  npm install @types/core-js @types/jasmine @types/node --save-dev
+  npm install @types/jasmine @types/node --save-dev
 ```
+
+- `gulp clean` - clear out all generated `text`
 
 - `npm run tsc` to confirm the project compiles w/o error (sanity check)
 

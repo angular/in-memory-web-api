@@ -8,13 +8,12 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "removeComments": false,
+    "lib": [ "es2015", "dom" ],
     "noImplicitAny": true,
     "suppressImplicitAnyIndexErrors": true
   },
   "exclude": [
     "node_modules",
-    "in-memory-web-api",
     "typings/main",
     "typings/main.d.ts"
   ],

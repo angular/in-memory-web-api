@@ -4,12 +4,7 @@
  * Add the following line to `AppModule.imports`
  *   InMemoryWebApiModule.forRoot(HeroDataService) // or HeroDataOverrideService
  */
-import {
-  InMemoryDbService,
-  createErrorResponse, createObservableResponse, HttpMethodInterceptorArgs,
-  ParsedUrl, RequestInfo, STATUS
-} from 'angular-in-memory-web-api';
-
+import { Injectable } from '@angular/core';
 import { RequestMethod, ResponseOptions, URLSearchParams } from '@angular/http';
 
 // For AoT compile
@@ -18,6 +13,13 @@ import { Observable } from 'rxjs/Observable';
 import { Response }   from '@angular/http';
 /* tslint:enable:no-unused-variable */
 
+import {
+  InMemoryDbService,
+  createErrorResponse, createObservableResponse, HttpMethodInterceptorArgs,
+  ParsedUrl, RequestInfo, STATUS
+} from '../src';
+
+@Injectable()
 export class HeroDataService implements InMemoryDbService {
   createDb() {
     let heroes = [
@@ -33,6 +35,7 @@ export class HeroDataService implements InMemoryDbService {
 /**
  * This is an example of a Hero-oriented InMemoryDbService with method overrides.
  */
+@Injectable()
 export class HeroDataOverrideService extends HeroDataService {
   // parseUrl override
   parseUrl(url: string): ParsedUrl {
