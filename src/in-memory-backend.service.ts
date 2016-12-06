@@ -244,7 +244,7 @@ export class InMemoryBackendService {
     this.config.rootPath = loc.pathname;
     Object.assign(this.config, config || {});
 
-    this.responseInterceptor = inMemDbService[`responseInterceptor`] || responseInterceptor;
+    this.responseInterceptor = responseInterceptor;
     this.setPassThruBackend();
   }
 
@@ -404,7 +404,12 @@ export class InMemoryBackendService {
         break;
     }
 
-    resOptions = this.responseInterceptor(resOptions, reqInfo);
+    resOptions = this.inMemDbService['responseInterceptor'] ?
+      // intercept with override method
+      this.inMemDbService['responseInterceptor'](resOptions, reqInfo) :
+      // intercept with default interceptor
+      this.responseInterceptor(resOptions, reqInfo);
+
     return this.createDelayedObservableResponse(resOptions);
   }
 
