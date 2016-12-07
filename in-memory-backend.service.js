@@ -72,9 +72,9 @@ export var InMemoryBackendConfig = (function () {
         { type: Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendConfig.ctorParameters = [
+    InMemoryBackendConfig.ctorParameters = function () { return [
         null,
-    ];
+    ]; };
     return InMemoryBackendConfig;
 }());
 /**
@@ -511,11 +511,11 @@ export var InMemoryBackendService = (function () {
         { type: Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendService.ctorParameters = [
+    InMemoryBackendService.ctorParameters = function () { return [
         { type: Injector, },
         { type: InMemoryDbService, },
         { type: undefined, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },
-    ];
+    ]; };
     return InMemoryBackendService;
 }());
 //# sourceMappingURL=in-memory-backend.service.js.map

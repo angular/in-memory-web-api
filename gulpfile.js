@@ -105,7 +105,11 @@ function runNgc(directory, done) {
     childProcess.stderr.on('data', function (data) {
         console.log(data.toString());
     });
-    childProcess.on('close', function () {
-        done();
+    childProcess.on('close', function (code) {
+        if (code !== 0) {
+            throw(new Error('ngc compilation exited with an error code'))
+        } else {
+            done();
+        }
     });
 }
