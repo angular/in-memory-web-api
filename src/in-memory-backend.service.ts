@@ -16,31 +16,41 @@ import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 /**
  * Create an error Response from an HTTP status code and error message
  */
-export function createErrorResponse(status: number, message: string)  {
+export function createErrorResponse(req: Request, status: number, message: string): ResponseOptions {
   return new ResponseOptions({
     body: { 'error': `${message}` },
+    url: req.url,
     headers: new Headers({ 'Content-Type': 'application/json' }),
     status: status
   });
 }
 
 /**
- * Create an Observable response from response options:
+ * Create an Observable response from response options.
  */
 export function createObservableResponse(resOptions: ResponseOptions): Observable<Response> {
-    resOptions = setStatusText(resOptions);
-
-    const res = new Response(resOptions);
-
     return new Observable<Response>((responseObserver: Observer<Response>) => {
-      if (isSuccess(res.status)) {
-        responseObserver.next(res);
-        responseObserver.complete();
-      } else {
-        responseObserver.error(res);
-      }
+      emitResponse(responseObserver, resOptions);
       return () => { }; // unsubscribe function
     });
+}
+
+/**
+ * Create a response from response options
+ * and tell "ResponseObserver" (an `Observer<Response>`) to emit it.
+ * The observer's observable is either completed or in error state after call.
+ */
+export function emitResponse(responseObserver: Observer<Response>, resOptions: ResponseOptions) {
+  resOptions = setStatusText(resOptions);
+
+  const res = new Response(resOptions);
+
+  if (isSuccess(res.status)) {
+    responseObserver.next(res);
+    responseObserver.complete();
+  } else {
+    responseObserver.error(res);
+  }
 }
 
 /**
@@ -101,15 +111,33 @@ export interface InMemoryBackendConfigArgs {
    */
   passThruUnknownUrl?: boolean;
   /**
-   * host for this service
+   * true (default) should NOT return the entity (204) after a POST. false: return the entity (200).
+   */
+  post204?: boolean;
+  /**
+   * true (default) should NOT return the entity (204) after a PUT. false: return the entity (200).
+   */
+  put204?: boolean;
+  /**
+   * The base path to the api, e.g, 'api/'.
+   * If not specified than `parseUrl` assumes it is the first path segment in the request.
+   */
+  apiBase?: string;
+  /**
+   * host for this service, e.g., 'localhost'
    */
   host?: string;
   /**
-   * root path before any API call
+   * root path _before_ any API call, e.g., ''
    */
   rootPath?: string;
 }
 
+export function removeTrailingSlash(path: string) {
+  return path.replace(/\/$/, '');
+}
+
+/////////////////////////////////
 /**
 *  InMemoryBackendService configuration options
 *  Usage:
@@ -125,11 +153,14 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
       // default config:
       caseSensitiveSearch: false,
       defaultResponseOptions: new BaseResponseOptions(),
-      delay: 500,
-      delete404: false,
-      passThruUnknownUrl: false,
-      host: '',
-      rootPath: ''
+      delay: 500, // simulate latency by delaying response
+      delete404: false, // don't complain if can't find entity to delete
+      passThruUnknownUrl: false, // 404 if can't process URL
+      post204: true, // don't return the item after a POST
+      put204: true,  // don't return the item after a PUT
+      apiBase: undefined, // assumed to be the first path segment
+      host: undefined,    // default value is actually set in InMemoryBackendService ctor
+      rootPath: undefined // default value is actually set in InMemoryBackendService ctor
     }, config);
   }
 }
@@ -155,13 +186,10 @@ export interface RequestInfo {
 }
 
 /**
- * The `responseInterceptor` can morph the response from `collectionHandler`
- * Default just returns the response.
- * Override with an `responseInterceptor` method in your `inMemDbService`
+ * Provide a `responseInterceptor` method of this type in your `inMemDbService` to
+ * morph the response options created in the `collectionHandler`.
  */
-export function responseInterceptor(res: ResponseOptions, ri: RequestInfo): ResponseOptions {
-  return res;
-}
+export type ResponseInterceptor = (res: ResponseOptions, ri: RequestInfo) => ResponseOptions;
 
 /**
  * Set the status text in a response:
@@ -182,19 +210,19 @@ export function setStatusText(options: ResponseOptions) {
 /**
  *
  * Interface for the result of the parseUrl method:
- *   Given URL "http://localhost:8080/api/characters/42?foo=1 the default implementation returns
- *     base: 'api'
- *     collectionName: 'characters'
+ *   Given URL "http://localhost:8080/api/customers/42?foo=1 the default implementation returns
+ *     base: 'api/'
+ *     collectionName: 'customers'
  *     id: '42'
  *     query: new URLSearchParams('foo=1')
- *     resourceUrl: 'api/characters/42?foo=1'
+ *     resourceUrl: 'http://localhost/api/customers/'
  */
 export interface ParsedUrl {
-  base: string;           // the "base" of the resource
-  collectionName: string; // the name of the collection of data items
-  id: string;             // the id of the item in the collection
+  base: string;           // the slash-terminated "base" for api requests (e.g. `api/`)
+  collectionName: string; // the name of the collection of data items (e.g.,`customers`)
+  id: string;             // the (optional) id of the item in the collection (e.g., `42`)
   query: URLSearchParams; // the query as an Angular `Http` client request's URLSearchParams object
-  resourceUrl: string;    // the effective URL for the resource
+  resourceUrl: string;    // the effective URL for the resource (e.g., 'http://localhost/api/customers/')
 }
 
 ////////////  InMemoryBackendService ///////////
@@ -230,7 +258,6 @@ export class InMemoryBackendService {
   protected passThruBackend: ConnectionBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
-  private responseInterceptor: typeof responseInterceptor;
 
   constructor(
     private injector: Injector,
@@ -240,11 +267,9 @@ export class InMemoryBackendService {
     this.resetDb();
 
     const loc = this.getLocation('./');
-    this.config.host = loc.host;
-    this.config.rootPath = loc.pathname;
+    this.config.host = loc.host;         // default to app web server host
+    this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
     Object.assign(this.config, config || {});
-
-    this.responseInterceptor = inMemDbService[`responseInterceptor`] || responseInterceptor;
     this.setPassThruBackend();
   }
 
@@ -254,8 +279,9 @@ export class InMemoryBackendService {
       response = this.handleRequest(req);
     } catch (error) {
       const err = error.message || error;
-      const options = createErrorResponse(STATUS.INTERNAL_SERVER_ERROR, `${err}`);
-      response = this.createDelayedObservableResponse(options);
+      const options = createErrorResponse(req, STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      options.url = options.url || req.url; // make sure url is set
+      response = this.addDelay(createObservableResponse(options));
     }
     return {
       readyState: ReadyState.Done,
@@ -272,11 +298,11 @@ export class InMemoryBackendService {
    *
    * Expect URI pattern in the form :base/:collectionName/:id?
    * Examples:
-   *   // for store with a 'characters' collection
-   *   GET api/characters          // all characters
-   *   GET api/characters/42       // the character with id=42
-   *   GET api/characters?name=^j  // 'j' is a regex; returns characters whose name starts with 'j' or 'J'
-   *   GET api/characters.json/42  // ignores the ".json"
+   *   // for store with a 'customers' collection
+   *   GET api/customers          // all customers
+   *   GET api/customers/42       // the character with id=42
+   *   GET api/customers?name=^j  // 'j' is a regex; returns customers whose name starts with 'j' or 'J'
+   *   GET api/customers.json/42  // ignores the ".json"
    *
    * Also accepts
    *   "commands":
@@ -317,18 +343,20 @@ export class InMemoryBackendService {
       return this.commands(reqInfo);
 
     } else if (this.inMemDbService[reqMethodName]) {
-      // If service has an interceptor for an HTTP method, call it
+      // InMemoryDbService has an overriding interceptor for this HTTP method; call it
+      // The interceptor result must be an Observable<Response>
       const interceptorArgs: HttpMethodInterceptorArgs = {
         requestInfo: reqInfo,
         db: this.db,
         config: this.config,
         passThruBackend: this.passThruBackend
       };
-      // The result which must be Observable<Response>
-      return this.addDelay(this.inMemDbService[reqMethodName](interceptorArgs));
+      const interceptorResponse = this.inMemDbService[reqMethodName](interceptorArgs) as Observable<Response>;
+      return this.addDelay(interceptorResponse);
 
     } else if (reqInfo.collection) {
-      return this.collectionHandler(reqInfo);
+      // request is for a collection created by the InMemoryDbService
+      return this.addDelay(this.collectionHandler(reqInfo));
 
     } else if (this.passThruBackend) {
       // Passes request thru to a "real" backend which returns an Observable<Response>
@@ -336,15 +364,16 @@ export class InMemoryBackendService {
       return this.passThruBackend.createConnection(req).response;
 
     } else {
-      resOptions = createErrorResponse(STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-      return this.createDelayedObservableResponse(resOptions);
+      // can't handle this request
+      resOptions = createErrorResponse(req, STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
+      return this.addDelay(createObservableResponse(resOptions));
     }
   }
 
   /**
    * Add configured delay to response observable unless delay === 0
    */
-  protected addDelay(response: Observable<Response>) {
+  protected addDelay(response: Observable<Response>): Observable<Response> {
     const delay = this.config.delay;
     return delay === 0 ? response : response.delay(delay || 500);
   }
@@ -354,7 +383,7 @@ export class InMemoryBackendService {
    * This impl only supports RegExp queries on string properties of the collection
    * ANDs the conditions together
    */
-  protected applyQuery(collection: any[], query: URLSearchParams) {
+  protected applyQuery(collection: any[], query: URLSearchParams): any[] {
     // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
     const conditions: {name: string, rx: RegExp}[] = [];
     const caseSensitive = this.config.caseSensitiveSearch ? undefined : 'i';
@@ -384,28 +413,35 @@ export class InMemoryBackendService {
 
   protected collectionHandler(reqInfo: RequestInfo): Observable<Response> {
     const req = reqInfo.req;
-    let resOptions: ResponseOptions;
+    return new Observable<Response>((responseObserver: Observer<Response>) => {
+      let resOptions: ResponseOptions;
+      switch (req.method) {
+        case RequestMethod.Get:
+          resOptions = this.get(reqInfo);
+          break;
+        case RequestMethod.Post:
+          resOptions = this.post(reqInfo);
+          break;
+        case RequestMethod.Put:
+          resOptions = this.put(reqInfo);
+          break;
+        case RequestMethod.Delete:
+          resOptions = this.delete(reqInfo);
+          break;
+        default:
+          resOptions = createErrorResponse(req, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+          break;
+      }
 
-    switch (req.method) {
-      case RequestMethod.Get:
-        resOptions = this.get(reqInfo);
-        break;
-      case RequestMethod.Post:
-        resOptions = this.post(reqInfo);
-        break;
-      case RequestMethod.Put:
-        resOptions = this.put(reqInfo);
-        break;
-      case RequestMethod.Delete:
-        resOptions = this.delete(reqInfo);
-        break;
-      default:
-        resOptions = createErrorResponse(STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
-        break;
-    }
+      // If `inMemDbService.responseInterceptor` exists, let it morph the response options
+      if (this.inMemDbService['responseInterceptor']) {
+        resOptions = (this.inMemDbService['responseInterceptor'] as ResponseInterceptor)(resOptions, reqInfo);
+      }
 
-    resOptions = this.responseInterceptor(resOptions, reqInfo);
-    return this.createDelayedObservableResponse(resOptions);
+      resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
+      emitResponse(responseObserver, resOptions);
+      return () => { }; // unsubscribe function
+    });
   }
 
   /**
@@ -415,8 +451,11 @@ export class InMemoryBackendService {
    *   commands/config (GET) // Return this service's config object
    *   commands/config (!GET) // Update the config (e.g. delay)
    *
+   * Commands are "hot", meaning they are always executed immediately
+   * whether or not someone subscribes to the returned observable
+   *
    * Usage:
-   *   http.post('commands/resetdb', null);
+   *   http.post('commands/resetdb', undefined);
    *   http.get('commands/config');
    *   http.post('commands/config', '{"delay":1000}');
    */
@@ -445,19 +484,15 @@ export class InMemoryBackendService {
         }
         break;
       default:
-        resOptions = createErrorResponse(
-          STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
+        resOptions = createErrorResponse(reqInfo.req, STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
     }
+    resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
     return createObservableResponse(resOptions);
   }
 
-  protected createDelayedObservableResponse(resOptions: ResponseOptions): Observable<Response> {
-    return this.addDelay(createObservableResponse(resOptions));
-  }
-
-  protected delete({id, collection, collectionName, headers /*, req */}: RequestInfo) {
+  protected delete({id, collection, collectionName, headers, req}: RequestInfo) {
     if (!id) {
-      return createErrorResponse(STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
+      return createErrorResponse(req, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
     const exists = this.removeById(collection, id);
     return new ResponseOptions({
@@ -475,11 +510,11 @@ export class InMemoryBackendService {
     let maxId = 0;
     collection.reduce((prev: any, item: any) => {
       maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
-    }, null);
+    }, undefined);
     return maxId + 1;
   }
 
-  protected get({id, query, collection, collectionName, headers}: RequestInfo) {
+  protected get({id, query, collection, collectionName, headers, req}: RequestInfo) {
     let data = collection;
 
     if (id) {
@@ -489,8 +524,7 @@ export class InMemoryBackendService {
     }
 
     if (!data) {
-      return createErrorResponse(STATUS.NOT_FOUND,
-        `'${collectionName}' with id='${id}' not found`);
+      return createErrorResponse(req, STATUS.NOT_FOUND, `'${collectionName}' with id='${id}' not found`);
     }
     return new ResponseOptions({
       body: { data: this.clone(data) },
@@ -512,7 +546,8 @@ export class InMemoryBackendService {
   // tries to parse id as number if collection item.id is a number.
   // returns the original param id otherwise.
   protected parseId(collection: {id: any}[], id: string): any {
-    if (!collection || !id) { return null; }
+    // tslint:disable-next-line:triple-equals
+    if (!collection || id == undefined) { return undefined; }
     const isNumberId =  collection[0] && typeof collection[0].id === 'number';
     if (isNumberId) {
       const idNum = parseFloat(id);
@@ -521,6 +556,23 @@ export class InMemoryBackendService {
     return id;
   }
 
+  /**
+   * Parses the request URL into a `ParsedUrl` object.
+   * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
+   *
+   * Configuring the `apiBase` yields the most interesting changes to `parseUrl` behavior:
+   *   When apiBase=undefined and url='http://localhost/api/collection/42'
+   *     {base: 'api/', collectionName: 'collection', id: '42', ...}
+   *   When apiBase='some/api/root/' and url='http://localhost/some/api/root/collection'
+   *     {base: 'some/api/root/', collectionName: 'collection', id: undefined, ...}
+   *   When apiBase='/' and url='http://localhost/collection'
+   *     {base: '/', collectionName: 'collection', id: undefined, ...}
+   *
+   * The actual api base segment values are ignored. Only the number of segments matters.
+   * The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `two/segments'
+   *
+   * To replace this default method, assign your alternative to your InMemDbService['parseUrl']
+   */
   protected parseUrl(url: string): ParsedUrl {
     try {
       const loc = this.getLocation(url);
@@ -533,11 +585,35 @@ export class InMemoryBackendService {
         urlRoot = loc.protocol + '//' + loc.host + '/';
       }
       const path = loc.pathname.substring(drop);
-      let [base, collectionName, id] = path.split('/');
-      const resourceUrl = urlRoot + base + '/' + collectionName + '/';
-      [collectionName] = collectionName.split('.'); // ignore anything after the '.', e.g., '.json'
+      const pathSegments = path.split('/');
+      let segmentIx = 0;
+
+      // apiBase: the front part of the path devoted to getting to the api route
+      // Assumes first path segment if no config.apiBase
+      // else ignores as many path segments as are in config.apiBase
+      // Does NOT care what the api base chars actually are.
+      let apiBase: string;
+      // tslint:disable-next-line:triple-equals
+      if (this.config.apiBase == undefined) {
+        apiBase = pathSegments[segmentIx++];
+      } else {
+        apiBase = removeTrailingSlash(this.config.apiBase.trim());
+        if (apiBase) {
+          segmentIx = apiBase.split('/').length;
+        } else {
+          segmentIx = 0; // no api base at all; unwise but allowed.
+        }
+      }
+      apiBase = apiBase + '/';
+
+      let collectionName = pathSegments[segmentIx++];
+      // ignore anything after a '.' (e.g.,the "json" in "customers.json")
+      collectionName = collectionName && collectionName.split('.')[0];
+
+      const id = pathSegments[segmentIx++];
       const query = loc.search && new URLSearchParams(loc.search.substr(1));
-      return { base, collectionName, id, query, resourceUrl };
+      const resourceUrl = urlRoot + apiBase + collectionName + '/';
+      return { base: apiBase, collectionName, id, query, resourceUrl };
     } catch (err) {
       const msg = `unable to parse url '${url}'; original error: ${err.message}`;
       throw new Error(msg);
@@ -546,53 +622,52 @@ export class InMemoryBackendService {
 
   protected post({collection, /* collectionName, */ headers, id, req, resourceUrl}: RequestInfo) {
     const item = JSON.parse(<string>req.text());
-    if (!item.id) {
+    // tslint:disable-next-line:triple-equals
+    if (item.id == undefined) {
       item.id = id || this.genId(collection);
     }
     // ignore the request id, if any. Alternatively,
     // could reject request if id differs from item.id
     id = item.id;
     const existingIx = this.indexOf(collection, id);
+    const body = { data: this.clone(item) };
+
     if (existingIx > -1) {
       collection[existingIx] = item;
-      return new ResponseOptions({
-        headers: headers,
-        status: STATUS.NO_CONTENT
-      });
+      const res =
+        this.config.post204 ?
+          {headers, status: STATUS.NO_CONTENT} : // successful; no content
+          {headers, body, status: STATUS.OK }; // successful; return entity
+      return new ResponseOptions(res);
     } else {
       collection.push(item);
       headers.set('Location', resourceUrl + '/' + id);
-      return new ResponseOptions({
-        headers: headers,
-        body: { data: this.clone(item) },
-        status: STATUS.CREATED
-      });
+      return new ResponseOptions({ headers, body, status: STATUS.CREATED });
     }
   }
 
   protected put({id, collection, collectionName, headers, req}: RequestInfo) {
     const item = JSON.parse(<string>req.text());
-    if (!id) {
-      return createErrorResponse(STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
+    // tslint:disable-next-line:triple-equals
+    if (item.id == undefined) {
+      return createErrorResponse(req, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
     if (id !== item.id) {
-      return createErrorResponse(STATUS.BAD_REQUEST,
-        `"${collectionName}" id does not match item.id`);
+      return createErrorResponse(req, STATUS.BAD_REQUEST, `"${collectionName}" id does not match item.id`);
     }
     const existingIx = this.indexOf(collection, id);
+    const body = { data: this.clone(item) };
+
     if (existingIx > -1) {
       collection[existingIx] = item;
-      return new ResponseOptions({
-        headers: headers,
-        status: STATUS.NO_CONTENT // successful; no content
-      });
+      const res =
+        this.config.put204 ?
+          {headers, status: STATUS.NO_CONTENT} : // successful; no content
+          {headers, body, status: STATUS.OK }; // successful; return entity
+      return new ResponseOptions(res);
     } else {
       collection.push(item);
-      return new ResponseOptions({
-        body: { data: this.clone(item) },
-        headers: headers,
-        status: STATUS.CREATED
-      });
+      return new ResponseOptions({ headers, body, status: STATUS.CREATED });
     }
   }
 
