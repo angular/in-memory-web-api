@@ -28,9 +28,9 @@ export function createErrorResponse(req: Request, status: number, message: strin
 /**
  * Create an Observable response from response options.
  */
-export function createObservableResponse(resOptions: ResponseOptions): Observable<Response> {
+export function createObservableResponse(req: Request, resOptions: ResponseOptions): Observable<Response> {
     return new Observable<Response>((responseObserver: Observer<Response>) => {
-      emitResponse(responseObserver, resOptions);
+      emitResponse(responseObserver, req, resOptions);
       return () => { }; // unsubscribe function
     });
 }
@@ -40,7 +40,8 @@ export function createObservableResponse(resOptions: ResponseOptions): Observabl
  * and tell "ResponseObserver" (an `Observer<Response>`) to emit it.
  * The observer's observable is either completed or in error state after call.
  */
-export function emitResponse(responseObserver: Observer<Response>, resOptions: ResponseOptions) {
+export function emitResponse(responseObserver: Observer<Response>, req: Request, resOptions: ResponseOptions) {
+  resOptions.url = resOptions.url || req.url; // make sure url is set
   resOptions = setStatusText(resOptions);
 
   const res = new Response(resOptions);
@@ -280,8 +281,7 @@ export class InMemoryBackendService {
     } catch (error) {
       const err = error.message || error;
       const options = createErrorResponse(req, STATUS.INTERNAL_SERVER_ERROR, `${err}`);
-      options.url = options.url || req.url; // make sure url is set
-      response = this.addDelay(createObservableResponse(options));
+      response = this.addDelay(createObservableResponse(req, options));
     }
     return {
       readyState: ReadyState.Done,
@@ -366,7 +366,7 @@ export class InMemoryBackendService {
     } else {
       // can't handle this request
       resOptions = createErrorResponse(req, STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-      return this.addDelay(createObservableResponse(resOptions));
+      return this.addDelay(createObservableResponse(req, resOptions));
     }
   }
 
@@ -438,8 +438,7 @@ export class InMemoryBackendService {
         resOptions = (this.inMemDbService['responseInterceptor'] as ResponseInterceptor)(resOptions, reqInfo);
       }
 
-      resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
-      emitResponse(responseObserver, resOptions);
+      emitResponse(responseObserver,  reqInfo.req, resOptions);
       return () => { }; // unsubscribe function
     });
   }
@@ -486,8 +485,8 @@ export class InMemoryBackendService {
       default:
         resOptions = createErrorResponse(reqInfo.req, STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
     }
-    resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
-    return createObservableResponse(resOptions);
+
+    return createObservableResponse(reqInfo.req, resOptions);
   }
 
   protected delete({id, collection, collectionName, headers, req}: RequestInfo) {

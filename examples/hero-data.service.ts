@@ -97,7 +97,7 @@ export class HeroDataOverrideService extends HeroDataService {
            `'${collectionName}' with id='${id}' not found`);
       }
 
-      emitResponse(responseObserver, resOptions);
+      emitResponse(responseObserver, req, resOptions);
       return () => { }; // unsubscribe function
     });
   }

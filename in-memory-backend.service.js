@@ -18,9 +18,9 @@ export function createErrorResponse(req, status, message) {
 /**
  * Create an Observable response from response options.
  */
-export function createObservableResponse(resOptions) {
+export function createObservableResponse(req, resOptions) {
     return new Observable(function (responseObserver) {
-        emitResponse(responseObserver, resOptions);
+        emitResponse(responseObserver, req, resOptions);
         return function () { }; // unsubscribe function
     });
 }
@@ -29,7 +29,8 @@ export function createObservableResponse(resOptions) {
  * and tell "ResponseObserver" (an `Observer<Response>`) to emit it.
  * The observer's observable is either completed or in error state after call.
  */
-export function emitResponse(responseObserver, resOptions) {
+export function emitResponse(responseObserver, req, resOptions) {
+    resOptions.url = resOptions.url || req.url; // make sure url is set
     resOptions = setStatusText(resOptions);
     var res = new Response(resOptions);
     if (isSuccess(res.status)) {
@@ -162,8 +163,7 @@ export var InMemoryBackendService = (function () {
         catch (error) {
             var err = error.message || error;
             var options = createErrorResponse(req, STATUS.INTERNAL_SERVER_ERROR, "" + err);
-            options.url = options.url || req.url; // make sure url is set
-            response = this.addDelay(createObservableResponse(options));
+            response = this.addDelay(createObservableResponse(req, options));
         }
         return {
             readyState: ReadyState.Done,
@@ -242,7 +242,7 @@ export var InMemoryBackendService = (function () {
         else {
             // can't handle this request
             resOptions = createErrorResponse(req, STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
-            return this.addDelay(createObservableResponse(resOptions));
+            return this.addDelay(createObservableResponse(req, resOptions));
         }
     };
     /**
@@ -309,8 +309,7 @@ export var InMemoryBackendService = (function () {
             if (_this.inMemDbService['responseInterceptor']) {
                 resOptions = _this.inMemDbService['responseInterceptor'](resOptions, reqInfo);
             }
-            resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
-            emitResponse(responseObserver, resOptions);
+            emitResponse(responseObserver, reqInfo.req, resOptions);
             return function () { }; // unsubscribe function
         });
     };
@@ -356,8 +355,7 @@ export var InMemoryBackendService = (function () {
             default:
                 resOptions = createErrorResponse(reqInfo.req, STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
-        resOptions.url = resOptions.url || reqInfo.req.url; // make sure url is set
-        return createObservableResponse(resOptions);
+        return createObservableResponse(reqInfo.req, resOptions);
     };
     InMemoryBackendService.prototype.delete = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;

@@ -10,13 +10,13 @@ export declare function createErrorResponse(req: Request, status: number, messag
 /**
  * Create an Observable response from response options.
  */
-export declare function createObservableResponse(resOptions: ResponseOptions): Observable<Response>;
+export declare function createObservableResponse(req: Request, resOptions: ResponseOptions): Observable<Response>;
 /**
  * Create a response from response options
  * and tell "ResponseObserver" (an `Observer<Response>`) to emit it.
  * The observer's observable is either completed or in error state after call.
  */
-export declare function emitResponse(responseObserver: Observer<Response>, resOptions: ResponseOptions): void;
+export declare function emitResponse(responseObserver: Observer<Response>, req: Request, resOptions: ResponseOptions): void;
 /**
 * Interface for object passed to an HTTP method override method
 */

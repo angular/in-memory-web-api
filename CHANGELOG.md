@@ -44,6 +44,8 @@ It is `true` by default which means they do not return the entity (`status=204`)
 
 * `response.url` is set to `request.url` when this service itself creates the response.
 
+* A few new methods (e.g., `emitResponse`) to assist in HTTP method interceptors.
+
 <hr>
 
 <a name="0.1.17"></a>
