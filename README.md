@@ -1,16 +1,20 @@
 # Angular in-memory-web-api
 [![Build Status][travis-badge]][travis-badge-url]
 
->**UPDATE NOTICE**
->
->As of v.0.1.0, the npm package was renamed from `angular2-in-memory-web-api` to its current name,
-`angular-in-memory-web-api`. All versions ***after 0.0.21*** are shipped under this name.
-**Be sure to update your `package.json` and import statements**.
-
 An in-memory web api for Angular demos and tests.
 
-It will intercept HTTP requests that would otherwise go to the remote server
+It intercepts Angular `Http` requests that would otherwise go to the remote server
 via the Angular `XHRBackend` service
+
+>The _in-memory-web-api_ exists primarily to support the 
+[Angular documentation](https://angular.io/docs/ts/latest/ "Angular documentation web site").
+It is not supposed to emulate every possible real world web API and is not intended for production use.
+>
+>Most importantly, it is ***always experimental***. 
+We will make breaking changes and we won't feel bad about it 
+because this is a development tool, not a production product. 
+We do try to tell you about such changes in the `CHANGELOG.md`
+and we fix bugs as fast as we can.
 
 This in-memory web api service processes an HTTP request and 
 returns an `Observable` of HTTP `Response` object
@@ -31,6 +35,12 @@ Also accepts
     POST "resetDb",
     GET/POST "config" - get or (re)set the config
   ```
+
+>**UPDATE NOTICE**
+>
+>As of v.0.1.0, the npm package was renamed from `angular2-in-memory-web-api` to its current name,
+`angular-in-memory-web-api`. All versions ***after 0.0.21*** are shipped under this name.
+**Be sure to update your `package.json` and import statements**.
 
 ## Basic usage
 Create an `InMemoryDataService` class that implements `InMemoryDataService`.
@@ -89,6 +99,8 @@ The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second
    InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 500 }),
 ```
 
+**Read the `InMemoryBackendConfigArgs` interface to learn about these options**.
+
 ## Simple query strings
 Pass custom filters as a regex pattern via query string. 
 The query string defines which property and value to match.
@@ -102,21 +114,51 @@ The following example matches all names start with the letter 'j'  or 'J' in the
 >Search pattern matches are case insensitive by default. 
 Set `config.caseSensitiveSearch = true` if needed.
 
-## Pass thru to a live XHRBackend
+## Pass thru to a live _XHRBackend_
 
 If an existing, running remote server should handle requests for collections 
 that are not in the in-memory database, set `Config.passThruUnknownUrl: true`.
-This service will forward unrecognized requests via a base version of the Angular XHRBackend.
+This service will forward unrecognized requests via a base version of the Angular `XHRBackend`.
 
-## _parseUrl_ override
+## _parseUrl_ and your override
 
-The `parseUrl` method breaks down the request URL into a `ParsedUrl` object.
+The `parseUrl` parses the request URL into a `ParsedUrl` object.
 `ParsedUrl` is a public interface whose properties guide the in-memory web api
 as it processes the request.
 
-Request URLs for your api may not match the api imagined by the default `parseUrl` and may even cause it to throw an error.
+### Default _parseUrl_
+
+Default parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
+Read the source code for the complete story.
+
+Configuring the `apiBase` yields the most interesting changes to `parseUrl` behavior:
+
+* For `apiBase=undefined` and `url='http://localhost/api/customers/42'`
+    ```
+    {base: 'api/', collectionName: 'customers', id: '42', ...}
+    ```
+
+*  For `apiBase='some/api/root/'` and `url='http://localhost/some/api/root/customers'`
+    ```
+    {base: 'some/api/root/', collectionName: 'customers', id: undefined, ...}
+    ```
+
+*  For `apiBase='/'` and `url='http://localhost/customers'`
+    ```
+    {base: '/', collectionName: 'customers', id: undefined, ...}
+    ```
+
+**The actual api base segment values are ignored**. Only the number of segments matters.
+The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `two/segments'
+
+This means that URLs that work with the in-memory web api may be rejected by the real server.
+
+### Custom _parseUrl_
+
 You can override the default by implementing a `parseUrl` method in your `InMemoryDbService`.
 Such a method must take the incoming request URL string and return a `ParsedUrl` object. 
+
+Assign your alternative to `InMemDbService['parseUrl']`
 
 ## _responseInterceptor_
 
@@ -133,11 +175,11 @@ If you make requests this service can't handle but still want an in-memory datab
 override the way this service handles any HTTP method by implementing a method in
 your `InMemoryDbService` that does the job.
 
-The `InMemoryDbService` method name must be the same as the HTTP method name but all lowercase.
+The `InMemoryDbService` method name must be the same as the HTTP method name but **all lowercase**.
 This service calls it with an `HttpMethodInterceptorArgs` object.
 For example, your HTTP GET interceptor would be called like this:
 e.g., `yourInMemDbService["get"](interceptorArgs)`.
-Your method must return an `Observable<Response>`
+Your method must **return an `Observable<Response>`** which _should be "cold"_.
 
 The `HttpMethodInterceptorArgs` (as of this writing) are:
 ```ts
@@ -152,15 +194,15 @@ The file `examples/hero-data.service.ts` is an example of a Hero-oriented `InMem
 derived from the [HTTP Client](https://angular.io/docs/ts/latest/guide/server-communication.html) 
 sample in the Angular documentation.
 
-Add the following line to `AppModule.imports`
+To try it, add the following line to `AppModule.imports`
 ```ts
 InMemoryWebApiModule.forRoot(HeroDataService)
 ```
   
 That file also has a `HeroDataOverrideService` derived class that demonstrates overriding
-the `parseUrl` method and an HTTP GET interceptor.
+the `parseUrl` method and it has a "cold" HTTP GET interceptor.
 
-Add the following line to `AppModule.imports` to see it in action:
+Add the following line to `AppModule.imports` to see this version of the data service in action:
 ```ts
 InMemoryWebApiModule.forRoot(HeroDataOverrideService)
 ```

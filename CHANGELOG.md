@@ -1,4 +1,50 @@
 # "angular-in-memory-web-api" versions
+>This in-memory-web-api exists primarily to support the Angular documentation.
+It is not supposed to emulate every possible real world web API and is not intended for production use.
+>
+>Most importantly, it is ***always experimental***. 
+We will make breaking changes and we won't feel bad about it 
+because this is a development tool, not a production product. 
+We do try to tell you about such changes in this `CHANGELOG.md`
+and we fix bugs as fast as we can.
+
+<a name="0.2.0"></a>
+## 0.2.0 (2016-12-11)
+
+* BREAKING CHANGE: The observables returned by the `handleCollections` methods that process requests against the supplied in-mem-db collections are now "cold". 
+That means that requests aren't processed until something subscribes to the observable ... just like real-world `Http` calls.
+
+  Previously, these request were "hot" meaning that the operation was performed immediately 
+  (e.g., an in-memory collection was updated) and _then_ we returned an `Observable<Response>`.
+  That was a mistake! Fixing that mistake _might_ break your app which is why bumped the _minor_ version number from 1 to 2.
+
+  We hope _very few apps are broken by this change_. Most will have subscribed anyway.
+  But any app that called an `http` method with fire-and-forget ... and didn't subscribe ... 
+  expecting the database to be updated (for example) will discover that the operation did ***not*** happen.
+
+* BREAKING CHANGE: `createErrorResponse` now requires the `Request` object as its first parameter
+so it can prepare a proper error message. 
+For example, a 404 `errorResponse.toString()` now shows the request URL.
+
+* Commands remain "hot" &mdash; processed immediately &mdash; as they should be.
+
+* The `HTTP GET` interceptor in example `hero-data.service` shows how to create your own "cold" observable.
+
+* While you can still specify the `inMemDbService['responseInterceptor']` to morph the response options,
+the previously exported `responseInterceptor` function no longer exists as it served no useful purpose.
+Added the `ResponseInterceptor` _type_ to remind you of the signature to implement.
+
+* Allows objects with `id===0` (issue #56)
+
+* The default `parseUrl` method is more flexible, thanks in part to the new `config.apiBase` property.
+See the ReadMe to learn more.
+
+* Added `config.post204` and `config.put204` to control whether PUT and POST return the saved entity.
+It is `true` by default which means they do not return the entity (`status=204`) &mdash; the same behavior as before. (issue #74)
+
+* `response.url` is set to `request.url` when this service itself creates the response.
+
+<hr>
 
 <a name="0.1.17"></a>
 ## 0.1.17 (2016-12-07)

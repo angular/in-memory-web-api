@@ -5,17 +5,14 @@
  *   InMemoryWebApiModule.forRoot(HeroDataService) // or HeroDataOverrideService
  */
 import { Injectable } from '@angular/core';
-import { RequestMethod, ResponseOptions, URLSearchParams } from '@angular/http';
+import { RequestMethod, Response, ResponseOptions, URLSearchParams } from '@angular/http';
 
-// For AoT compile
-/* tslint:disable:no-unused-variable */
 import { Observable } from 'rxjs/Observable';
-import { Response }   from '@angular/http';
-/* tslint:enable:no-unused-variable */
+import { Observer }   from 'rxjs/Observer';
 
 import {
   InMemoryDbService,
-  createErrorResponse, createObservableResponse, HttpMethodInterceptorArgs,
+  createErrorResponse, emitResponse, HttpMethodInterceptorArgs,
   ParsedUrl, RequestInfo, STATUS
 } from '../src';
 
@@ -75,31 +72,34 @@ export class HeroDataOverrideService extends HeroDataService {
 
   // HTTP GET interceptor
   protected get(interceptorArgs: HttpMethodInterceptorArgs) {
+    // Returns a "cold" observable that won't be executed until something subscribes.
+    return new Observable<Response>((responseObserver: Observer<Response>) => {
+      console.log('HTTP GET override');
+      let resOptions: ResponseOptions;
 
-    console.log('HTTP GET override');
-    let resp: ResponseOptions;
+      const {id, query, collection, collectionName, headers, req} = interceptorArgs.requestInfo;
+      let data = collection;
 
-    const {id, query, collection, collectionName, headers} = interceptorArgs.requestInfo;
-    let data = collection;
+      if (id) {
+        data = this.findById(collection, id);
+      } else if (query) {
+        data = this.applyQuery(collection, query);
+      }
 
-    if (id) {
-      data = this.findById(collection, id);
-    } else if (query) {
-      data = this.applyQuery(collection, query);
-    }
+      if (data) {
+        resOptions = new ResponseOptions({
+          body: { data: this.clone(data) },
+          headers: headers,
+          status: STATUS.OK
+        });
+      } else {
+        resOptions = createErrorResponse(req, STATUS.NOT_FOUND,
+           `'${collectionName}' with id='${id}' not found`);
+      }
 
-    if (data) {
-      resp = new ResponseOptions({
-        body: { data: this.clone(data) },
-        headers: headers,
-        status: STATUS.OK
-      });
-    } else {
-      resp = createErrorResponse(STATUS.NOT_FOUND,
-        `'${collectionName}' with id='${id}' not found`);
-    }
-
-    return createObservableResponse(resp);
+      emitResponse(responseObserver, resOptions);
+      return () => { }; // unsubscribe function
+    });
   }
 
   /////////// private ///////////////
