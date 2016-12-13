@@ -96,10 +96,20 @@ Some features are not readily apparent in the basic usage example.
 
 The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
 ```ts
-   InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 500 }),
+  InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 500 }),
 ```
 
 **Read the `InMemoryBackendConfigArgs` interface to learn about these options**.
+
+## Default delayed response
+
+By default this service adds a 500ms delay (see `InMemoryBackendConfig.delay`) 
+to all requests to simulate round-trip latency.
+You can eliminate that or extend it by setting a different value:
+```ts
+  InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 0 }),    // no delay
+  InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 1500 }), // 1.5 second delay
+```
 
 ## Simple query strings
 Pass custom filters as a regex pattern via query string. 
