@@ -197,10 +197,10 @@ export declare class InMemoryBackendService {
      *   GET api/customers?name=^j  // 'j' is a regex; returns customers whose name starts with 'j' or 'J'
      *   GET api/customers.json/42  // ignores the ".json"
      *
-     * Also accepts
-     *   "commands":
-     *     POST "resetDb",
-     *     GET/POST "config"" - get or (re)set the config
+     * Also accepts direct commands to the service in which the last segment of the apiBase is the word "commands"
+     * Examples:
+     *     POST commands/resetDb,
+     *     GET/POST commands/config - get or (re)set the config
      *
      *   HTTP overrides:
      *     If the injected inMemDbService defines an HTTP method (lowercase)
@@ -222,7 +222,7 @@ export declare class InMemoryBackendService {
     protected clone(data: any): any;
     protected collectionHandler(reqInfo: RequestInfo): Observable<Response>;
     /**
-     * When the `base`="commands", the `collectionName` is the command
+     * When the last segment of the `base` path is "commands", the `collectionName` is the command
      * Example URLs:
      *   commands/resetdb   // Reset the "database" to its original state
      *   commands/config (GET) // Return this service's config object
