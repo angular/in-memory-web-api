@@ -39,6 +39,7 @@ Examples:
   GET api/heroes?name=^j  // 'j' is a regex; returns heroes whose name starting with 'j' or 'J'
   GET api/heroes.json/42  // ignores the ".json"
 ```
+
 <a id="commands"></a>
 ## Commands
 
@@ -83,6 +84,7 @@ export class InMemHeroService implements InMemoryDbService {
   }
 }
 ```
+**Be sure to name your id as just 'id', otherwise it's treated as query and will return an empty array rather than a 404 when you call ```this.http.get('app/items/?someOtherId=123')```**
 
 Register this module and your service implementation in `AppModule.imports`
 calling the `forRoot` static method with this service class and optional configuration object:
