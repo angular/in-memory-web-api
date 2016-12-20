@@ -39,7 +39,7 @@ export var InMemoryWebApiModule = (function () {
                 },] },
     ];
     /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = [];
+    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
 //# sourceMappingURL=in-memory-web-api.module.js.map

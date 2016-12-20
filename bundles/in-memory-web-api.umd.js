@@ -544,9 +544,9 @@ var InMemoryBackendConfig = (function () {
         { type: _angular_core.Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendConfig.ctorParameters = [
+    InMemoryBackendConfig.ctorParameters = function () { return [
         null,
-    ];
+    ]; };
     return InMemoryBackendConfig;
 }());
 /**
@@ -1021,11 +1021,11 @@ var InMemoryBackendService = (function () {
         { type: _angular_core.Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendService.ctorParameters = [
+    InMemoryBackendService.ctorParameters = function () { return [
         { type: _angular_core.Injector, },
         { type: InMemoryDbService, },
         { type: undefined, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
-    ];
+    ]; };
     return InMemoryBackendService;
 }());
 
@@ -1067,7 +1067,7 @@ var InMemoryWebApiModule = (function () {
                 },] },
     ];
     /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = [];
+    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
 
