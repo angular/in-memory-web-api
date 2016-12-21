@@ -90,7 +90,7 @@ export abstract class InMemoryDbService {
 /**
 * Interface for InMemoryBackend configuration options
 */
-export interface InMemoryBackendConfigArgs {
+export abstract class InMemoryBackendConfigArgs {
   /**
    * false (default) if search match should be case insensitive
    */

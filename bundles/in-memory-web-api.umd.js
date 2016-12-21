@@ -511,6 +511,14 @@ var InMemoryDbService = (function () {
     }
     return InMemoryDbService;
 }());
+/**
+* Interface for InMemoryBackend configuration options
+*/
+var InMemoryBackendConfigArgs = (function () {
+    function InMemoryBackendConfigArgs() {
+    }
+    return InMemoryBackendConfigArgs;
+}());
 function removeTrailingSlash(path) {
     return path.replace(/\/$/, '');
 }
@@ -544,9 +552,9 @@ var InMemoryBackendConfig = (function () {
         { type: _angular_core.Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendConfig.ctorParameters = [
-        null,
-    ];
+    InMemoryBackendConfig.ctorParameters = function () { return [
+        { type: InMemoryBackendConfigArgs, },
+    ]; };
     return InMemoryBackendConfig;
 }());
 /**
@@ -1021,11 +1029,11 @@ var InMemoryBackendService = (function () {
         { type: _angular_core.Injectable },
     ];
     /** @nocollapse */
-    InMemoryBackendService.ctorParameters = [
+    InMemoryBackendService.ctorParameters = function () { return [
         { type: _angular_core.Injector, },
         { type: InMemoryDbService, },
-        { type: undefined, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
-    ];
+        { type: InMemoryBackendConfigArgs, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
+    ]; };
     return InMemoryBackendService;
 }());
 
@@ -1067,7 +1075,7 @@ var InMemoryWebApiModule = (function () {
                 },] },
     ];
     /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = [];
+    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
 
@@ -1077,6 +1085,7 @@ exports.createErrorResponse = createErrorResponse;
 exports.createObservableResponse = createObservableResponse;
 exports.emitResponse = emitResponse;
 exports.InMemoryDbService = InMemoryDbService;
+exports.InMemoryBackendConfigArgs = InMemoryBackendConfigArgs;
 exports.removeTrailingSlash = removeTrailingSlash;
 exports.InMemoryBackendConfig = InMemoryBackendConfig;
 exports.isSuccess = isSuccess;

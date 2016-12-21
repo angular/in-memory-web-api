@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.2.2"></a>
+## 0.2.2 (2016-12-20)
+* Update to Angular 2.4.0
+
 <a id="0.2.1"></a>
 ## 0.2.1 (2016-12-14)
 * Fixed regression in handling commands, introduced in 0.2.0
