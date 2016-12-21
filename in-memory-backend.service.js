@@ -56,6 +56,14 @@ export var InMemoryDbService = (function () {
     }
     return InMemoryDbService;
 }());
+/**
+* Interface for InMemoryBackend configuration options
+*/
+export var InMemoryBackendConfigArgs = (function () {
+    function InMemoryBackendConfigArgs() {
+    }
+    return InMemoryBackendConfigArgs;
+}());
 export function removeTrailingSlash(path) {
     return path.replace(/\/$/, '');
 }
@@ -90,7 +98,7 @@ export var InMemoryBackendConfig = (function () {
     ];
     /** @nocollapse */
     InMemoryBackendConfig.ctorParameters = function () { return [
-        null,
+        { type: InMemoryBackendConfigArgs, },
     ]; };
     return InMemoryBackendConfig;
 }());
@@ -569,7 +577,7 @@ export var InMemoryBackendService = (function () {
     InMemoryBackendService.ctorParameters = function () { return [
         { type: Injector, },
         { type: InMemoryDbService, },
-        { type: undefined, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },
+        { type: InMemoryBackendConfigArgs, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },
     ]; };
     return InMemoryBackendService;
 }());

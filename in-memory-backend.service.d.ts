@@ -51,7 +51,7 @@ export declare abstract class InMemoryDbService {
 /**
 * Interface for InMemoryBackend configuration options
 */
-export interface InMemoryBackendConfigArgs {
+export declare abstract class InMemoryBackendConfigArgs {
     /**
      * false (default) if search match should be case insensitive
      */
