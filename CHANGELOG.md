@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.2.4"></a>
+## 0.2.4 (2017-01-02)
+* Remove reflect-matadata and zone.js as peerDependencies
+
 <a id="0.2.3"></a>
 ## 0.2.3 (2016-12-28)
 * Unpin RxJs
