@@ -651,7 +651,7 @@ export class InMemoryBackendService {
     if (item.id == undefined) {
       return createErrorResponse(req, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
-    if (id !== item.id) {
+    if (id != item.id) {
       return createErrorResponse(req, STATUS.BAD_REQUEST, `"${collectionName}" id does not match item.id`);
     }
     const existingIx = this.indexOf(collection, id);
