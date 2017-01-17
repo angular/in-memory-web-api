@@ -539,7 +539,8 @@ export class InMemoryBackendService {
   };
 
   protected indexOf(collection: any[], id: number) {
-    return collection.findIndex((item: any) => item.id === id);
+    // tslint:disable-next-line:triple-equals
+    return collection.findIndex((item: any) => item.id == id);
   }
 
   // tries to parse id as number if collection item.id is a number.
