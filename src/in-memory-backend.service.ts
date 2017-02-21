@@ -490,7 +490,7 @@ export class InMemoryBackendService {
   }
 
   protected delete({id, collection, collectionName, headers, req}: RequestInfo) {
-    if (!id) {
+    if (id == undefined) {
       return createErrorResponse(req, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
     const exists = this.removeById(collection, id);
