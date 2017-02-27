@@ -523,7 +523,8 @@ export var InMemoryBackendService = (function () {
         if (item.id == undefined) {
             return createErrorResponse(req, STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
         }
-        if (id !== item.id) {
+        // tslint:disable-next-line:triple-equals
+        if (id != item.id) {
             return createErrorResponse(req, STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
         }
         var existingIx = this.indexOf(collection, id);

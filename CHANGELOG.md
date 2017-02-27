@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.3.0"></a>
+## 0.3.0 (2017-02-27)
+* Support Angular version 4
+
 <a id="0.2.4"></a>
 ## 0.2.4 (2017-01-02)
 * Remove reflect-matadata and zone.js as peerDependencies

@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
-    (factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx,global.Rx));
-}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable,rxjs_add_operator_delay) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
+	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx));
+}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
@@ -978,7 +978,8 @@ var InMemoryBackendService = (function () {
         if (item.id == undefined) {
             return createErrorResponse(req, STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
         }
-        if (id !== item.id) {
+        // tslint:disable-next-line:triple-equals
+        if (id != item.id) {
             return createErrorResponse(req, STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
         }
         var existingIx = this.indexOf(collection, id);
