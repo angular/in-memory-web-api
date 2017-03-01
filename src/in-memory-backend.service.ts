@@ -8,6 +8,7 @@ import { BaseResponseOptions, BrowserXhr, Connection, ConnectionBackend,
 import { Observable } from 'rxjs/Observable';
 import { Observer }   from 'rxjs/Observer';
 import 'rxjs/add/operator/delay';
+import parseuri from 'parseuri';
 
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
@@ -533,9 +534,15 @@ export class InMemoryBackendService {
   }
 
   protected getLocation(href: string) {
-    const l = document.createElement('a');
-    l.href = href;
-    return l;
+    const uri = parseuri(href);
+    const loc = {
+      host: uri.host,
+      protocol: uri.protocol,
+      port: uri.port,
+      pathname: uri.path,
+      search: uri.query
+    };
+    return loc;
   };
 
   protected indexOf(collection: any[], id: number) {

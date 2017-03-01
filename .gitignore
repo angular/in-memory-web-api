@@ -11,3 +11,5 @@ examples/*.js
 examples/*.js.map
 examples/*.metadata.json
 yarn.lock
+
+!src/parseuri.d.ts
