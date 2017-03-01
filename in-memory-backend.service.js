@@ -2,6 +2,7 @@ import { Inject, Injectable, Injector, Optional } from '@angular/core';
 import { BaseResponseOptions, BrowserXhr, Headers, ReadyState, RequestMethod, Response, ResponseOptions, URLSearchParams, XHRBackend, XSRFStrategy } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/delay';
+import parseuri from 'parseuri';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 ////////////  HELPERS ///////////
 /**
@@ -406,9 +407,15 @@ export var InMemoryBackendService = (function () {
         });
     };
     InMemoryBackendService.prototype.getLocation = function (href) {
-        var l = document.createElement('a');
-        l.href = href;
-        return l;
+        var uri = parseuri(href);
+        var loc = {
+            host: uri.host,
+            protocol: uri.protocol,
+            port: uri.port,
+            pathname: uri.path,
+            search: uri.query
+        };
+        return loc;
     };
     ;
     InMemoryBackendService.prototype.indexOf = function (collection, id) {
