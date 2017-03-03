@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 ////////////  HELPERS ///////////
+var document; // so it will be defined when not running in browser
 /**
  * Create an error Response from an HTTP status code and error message
  */
@@ -406,9 +407,9 @@ export var InMemoryBackendService = (function () {
         });
     };
     InMemoryBackendService.prototype.getLocation = function (href) {
-        var l = document.createElement('a');
-        l.href = href;
-        return l;
+        // default the base url when not running in browser
+        var base = document ? document.location.href : 'http://node';
+        return new URL(href, base);
     };
     ;
     InMemoryBackendService.prototype.indexOf = function (collection, id) {

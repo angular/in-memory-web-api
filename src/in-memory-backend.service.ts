@@ -12,6 +12,7 @@ import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 ////////////  HELPERS ///////////
+let document: Document;  // so it will be defined when not running in browser
 
 /**
  * Create an error Response from an HTTP status code and error message
@@ -533,9 +534,9 @@ export class InMemoryBackendService {
   }
 
   protected getLocation(href: string) {
-    const l = document.createElement('a');
-    l.href = href;
-    return l;
+    // default the base url when not running in browser
+    let base = document ? document.location.href : 'http://node';
+    return new URL(href, base);
   };
 
   protected indexOf(collection: any[], id: number) {
