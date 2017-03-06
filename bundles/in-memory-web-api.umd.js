@@ -881,8 +881,10 @@ var InMemoryBackendService = (function () {
     
     // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
     InMemoryBackendService.prototype.parseuri = function (str) {
+        // tslint:disable-next-line:max-line-length
         var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-        var key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port', 'relative', 'path', 'directory', 'file', 'query', 'anchor'];
+        var key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port',
+            'relative', 'path', 'directory', 'file', 'query', 'anchor'];
         var m = URL_REGEX.exec(str);
         var uri = {};
         var i = 14;
