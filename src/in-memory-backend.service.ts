@@ -12,7 +12,7 @@ import 'rxjs/add/operator/delay';
 import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 ////////////  HELPERS ///////////
-let document: Document;  // so it will be defined when not running in browser
+
 
 /**
  * Create an error Response from an HTTP status code and error message
@@ -268,7 +268,7 @@ export class InMemoryBackendService {
     ) {
     this.resetDb();
 
-    const loc = this.getLocation('./');
+    const loc = this.getLocation('/');
     this.config.host = loc.host;         // default to app web server host
     this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
     Object.assign(this.config, config || {});
@@ -534,10 +534,36 @@ export class InMemoryBackendService {
   }
 
   protected getLocation(href: string) {
-    // default the base url when not running in browser
-    let base = document ? document.location.href : 'http://node';
-    return new URL(href, base);
+    if (!href.startsWith('http')) {
+      // get the document iff running in browser
+      let doc: Document = (typeof document === 'undefined') ? undefined : document;
+      // add host info to url before parsing.  Use a fake host when not in browser.
+      let base = doc ? doc.location.protocol + '//' + doc.location.host : 'http://fake';
+      href = href.startsWith('/') ? base + href : base + '/' + href;
+    }
+    let uri = this.parseuri(href);
+    let loc = {
+      host: uri.host,
+      protocol: uri.protocol,
+      port: uri.port,
+      pathname: uri.path,
+      search: uri.query ? '?' + uri.query : ''
+    };
+    return loc;
   };
+
+
+  // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
+  protected parseuri(str: string): any {
+    const URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    const key = ['source','protocol','authority','userInfo','user','password','host','port','relative','path','directory','file','query','anchor'];
+    let m   = URL_REGEX.exec(str);
+    let uri = {};
+    let i   = 14;
+
+    while (i--) { uri[key[i]] = m[i] || ''; }
+    return uri;
+  }
 
   protected indexOf(collection: any[], id: number) {
     return collection.findIndex((item: any) => item.id === id);
