@@ -6,7 +6,12 @@ It is not supposed to emulate every possible real world web API and is not inten
 We will make breaking changes and we won't feel bad about it 
 because this is a development tool, not a production product. 
 We do try to tell you about such changes in this `CHANGELOG.md`
+
 and we fix bugs as fast as we can.
+<a id="0.3.1"></a>
+## 0.3.1 (2017-03-08)
+* Now runs in node so can use in "universal" demos.
+See PR #102.
 
 <a id="0.3.0"></a>
 ## 0.3.0 (2017-02-27)

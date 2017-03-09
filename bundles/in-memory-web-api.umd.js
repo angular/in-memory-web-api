@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
-	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
-	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx));
-}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable) { 'use strict';
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
+    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
+    (factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx,global.Rx));
+}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable,rxjs_add_operator_delay) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
