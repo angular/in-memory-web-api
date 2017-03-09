@@ -241,7 +241,14 @@ export declare class InMemoryBackendService {
     protected findById(collection: any[], id: number | string): any;
     protected genId(collection: any): any;
     protected get({id, query, collection, collectionName, headers, req}: RequestInfo): ResponseOptions;
-    protected getLocation(href: string): HTMLAnchorElement;
+    protected getLocation(href: string): {
+        host: any;
+        protocol: any;
+        port: any;
+        pathname: any;
+        search: string;
+    };
+    protected parseuri(str: string): any;
     protected indexOf(collection: any[], id: number): number;
     protected parseId(collection: {
         id: any;

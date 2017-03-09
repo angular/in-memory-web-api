@@ -157,7 +157,7 @@ export var InMemoryBackendService = (function () {
         this.inMemDbService = inMemDbService;
         this.config = new InMemoryBackendConfig();
         this.resetDb();
-        var loc = this.getLocation('./');
+        var loc = this.getLocation('/');
         this.config.host = loc.host; // default to app web server host
         this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
         Object.assign(this.config, config || {});
@@ -406,11 +406,38 @@ export var InMemoryBackendService = (function () {
         });
     };
     InMemoryBackendService.prototype.getLocation = function (href) {
-        var l = document.createElement('a');
-        l.href = href;
-        return l;
+        if (!href.startsWith('http')) {
+            // get the document iff running in browser
+            var doc = (typeof document === 'undefined') ? undefined : document;
+            // add host info to url before parsing.  Use a fake host when not in browser.
+            var base = doc ? doc.location.protocol + '//' + doc.location.host : 'http://fake';
+            href = href.startsWith('/') ? base + href : base + '/' + href;
+        }
+        var uri = this.parseuri(href);
+        var loc = {
+            host: uri.host,
+            protocol: uri.protocol,
+            port: uri.port,
+            pathname: uri.path,
+            search: uri.query ? '?' + uri.query : ''
+        };
+        return loc;
     };
     ;
+    // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
+    InMemoryBackendService.prototype.parseuri = function (str) {
+        // tslint:disable-next-line:max-line-length
+        var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+        var key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port',
+            'relative', 'path', 'directory', 'file', 'query', 'anchor'];
+        var m = URL_REGEX.exec(str);
+        var uri = {};
+        var i = 14;
+        while (i--) {
+            uri[key[i]] = m[i] || '';
+        }
+        return uri;
+    };
     InMemoryBackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
     };
