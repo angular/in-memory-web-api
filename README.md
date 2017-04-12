@@ -62,7 +62,7 @@ Usage:
 ```
 
 ## Basic usage
-Create an `InMemoryDataService` class that implements `InMemoryDataService`.
+Create an `InMemoryDataService` class that implements `InMemoryDbService`.
 
 At minimum it must implement `createDb` which 
 creates a "database" hash whose keys are collection names
