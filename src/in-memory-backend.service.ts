@@ -519,10 +519,10 @@ export class InMemoryBackendService {
     let data = collection;
 
     // tslint:disable-next-line:triple-equals
-    if (id == undefined) {
-      data = this.applyQuery(collection, query);
-    } else if (query) {
+    if (id != undefined && id !== '') {
       data = this.findById(collection, id);
+    } else if (query) {
+      data = this.applyQuery(collection, query);
     }
 
     if (!data) {

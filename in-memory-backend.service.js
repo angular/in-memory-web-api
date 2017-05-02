@@ -367,7 +367,8 @@ export var InMemoryBackendService = (function () {
     };
     InMemoryBackendService.prototype.delete = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
-        if (!id) {
+        // tslint:disable-next-line:triple-equals
+        if (id == undefined) {
             return createErrorResponse(req, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
         }
         var exists = this.removeById(collection, id);
@@ -390,7 +391,8 @@ export var InMemoryBackendService = (function () {
     InMemoryBackendService.prototype.get = function (_a) {
         var id = _a.id, query = _a.query, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
         var data = collection;
-        if (id) {
+        // tslint:disable-next-line:triple-equals
+        if (id != undefined && id !== '') {
             data = this.findById(collection, id);
         }
         else if (query) {

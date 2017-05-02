@@ -1,8 +1,8 @@
 (function (global, factory) {
-    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
-    typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
-    (factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx,global.Rx));
-}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable,rxjs_add_operator_delay) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
+	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx));
+}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
@@ -822,7 +822,8 @@ var InMemoryBackendService = (function () {
     };
     InMemoryBackendService.prototype.delete = function (_a) {
         var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
-        if (!id) {
+        // tslint:disable-next-line:triple-equals
+        if (id == undefined) {
             return createErrorResponse(req, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
         }
         var exists = this.removeById(collection, id);
@@ -845,7 +846,8 @@ var InMemoryBackendService = (function () {
     InMemoryBackendService.prototype.get = function (_a) {
         var id = _a.id, query = _a.query, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
         var data = collection;
-        if (id) {
+        // tslint:disable-next-line:triple-equals
+        if (id != undefined && id !== '') {
             data = this.findById(collection, id);
         }
         else if (query) {

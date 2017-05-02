@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 
 and we fix bugs as fast as we can.
+<a id="0.3.2"></a>
+## 0.3.2 (2017-05-02)
+* Bug fixes PRs #91, 95, 106
+
 <a id="0.3.1"></a>
 ## 0.3.1 (2017-03-08)
 * Now runs in node so can use in "universal" demos.
