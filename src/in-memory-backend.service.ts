@@ -13,6 +13,7 @@ import { STATUS, STATUS_CODE_INFO } from './http-status-codes';
 
 ////////////  HELPERS ///////////
 
+
 /**
  * Create an error Response from an HTTP status code and error message
  */
@@ -267,7 +268,7 @@ export class InMemoryBackendService {
     ) {
     this.resetDb();
 
-    const loc = this.getLocation('./');
+    const loc = this.getLocation('/');
     this.config.host = loc.host;         // default to app web server host
     this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
     Object.assign(this.config, config || {});
@@ -385,10 +386,10 @@ export class InMemoryBackendService {
    */
   protected applyQuery(collection: any[], query: URLSearchParams): any[] {
     // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
-    const conditions: {name: string, rx: RegExp}[] = [];
+    const conditions: { name: string, rx: RegExp }[] = [];
     const caseSensitive = this.config.caseSensitiveSearch ? undefined : 'i';
     query.paramsMap.forEach((value: string[], name: string) => {
-      value.forEach(v => conditions.push({name, rx: new RegExp(decodeURI(v), caseSensitive)}));
+      value.forEach(v => conditions.push({ name, rx: new RegExp(decodeURI(v), caseSensitive) }));
     });
 
     const len = conditions.length;
@@ -438,7 +439,7 @@ export class InMemoryBackendService {
         resOptions = (this.inMemDbService['responseInterceptor'] as ResponseInterceptor)(resOptions, reqInfo);
       }
 
-      emitResponse(responseObserver,  reqInfo.req, resOptions);
+      emitResponse(responseObserver, reqInfo.req, resOptions);
       return () => { }; // unsubscribe function
     });
   }
@@ -460,7 +461,7 @@ export class InMemoryBackendService {
    */
   protected commands(reqInfo: RequestInfo): Observable<Response> {
     const command = reqInfo.collectionName.toLowerCase();
-    const method  = reqInfo.req.method;
+    const method = reqInfo.req.method;
     let resOptions: ResponseOptions;
 
     switch (command) {
@@ -490,6 +491,7 @@ export class InMemoryBackendService {
   }
 
   protected delete({id, collection, collectionName, headers, req}: RequestInfo) {
+    // tslint:disable-next-line:triple-equals
     if (id == undefined) {
       return createErrorResponse(req, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
@@ -513,13 +515,14 @@ export class InMemoryBackendService {
     return maxId + 1;
   }
 
-  protected get({id, query, collection, collectionName, headers, req}: RequestInfo) {
+  protected get({ id, query, collection, collectionName, headers, req }: RequestInfo) {
     let data = collection;
 
-    if (id) {
-      data = this.findById(collection, id);
-    } else if (query) {
+    // tslint:disable-next-line:triple-equals
+    if (id == undefined) {
       data = this.applyQuery(collection, query);
+    } else if (query) {
+      data = this.findById(collection, id);
     }
 
     if (!data) {
@@ -533,10 +536,38 @@ export class InMemoryBackendService {
   }
 
   protected getLocation(href: string) {
-    const l = document.createElement('a');
-    l.href = href;
-    return l;
+    if (!href.startsWith('http')) {
+      // get the document iff running in browser
+      let doc: Document = (typeof document === 'undefined') ? undefined : document;
+      // add host info to url before parsing.  Use a fake host when not in browser.
+      let base = doc ? doc.location.protocol + '//' + doc.location.host : 'http://fake';
+      href = href.startsWith('/') ? base + href : base + '/' + href;
+    }
+    let uri = this.parseuri(href);
+    let loc = {
+      host: uri.host,
+      protocol: uri.protocol,
+      port: uri.port,
+      pathname: uri.path,
+      search: uri.query ? '?' + uri.query : ''
+    };
+    return loc;
   };
+
+
+  // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
+  protected parseuri(str: string): any {
+    // tslint:disable-next-line:max-line-length
+    const URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+    const key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port',
+      'relative', 'path', 'directory', 'file', 'query', 'anchor'];
+    let m = URL_REGEX.exec(str);
+    let uri = {};
+    let i = 14;
+
+    while (i--) { uri[key[i]] = m[i] || ''; }
+    return uri;
+  }
 
   protected indexOf(collection: any[], id: number) {
     return collection.findIndex((item: any) => item.id === id);
@@ -544,10 +575,10 @@ export class InMemoryBackendService {
 
   // tries to parse id as number if collection item.id is a number.
   // returns the original param id otherwise.
-  protected parseId(collection: {id: any}[], id: string): any {
+  protected parseId(collection: { id: any }[], id: string): any {
     // tslint:disable-next-line:triple-equals
     if (!collection || id == undefined) { return undefined; }
-    const isNumberId =  collection[0] && typeof collection[0].id === 'number';
+    const isNumberId = collection[0] && typeof collection[0].id === 'number';
     if (isNumberId) {
       const idNum = parseFloat(id);
       return isNaN(idNum) ? id : idNum;
@@ -619,7 +650,7 @@ export class InMemoryBackendService {
     }
   }
 
-  protected post({collection, /* collectionName, */ headers, id, req, resourceUrl}: RequestInfo) {
+  protected post({ collection, /* collectionName, */ headers, id, req, resourceUrl }: RequestInfo) {
     const item = JSON.parse(<string>req.text());
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
@@ -635,8 +666,8 @@ export class InMemoryBackendService {
       collection[existingIx] = item;
       const res =
         this.config.post204 ?
-          {headers, status: STATUS.NO_CONTENT} : // successful; no content
-          {headers, body, status: STATUS.OK }; // successful; return entity
+          { headers, status: STATUS.NO_CONTENT } : // successful; no content
+          { headers, body, status: STATUS.OK }; // successful; return entity
       return new ResponseOptions(res);
     } else {
       collection.push(item);
@@ -645,7 +676,7 @@ export class InMemoryBackendService {
     }
   }
 
-  protected put({id, collection, collectionName, headers, req}: RequestInfo) {
+  protected put({ id, collection, collectionName, headers, req }: RequestInfo) {
     const item = JSON.parse(<string>req.text());
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
@@ -662,8 +693,8 @@ export class InMemoryBackendService {
       collection[existingIx] = item;
       const res =
         this.config.put204 ?
-          {headers, status: STATUS.NO_CONTENT} : // successful; no content
-          {headers, body, status: STATUS.OK }; // successful; return entity
+          { headers, status: STATUS.NO_CONTENT } : // successful; no content
+          { headers, body, status: STATUS.OK }; // successful; return entity
       return new ResponseOptions(res);
     } else {
       collection.push(item);
