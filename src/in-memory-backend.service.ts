@@ -490,8 +490,9 @@ export class InMemoryBackendService {
     return createObservableResponse(reqInfo.req, resOptions);
   }
 
-  protected delete({ id, collection, collectionName, headers, req }: RequestInfo) {
-    if (!id) {
+  protected delete({id, collection, collectionName, headers, req}: RequestInfo) {
+    // tslint:disable-next-line:triple-equals
+    if (id == undefined) {
       return createErrorResponse(req, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
     }
     const exists = this.removeById(collection, id);
@@ -517,10 +518,11 @@ export class InMemoryBackendService {
   protected get({ id, query, collection, collectionName, headers, req }: RequestInfo) {
     let data = collection;
 
-    if (id) {
-      data = this.findById(collection, id);
-    } else if (query) {
+    // tslint:disable-next-line:triple-equals
+    if (id == undefined) {
       data = this.applyQuery(collection, query);
+    } else if (query) {
+      data = this.findById(collection, id);
     }
 
     if (!data) {
