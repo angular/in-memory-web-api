@@ -222,7 +222,15 @@ The `InMemoryDbService` method name must be the same as the HTTP method name but
 This service calls it with an `HttpMethodInterceptorArgs` object.
 For example, your HTTP GET interceptor would be called like this:
 e.g., `yourInMemDbService["get"](interceptorArgs)`.
-Your method must **return an `Observable<Response>`** which _should be "cold"_.
+
+Your method can have two possible returns:
+* `null` - the service will continue on with its default processing (checking the collection or
+falling back to a different backend).  This is useful if you only wish to handle processing
+for certain paths in the given HTTP method.
+* `Observable<Response>` - your code has handled the request and the response is available from this
+observable.  It _should be "cold"_.
+
+Your method must **return one of these two values**.
 
 The `HttpMethodInterceptorArgs` (as of this writing) are:
 ```ts
