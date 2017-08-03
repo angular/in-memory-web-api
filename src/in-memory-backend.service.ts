@@ -133,6 +133,11 @@ export abstract class InMemoryBackendConfigArgs {
    * root path _before_ any API call, e.g., ''
    */
   rootPath?: string;
+  /**
+   * true (default) encapsulate content in a `data` property inside the response body. false: put content directly inside the response body
+   */
+  dataEncapsulation?: boolean;
+
 }
 
 export function removeTrailingSlash(path: string) {
@@ -162,7 +167,8 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
       put204: true,  // don't return the item after a PUT
       apiBase: undefined, // assumed to be the first path segment
       host: undefined,    // default value is actually set in InMemoryBackendService ctor
-      rootPath: undefined // default value is actually set in InMemoryBackendService ctor
+      rootPath: undefined, // default value is actually set in InMemoryBackendService ctor
+      dataEncapsulation: true // encapsulate content in a `data` property in the response body
     }, config);
   }
 }
@@ -529,7 +535,7 @@ export class InMemoryBackendService {
       return createErrorResponse(req, STATUS.NOT_FOUND, `'${collectionName}' with id='${id}' not found`);
     }
     return new ResponseOptions({
-      body: { data: this.clone(data) },
+      body: this.config.dataEncapsulation ? { data: this.clone(data) } : this.clone(data),
       headers: headers,
       status: STATUS.OK
     });
@@ -660,7 +666,7 @@ export class InMemoryBackendService {
     // could reject request if id differs from item.id
     id = item.id;
     const existingIx = this.indexOf(collection, id);
-    const body = { data: this.clone(item) };
+    const body = this.config.dataEncapsulation ? { data: this.clone(item) } : this.clone(item);
 
     if (existingIx > -1) {
       collection[existingIx] = item;
@@ -687,7 +693,7 @@ export class InMemoryBackendService {
       return createErrorResponse(req, STATUS.BAD_REQUEST, `"${collectionName}" id does not match item.id`);
     }
     const existingIx = this.indexOf(collection, id);
-    const body = { data: this.clone(item) };
+    const body = this.config.dataEncapsulation ? { data: this.clone(item) } : this.clone(item);
 
     if (existingIx > -1) {
       collection[existingIx] = item;

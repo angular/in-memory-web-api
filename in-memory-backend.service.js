@@ -90,7 +90,8 @@ export var InMemoryBackendConfig = (function () {
             put204: true,
             apiBase: undefined,
             host: undefined,
-            rootPath: undefined // default value is actually set in InMemoryBackendService ctor
+            rootPath: undefined,
+            dataEncapsulation: true // encapsulate content in a `data` property in the response body
         }, config);
     }
     InMemoryBackendConfig.decorators = [
@@ -402,7 +403,7 @@ export var InMemoryBackendService = (function () {
             return createErrorResponse(req, STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
         }
         return new ResponseOptions({
-            body: { data: this.clone(data) },
+            body: this.config.dataEncapsulation ? { data: this.clone(data) } : this.clone(data),
             headers: headers,
             status: STATUS.OK
         });
@@ -531,7 +532,7 @@ export var InMemoryBackendService = (function () {
         // could reject request if id differs from item.id
         id = item.id;
         var existingIx = this.indexOf(collection, id);
-        var body = { data: this.clone(item) };
+        var body = this.config.dataEncapsulation ? { data: this.clone(item) } : this.clone(item);
         if (existingIx > -1) {
             collection[existingIx] = item;
             var res = this.config.post204 ?
@@ -557,7 +558,7 @@ export var InMemoryBackendService = (function () {
             return createErrorResponse(req, STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
         }
         var existingIx = this.indexOf(collection, id);
-        var body = { data: this.clone(item) };
+        var body = this.config.dataEncapsulation ? { data: this.clone(item) } : this.clone(item);
         if (existingIx > -1) {
             collection[existingIx] = item;
             var res = this.config.put204 ?

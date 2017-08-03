@@ -93,6 +93,10 @@ export declare abstract class InMemoryBackendConfigArgs {
      * root path _before_ any API call, e.g., ''
      */
     rootPath?: string;
+    /**
+     * true (default) encapsulate content in a `data` property inside the response body. false: put content directly inside the response body
+     */
+    dataEncapsulation?: boolean;
 }
 export declare function removeTrailingSlash(path: string): string;
 /**
