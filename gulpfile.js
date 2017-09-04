@@ -8,8 +8,8 @@ var source = require('vinyl-source-stream');
 
 var path = require("path");
 
-var ngcOutput = './src/';
-var jsCopySrc = ['*.js', '*.js.map', '*.d.ts', '*.metadata.json'].map(ext => ngcOutput + ext);
+var inMemSrc = './src/in-mem/';
+var jsCopySrc = ['*.js', '*.js.map', '*.d.ts', '*.metadata.json'].map(ext => inMemSrc + ext);
 
 gulp.task('default', ['help']);
 
@@ -28,7 +28,7 @@ gulp.task('build', ['umd'], function(){
 });
 
 gulp.task('ngc', ['clean'], function(done) {
-    runNgc('./', done);
+  runNgc('src/in-mem/', done);
 });
 
 // Uses rollup-stream plugin https://www.npmjs.com/package/rollup-stream
@@ -38,9 +38,20 @@ gulp.task('umd', ['ngc'], function(done) {
     .pipe(gulp.dest('./bundles'));
 });
 
-gulp.task('clean', function(done) {
-  clean(['aot/**/*.*']);
-  clean([ngcOutput+'*.js', '*.js.map', '*.d.ts', '!gulpfile.js', '*.metadata.json', './bundles/in-memory-web-api.umd.js'], done);
+gulp.task('clean', function() {
+  return Promise.all([
+    clean(['aot/**/*.*']),
+    clean(['src/app/**.*js','src/**/*.js.map', 'src/**/*.d.ts','src/**/*.metadata.json']),
+    clean(['src/in-mem/node_modules/**/*.*','src/in-mem/**.*js','src/**/*.ngsummary.json', 'src/**/*.ngfactory.ts']),
+    clean([
+       './http-status-codes.*',
+       './in-memory-backend.service.*',
+       './in-memory-web-api.module.*',
+       './index.*',
+       './bundles/in-memory-web-api.umd.js'
+    ])
+  ])
+  .then(() => console.log('Cleaned successfully'));
 });
 
 /**
@@ -73,13 +84,12 @@ gulp.task('bump', function() {
 });
 //////////
 
-function clean(path, done) {
+function clean(path) {
     log('Cleaning: ' + $.util.colors.blue(path));
-    del(path, {dryRun:false})
+    return del(path, {dryRun:false})
     .then(function(paths) {
       console.log('Deleted files and folders:\n', paths.join('\n'));
-    })
-    .then(done,done);
+    });
 }
 
 function log(msg) {
@@ -98,7 +108,7 @@ function runNgc(directory, done) {
     //var ngcjs = path.join(process.cwd(), 'node_modules/typescript/bin/tsc');
     //ngcjs = path.join(process.cwd(), 'node_modules/.bin/ngc');
     var ngcjs = './node_modules/@angular/compiler-cli/src/main.js';
-    var childProcess = cp.spawn('node', [ngcjs, '-p', directory], { cwd: process.cwd() });
+    var childProcess = cp.spawn('node', [ngcjs, '-p', './tsconfig-ngc.json'], { cwd: process.cwd() });
     childProcess.stdout.on('data', function (data) {
         console.log(data.toString());
     });

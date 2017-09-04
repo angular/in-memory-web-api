@@ -1,20 +1,21 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
   "scripts": {
-    "tsc": "tsc",
-    "ngc": "ngc",
-    "tsc:w": "tsc -w",
+    "build": "tsc",
+    "build:watch": "tsc -w",
     "lint": "tslint ./src/*.ts -t verbose -e ./src/*.d.ts",
-    "lite": "lite-server",
-    "live": "live-server",
-    "start": "concurrently \"npm run tsc:w\" \"npm run lite\" ",
-    "test": "karma start karma.conf.js",
-    "build-and-test": "concurrently  \"npm run tsc\" \"npm run test\"",
-    "http-server": "tsc && http-server"
+    "start": "concurrently \"npm run build:watch\" \"npm run serve\"",
+    "pretest": "npm run build",
+    "test": "concurrently \"npm run build:watch\" \"karma start karma.conf.js\"",
+    "pretest:once": "npm run build",
+    "test:once": "karma start karma.conf.js --single-run",
+
+    "tsc": "tsc",
+    "tsc:w": "tsc -w"
   },
   "repository": {
     "type": "git",
@@ -30,16 +31,19 @@
   "peerDependencies": {
     "@angular/core": ">=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0",
     "@angular/http": ">=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0",
-    "rxjs": "^5.0.1"
+    "rxjs": "^5.1.0"
   },
   "devDependencies": {
-    "@angular/common": "~2.4.0",
-    "@angular/compiler": "~2.4.0",
-    "@angular/compiler-cli": "~2.4.0",
-    "@angular/core": "~2.4.0",
-    "@angular/http": "~2.4.0",
-    "@angular/platform-browser": "~2.4.0",
-    "@angular/platform-server": "~2.4.0",
+    "@angular/animations": "~4.3.1",
+    "@angular/common": "~4.3.1",
+    "@angular/compiler": "~4.3.1",
+    "@angular/compiler-cli": "~4.3.1",
+    "@angular/core": "~4.3.1",
+    "@angular/http": "~4.3.1",
+    "@angular/platform-browser": "~4.3.1",
+    "@angular/platform-browser-dynamic": "~4.3.1",
+    "@angular/platform-server": "~4.3.1",
+    "@angular/tsc-wrapped": "~4.3.1",
     "@types/jasmine": "2.5.36",
     "@types/node": "^6.0.46",
     "canonical-path": "0.0.2",
@@ -59,16 +63,21 @@
     "karma-htmlfile-reporter": "^0.3.4",
     "karma-jasmine": "^1.0.2",
     "karma-jasmine-html-reporter": "^0.2.2",
+    "karma-phantomjs-launcher": "^1.0.2",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^2.0.1",
     "lite-server": "^2.2.2",
     "lodash": "^4.16.2",
     "rimraf": "^2.5.4",
     "rollup": "^0.36.0",
     "rollup-stream": "^1.14.0",
-    "rxjs": "^5.0.1",
+    "rxjs": "^5.1.0",
+    "systemjs": "0.19.40",
     "tslint": "^3.15.1",
-    "typescript": "~2.0.10",
+    "typescript": "~2.3.2",
     "vinyl-source-stream": "^1.1.0",
+    "webpack": "2.2.1",
     "yargs": "^5.0.0",
-    "zone.js": "^0.7.2"
+    "zone.js": "^0.8.4"
   }
 }

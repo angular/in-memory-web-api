@@ -8,6 +8,25 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 
 and we fix bugs as fast as we can.
+
+<a id="0.4.0"></a>
+## 0.4.0 (2017-09-04)
+See PR #130.
+* Added support for `HttpClient`
+* Added tests
+* refactor existing code to support tests
+* correct bugs and clarify choices as result of test
+* add some configuration options
+  - dataEncapsulation (issue #112, pr#123)
+  - post409
+  - put404b
+* `POST commands/resetDb` passes the request to your `resetDb` method 
+so you can optionally reset the database dynamically
+to arbitrary initial states (issue #128)
+* when HTTP method interceptor returns null/undefined, continue with service's default processing (pr #120)
+* reorganize files into src/app and src/in-mem
+* adjust gulp tasks accordingly
+
 <a id="0.3.2"></a>
 ## 0.3.2 (2017-05-02)
 * Bug fixes PRs #91, 95, 106

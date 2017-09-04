@@ -74,15 +74,17 @@ import { InMemoryDbService } from 'angular-in-memory-web-api';
 export class InMemHeroService implements InMemoryDbService {
   createDb() {
     let heroes = [
-      { id: '1', name: 'Windstorm' },
-      { id: '2', name: 'Bombasto' },
-      { id: '3', name: 'Magneta' },
-      { id: '4', name: 'Tornado' }
+      { id: 1, name: 'Windstorm' },
+      { id: 2, name: 'Bombasto' },
+      { id: 3, name: 'Magneta' },
+      { id: 4, name: 'Tornado' }
     ];
     return {heroes};
   }
 }
 ```
+
+>This library _currently_ assumes that every collection has a primary key called `id`.
 
 Register this module and your service implementation in `AppModule.imports`
 calling the `forRoot` static method with this service class and optional configuration object:
@@ -222,7 +224,15 @@ The `InMemoryDbService` method name must be the same as the HTTP method name but
 This service calls it with an `HttpMethodInterceptorArgs` object.
 For example, your HTTP GET interceptor would be called like this:
 e.g., `yourInMemDbService["get"](interceptorArgs)`.
-Your method must **return an `Observable<Response>`** which _should be "cold"_.
+
+Your method must return either:
+
+* `Observable<Response>` - your code has handled the request and the response is available from this
+observable.  It _should be "cold"_.
+
+* `null`/`undefined` - your code decided not to intervene, 
+perhaps because you wish to intercept only certain paths for the given HTTP method.
+The service continues with its default processing of the HTTP request.
 
 The `HttpMethodInterceptorArgs` (as of this writing) are:
 ```ts
@@ -233,25 +243,23 @@ passThruBackend: ConnectionBackend; // pass through backend, if it exists
 ```
 ## Examples
 
-The file `examples/hero-data.service.ts` is an example of a Hero-oriented `InMemoryDbService`,
-derived from the [HTTP Client](https://angular.io/docs/ts/latest/guide/server-communication.html) 
-sample in the Angular documentation.
+The file `src/app/hero-in-mem-data.service.ts` is an example of a Hero-oriented `InMemoryDbService`,
+such as you might see in an HTTP sample in the Angular documentation.
 
 To try it, add the following line to `AppModule.imports`
 ```ts
-InMemoryWebApiModule.forRoot(HeroDataService)
+InMemoryWebApiModule.forRoot(HeroInMemDataService)
 ```
   
-That file also has a `HeroDataOverrideService` derived class that demonstrates overriding
-the `parseUrl` method and it has a "cold" HTTP GET interceptor.
+See the `src/app/hero-in-mem-data-override.service.ts` class that demonstrates overriding
+the `parseUrl` method. It also has a "cold" HTTP GET interceptor.
 
 Add the following line to `AppModule.imports` to see this version of the data service in action:
 ```ts
-InMemoryWebApiModule.forRoot(HeroDataOverrideService)
+InMemoryWebApiModule.forRoot(HeroInMemDataOverrideService)
 ```
 
-# To Do
-* add tests (shameful omission!)
+The tests (see below) exercise these examples.
 
 # Build Instructions
 
@@ -282,7 +290,7 @@ compiling your application project.
 
 - `npm run tsc` to confirm the project compiles w/o error (sanity check)
 
- -- NO TESTS YET ... BAD --
+- `npm test`  to build and run tests (see "Testing" below)
 
 - `gulp build`
 - commit and push
@@ -297,3 +305,26 @@ compiling your application project.
 
 [travis-badge]: https://travis-ci.org/angular/in-memory-web-api.svg?branch=master
 [travis-badge-url]: https://travis-ci.org/angular/in-memory-web-api
+
+## Testing
+
+The "app" for this repo is not a real app.
+It's an Angular data service (`HeroService`) and a bunch of tests.
+
+>Note that the `tsconfig.json` produces a `commonjs` module.
+That's what _Angular specs require_.
+But when building for an app, it should be a `es2015` module,
+as is the `tsconfig-ngc.json` for AOT-ready version of this library.
+
+These tests are a work-in-progress, as tests often are.
+
+The `src/` folder is divided into 
+- `app/` - the test "app" and its tests
+- `in-mem/` - the source code for the in-memory web api library
+
+>A real app would reference the in-memory web api node module;
+these tests reference the library source files.
+
+The `karma-test-shim.js` add `in-mem` to the list of app folders that SystemJS should resolve.
+
+
