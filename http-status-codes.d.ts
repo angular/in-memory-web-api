@@ -71,13 +71,6 @@ export declare let STATUS_CODE_INFO: {
         'spec_title': string;
         'spec_href': string;
     };
-    '102': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
     '200': {
         'code': number;
         'text': string;
@@ -127,20 +120,6 @@ export declare let STATUS_CODE_INFO: {
         'spec_title': string;
         'spec_href': string;
     };
-    '207': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '226': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
     '300': {
         'code': number;
         'text': string;
@@ -184,13 +163,6 @@ export declare let STATUS_CODE_INFO: {
         'spec_href': string;
     };
     '307': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '308': {
         'code': number;
         'text': string;
         'description': string;
@@ -330,56 +302,7 @@ export declare let STATUS_CODE_INFO: {
         'spec_title': string;
         'spec_href': string;
     };
-    '422': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '423': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '424': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
     '426': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '428': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '429': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '431': {
-        'code': number;
-        'text': string;
-        'description': string;
-        'spec_title': string;
-        'spec_href': string;
-    };
-    '451': {
         'code': number;
         'text': string;
         'description': string;
@@ -422,6 +345,83 @@ export declare let STATUS_CODE_INFO: {
         'spec_href': string;
     };
     '505': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '102': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '207': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '226': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '308': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '422': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '423': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '424': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '428': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '429': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '431': {
+        'code': number;
+        'text': string;
+        'description': string;
+        'spec_title': string;
+        'spec_href': string;
+    };
+    '451': {
         'code': number;
         'text': string;
         'description': string;

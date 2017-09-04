@@ -1,8 +1,5 @@
 /**
- * This is an example of a Hero-oriented InMemoryDbService.
- *
- * Add the following line to `AppModule.imports`
- *   InMemoryWebApiModule.forRoot(HeroDataService) // or HeroDataOverrideService
+ * This is an example of a Hero-oriented InMemoryDbService with method overrides.
  */
 import { Injectable } from '@angular/core';
 import { RequestMethod, Response, ResponseOptions, URLSearchParams } from '@angular/http';
@@ -13,27 +10,14 @@ import { Observer }   from 'rxjs/Observer';
 import {
   InMemoryDbService,
   createErrorResponse, emitResponse, HttpMethodInterceptorArgs,
-  ParsedUrl, RequestInfo, STATUS
-} from '../src';
+  ParsedUrl, RequestInfo } from '../in-mem/in-memory-backend.service';
+
+import { STATUS } from '../in-mem/http-status-codes';
+
+import { HeroInMemDataService } from './hero-in-mem-data.service';
 
 @Injectable()
-export class HeroDataService implements InMemoryDbService {
-  createDb() {
-    let heroes = [
-      { id: '1', name: 'Windstorm' },
-      { id: '2', name: 'Bombasto' },
-      { id: '3', name: 'Magneta' },
-      { id: '4', name: 'Tornado' }
-    ];
-    return {heroes};
-  }
-}
-
-/**
- * This is an example of a Hero-oriented InMemoryDbService with method overrides.
- */
-@Injectable()
-export class HeroDataOverrideService extends HeroDataService {
+export class HeroInMemDataOverrideService extends HeroInMemDataService {
   // parseUrl override
   parseUrl(url: string): ParsedUrl {
     try {

@@ -1,5 +1,5 @@
 export default {
-  entry: './src/index.js',
+  entry: './src/in-mem/index.js',
   dest: './bundles/in-memory-web-api.umd.js',
   format: 'umd',
   moduleName: 'ng.inMemoryWebApi',

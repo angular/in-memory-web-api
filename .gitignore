@@ -2,12 +2,9 @@ aot
 in-memory-web-api
 node_modules
 typings
-src/*.d.ts
-src/*.js
-src/*.js.map
-src/*.metadata.json
-examples/*.d.ts
-examples/*.js
-examples/*.js.map
-examples/*.metadata.json
+npm-debug.log
+src/**/*.d.ts
+src/**/*.js
+src/**/*.js.map
+src/**/*.metadata.json
 yarn.lock

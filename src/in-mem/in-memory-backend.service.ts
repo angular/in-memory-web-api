@@ -84,8 +84,11 @@ export abstract class InMemoryDbService {
   * Each time it should return a new object with new arrays containing new item objects.
   * This condition allows InMemoryBackendService to morph the arrays and objects
   * without touching the original source data.
+  *
+  * The method will receive the request object from POST commands/resetDb
+  * which it may use to adjust its behavior.
   */
-  abstract createDb(): {};
+  abstract createDb(req?: Request): {};
 }
 
 /**
@@ -97,6 +100,10 @@ export abstract class InMemoryBackendConfigArgs {
    */
   caseSensitiveSearch?: boolean;
   /**
+   * true (default) encapsulate content in a `data` property inside the response body. false: put content directly inside the response body
+   */
+  dataEncapsulation?: boolean;
+  /**
    * default response options
    */
   defaultResponseOptions?: ResponseOptions;
@@ -105,21 +112,29 @@ export abstract class InMemoryBackendConfigArgs {
    */
   delay?: number;
   /**
-   * false (default) if ok when object-to-delete not found; else 404
+   * false (default) should 204 when object-to-delete not found; true: 404
    */
   delete404?: boolean;
   /**
-   * false (default) if should pass unrecognized request URL through to original backend; else 404
+   * false (default) should pass unrecognized request URL through to original backend; true: 404
    */
   passThruUnknownUrl?: boolean;
   /**
-   * true (default) should NOT return the entity (204) after a POST. false: return the entity (200).
+   * true (default) should NOT return the item (204) after a POST. false: return the item (200).
    */
   post204?: boolean;
   /**
-   * true (default) should NOT return the entity (204) after a PUT. false: return the entity (200).
-   */
+  * false (default) should NOT update existing item with POST. false: OK to update.
+  */
+  post409?: boolean;
+  /**
+  * true (default) should NOT return the item (204) after a POST. false: return the item (200).
+  */
   put204?: boolean;
+  /**
+   * false (default) if item not found, create as new item; false: should 404.
+   */
+  put404?: boolean;
   /**
    * The base path to the api, e.g, 'api/'.
    * If not specified than `parseUrl` assumes it is the first path segment in the request.
@@ -154,12 +169,15 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
     Object.assign(this, {
       // default config:
       caseSensitiveSearch: false,
+      dataEncapsulation: true, // wrap content within a `data` property of the response body
       defaultResponseOptions: new BaseResponseOptions(),
       delay: 500, // simulate latency by delaying response
       delete404: false, // don't complain if can't find entity to delete
       passThruUnknownUrl: false, // 404 if can't process URL
       post204: true, // don't return the item after a POST
+      post409: false, // don't update existing item with that ID
       put204: true,  // don't return the item after a PUT
+      put404: false, // create new item if PUT item with that ID not found
       apiBase: undefined, // assumed to be the first path segment
       host: undefined,    // default value is actually set in InMemoryBackendService ctor
       rootPath: undefined // default value is actually set in InMemoryBackendService ctor
@@ -342,8 +360,9 @@ export class InMemoryBackendService {
 
     if (/commands\/$/i.test(reqInfo.base)) {
       return this.commands(reqInfo);
+    }
 
-    } else if (this.inMemDbService[reqMethodName]) {
+    if (this.inMemDbService[reqMethodName]) {
       // InMemoryDbService has an overriding interceptor for this HTTP method; call it
       // The interceptor result must be an Observable<Response>
       const interceptorArgs: HttpMethodInterceptorArgs = {
@@ -353,9 +372,13 @@ export class InMemoryBackendService {
         passThruBackend: this.passThruBackend
       };
       const interceptorResponse = this.inMemDbService[reqMethodName](interceptorArgs) as Observable<Response>;
-      return this.addDelay(interceptorResponse);
 
-    } else if (reqInfo.collection) {
+      if (interceptorResponse) {
+        return this.addDelay(interceptorResponse);
+      }
+    }
+
+    if (reqInfo.collection) {
       // request is for a collection created by the InMemoryDbService
       return this.addDelay(this.collectionHandler(reqInfo));
 
@@ -406,6 +429,11 @@ export class InMemoryBackendService {
       }
       return ok;
     });
+  }
+
+  protected bodify(data: any) {
+    const body = this.clone(data);
+    return this.config.dataEncapsulation ? { data: body } : body;
   }
 
   protected clone(data: any) {
@@ -466,7 +494,7 @@ export class InMemoryBackendService {
 
     switch (command) {
       case 'resetdb':
-        this.resetDb();
+        this.resetDb(reqInfo.req);
         resOptions = new ResponseOptions({ status: STATUS.OK });
         break;
       case 'config':
@@ -529,7 +557,7 @@ export class InMemoryBackendService {
       return createErrorResponse(req, STATUS.NOT_FOUND, `'${collectionName}' with id='${id}' not found`);
     }
     return new ResponseOptions({
-      body: { data: this.clone(data) },
+      body: this.bodify(data),
       headers: headers,
       status: STATUS.OK
     });
@@ -650,44 +678,54 @@ export class InMemoryBackendService {
     }
   }
 
+  // Create entity
+  // Can update an existing entity too if post409 is false.
   protected post({ collection, /* collectionName, */ headers, id, req, resourceUrl }: RequestInfo) {
     const item = JSON.parse(<string>req.text());
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
       item.id = id || this.genId(collection);
     }
-    // ignore the request id, if any. Alternatively,
-    // could reject request if id differs from item.id
-    id = item.id;
+    if (id && id !== item.id) {
+      return createErrorResponse(req, STATUS.BAD_REQUEST, `Request id does not match item.id`);
+    } else {
+      id = item.id;
+    }
     const existingIx = this.indexOf(collection, id);
-    const body = { data: this.clone(item) };
+    const body = this.bodify(item);
 
-    if (existingIx > -1) {
+    if (existingIx === -1) {
+      collection.push(item);
+      headers.set('Location', resourceUrl + '/' + id);
+      return new ResponseOptions({ headers, body, status: STATUS.CREATED });
+    } else if (this.config.post409) {
+      return createErrorResponse(req, STATUS.CONFLICT,
+        `item with id='${id} exists and may not be updated with PUT; use POST instead.`);
+    } else {
       collection[existingIx] = item;
       const res =
         this.config.post204 ?
           { headers, status: STATUS.NO_CONTENT } : // successful; no content
           { headers, body, status: STATUS.OK }; // successful; return entity
       return new ResponseOptions(res);
-    } else {
-      collection.push(item);
-      headers.set('Location', resourceUrl + '/' + id);
-      return new ResponseOptions({ headers, body, status: STATUS.CREATED });
     }
   }
 
+  // Update existing entity
+  // Can create an entity too if put404 is false.
   protected put({ id, collection, collectionName, headers, req }: RequestInfo) {
     const item = JSON.parse(<string>req.text());
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
       return createErrorResponse(req, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
-    // tslint:disable-next-line:triple-equals
-    if (id != item.id) {
-      return createErrorResponse(req, STATUS.BAD_REQUEST, `"${collectionName}" id does not match item.id`);
+    if (id && id !== item.id) {
+      return createErrorResponse(req, STATUS.BAD_REQUEST, `Request id does not match item.id`);
+    } else {
+      id = item.id;
     }
     const existingIx = this.indexOf(collection, id);
-    const body = { data: this.clone(item) };
+    const body = this.bodify(item);
 
     if (existingIx > -1) {
       collection[existingIx] = item;
@@ -696,7 +734,11 @@ export class InMemoryBackendService {
           { headers, status: STATUS.NO_CONTENT } : // successful; no content
           { headers, body, status: STATUS.OK }; // successful; return entity
       return new ResponseOptions(res);
+    } else if (this.config.put404) {
+      // item to update not found; use POST to create new item for this id.
+      return createErrorResponse(req, STATUS.NOT_FOUND, `id='${id} not found`);
     } else {
+      // create new item for id not found
       collection.push(item);
       return new ResponseOptions({ headers, body, status: STATUS.CREATED });
     }
@@ -714,8 +756,8 @@ export class InMemoryBackendService {
   /**
    * Reset the "database" to its original state
    */
-  protected resetDb() {
-    this.db = this.inMemDbService.createDb();
+  protected resetDb(req?: Request) {
+    this.db = this.inMemDbService.createDb(req);
   }
 
   protected setPassThruBackend() {
