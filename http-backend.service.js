@@ -15,14 +15,14 @@ import { STATUS } from './http-status-codes';
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService } from './interfaces';
 import { BackendService } from './backend.service';
 /**
- * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
+ * For Angular `Http` simulate the behavior of a RESTy web api
+ * backed by the simple in-memory data store provided by the injected `InMemoryDbService`.
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
  *
  * ### Usage
  *
- * Create `InMemoryDataService` class that implements `InMemoryDataService`.
+ * Create an in-memory data store class that implements `InMemoryDbService`.
  * Call `forRoot` static method with this service class and optional configuration object:
  * ```
  * // other imports
@@ -41,14 +41,14 @@ import { BackendService } from './backend.service';
  * export class AppModule { ... }
  * ```
  */
-var InMemoryBackendService = (function (_super) {
-    __extends(InMemoryBackendService, _super);
-    function InMemoryBackendService(injector, inMemDbService, config) {
+var HttpBackendService = (function (_super) {
+    __extends(HttpBackendService, _super);
+    function HttpBackendService(injector, inMemDbService, config) {
         var _this = _super.call(this, inMemDbService, config) || this;
         _this.injector = injector;
         return _this;
     }
-    InMemoryBackendService.prototype.createConnection = function (req) {
+    HttpBackendService.prototype.createConnection = function (req) {
         var response;
         try {
             response = this.handleRequest(req);
@@ -56,8 +56,7 @@ var InMemoryBackendService = (function (_super) {
         catch (error) {
             var err = error.message || error;
             var resOptions_1 = this.createErrorResponseOptions(req.url, STATUS.INTERNAL_SERVER_ERROR, "" + err);
-            var resOptions$ = this.createResponseOptions$(function () { return resOptions_1; });
-            response = this.createResponse$(this.addDelay(resOptions$));
+            response = this.createResponse$(function () { return resOptions_1; });
         }
         return {
             readyState: ReadyState.Done,
@@ -66,30 +65,31 @@ var InMemoryBackendService = (function (_super) {
         };
     };
     ////  protected overrides /////
-    InMemoryBackendService.prototype.getJsonBody = function (req) {
+    HttpBackendService.prototype.getJsonBody = function (req) {
         try {
             return req.json();
         }
         catch (e) {
-            return {};
+            var msg = "'" + req.url + "' request body-to-json error\n" + JSON.stringify(e);
+            throw new Error(msg);
         }
     };
-    InMemoryBackendService.prototype.getRequestMethod = function (req) {
+    HttpBackendService.prototype.getRequestMethod = function (req) {
         return RequestMethod[req.method || 0].toLowerCase();
     };
-    InMemoryBackendService.prototype.createHeaders = function (headers) {
+    HttpBackendService.prototype.createHeaders = function (headers) {
         return new Headers(headers);
     };
-    InMemoryBackendService.prototype.createQuery = function (search) {
+    HttpBackendService.prototype.createQueryMap = function (search) {
         return search ? new URLSearchParams(search).paramsMap : new Map();
     };
-    InMemoryBackendService.prototype.createResponse$ = function (resOptions$) {
+    HttpBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
         return resOptions$.map(function (opts) {
             var options = opts;
             return new Response(new HttpResponseOptions(options));
         });
     };
-    InMemoryBackendService.prototype.setPassThruBackend = function () {
+    HttpBackendService.prototype.setPassThruBackend = function () {
         this.passThruBackend = undefined;
         if (this.config.passThruUnknownUrl) {
             try {
@@ -102,20 +102,20 @@ var InMemoryBackendService = (function (_super) {
                     handle: function (req) { return xhrBackend_1.createConnection(req).response; }
                 };
             }
-            catch (ex) {
-                ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
-                throw ex;
+            catch (e) {
+                e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
+                throw e;
             }
         }
     };
-    return InMemoryBackendService;
+    return HttpBackendService;
 }(BackendService));
-export { InMemoryBackendService };
-InMemoryBackendService.decorators = [
+export { HttpBackendService };
+HttpBackendService.decorators = [
     { type: Injectable },
 ];
 /** @nocollapse */
-InMemoryBackendService.ctorParameters = function () { return [
+HttpBackendService.ctorParameters = function () { return [
     { type: Injector, },
     { type: InMemoryDbService, },
     { type: InMemoryBackendConfigArgs, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },

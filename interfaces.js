@@ -62,6 +62,35 @@ InMemoryBackendConfig.decorators = [
 InMemoryBackendConfig.ctorParameters = function () { return [
     { type: InMemoryBackendConfigArgs, },
 ]; };
+/** Return information (UriInfo) about a URI  */
+export function parseUri(str) {
+    // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
+    // tslint:disable-next-line:max-line-length
+    var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+    var m = URL_REGEX.exec(str);
+    var uri = {
+        source: '',
+        protocol: '',
+        authority: '',
+        userInfo: '',
+        user: '',
+        password: '',
+        host: '',
+        port: '',
+        relative: '',
+        path: '',
+        directory: '',
+        file: '',
+        query: '',
+        anchor: ''
+    };
+    var keys = Object.keys(uri);
+    var i = keys.length;
+    while (i--) {
+        uri[keys[i]] = m[i] || '';
+    }
+    return uri;
+}
 export function removeTrailingSlash(path) {
     return path.replace(/\/$/, '');
 }

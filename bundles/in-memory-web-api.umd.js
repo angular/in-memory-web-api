@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/Observable'), require('rxjs/add/operator/delay'), require('@angular/core'), require('@angular/http'), require('rxjs/add/operator/map')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'rxjs/Observable', 'rxjs/add/operator/delay', '@angular/core', '@angular/http', 'rxjs/add/operator/map'], factory) :
-	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = {}),global.Rx,global.Rx,global.ng.core,global.ng.http));
-}(this, (function (exports,rxjs_Observable,rxjs_add_operator_delay,_angular_core,_angular_http) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/Observable'), require('rxjs/add/operator/delay'), require('@angular/core'), require('@angular/http'), require('rxjs/add/operator/map'), require('@angular/common/http')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'rxjs/Observable', 'rxjs/add/operator/delay', '@angular/core', '@angular/http', 'rxjs/add/operator/map', '@angular/common/http'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = {}),global.Rx,global.Rx,global.ng.core,global.ng.http,null,global._angular_common_http));
+}(this, (function (exports,rxjs_Observable,rxjs_add_operator_delay,_angular_core,_angular_http,rxjs_add_operator_map,_angular_common_http) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
@@ -528,6 +528,35 @@ InMemoryBackendConfig.decorators = [
 InMemoryBackendConfig.ctorParameters = function () { return [
     { type: InMemoryBackendConfigArgs, },
 ]; };
+/** Return information (UriInfo) about a URI  */
+function parseUri(str) {
+    // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
+    // tslint:disable-next-line:max-line-length
+    var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
+    var m = URL_REGEX.exec(str);
+    var uri = {
+        source: '',
+        protocol: '',
+        authority: '',
+        userInfo: '',
+        user: '',
+        password: '',
+        host: '',
+        port: '',
+        relative: '',
+        path: '',
+        directory: '',
+        file: '',
+        query: '',
+        anchor: ''
+    };
+    var keys = Object.keys(uri);
+    var i = keys.length;
+    while (i--) {
+        uri[keys[i]] = m[i] || '';
+    }
+    return uri;
+}
 function removeTrailingSlash(path) {
     return path.replace(/\/$/, '');
 }
@@ -535,7 +564,7 @@ function removeTrailingSlash(path) {
 /**
  * Base class for in-memory web api back-ends
  * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
+ * backed by the simple in-memory data store provided by the injected `InMemoryDbService` service.
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
  */
@@ -547,7 +576,7 @@ var BackendService = (function () {
         this.resetDb();
         var loc = this.getLocation('/');
         this.config.host = loc.host; // default to app web server host
-        this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
+        this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
         Object.assign(this.config, config);
         this.setPassThruBackend();
     }
@@ -572,20 +601,23 @@ var BackendService = (function () {
      *   HTTP overrides:
      *     If the injected inMemDbService defines an HTTP method (lowercase)
      *     The request is forwarded to that method as in
-     *     `inMemDbService.get(httpMethodInterceptorArgs)`
+     *     `inMemDbService.get(requestInfo)`
      *     which must return either an Observable of the response type
      *     for this http library or null|undefined (which means "keep processing").
      */
     BackendService.prototype.handleRequest = function (req) {
         var _this = this;
         var url = req.url;
-        var parser = this.inMemDbService['parseUrl'];
-        var parsed = parser ? parser(url) : this.parseUrl(url);
+        // Try override parser
+        // If no override parser or it returns nothing, use default parser
+        var parser = this.bind('parseRequestUrl');
+        var parsed = (parser && parser(url, this.requestInfoUtils)) ||
+            this.parseRequestUrl(url);
         var collectionName = parsed.collectionName;
         var collection = this.db[collectionName];
         var reqInfo = {
             req: req,
-            base: parsed.base,
+            apiBase: parsed.apiBase,
             collection: collection,
             collectionName: collectionName,
             headers: this.createHeaders({ 'Content-Type': 'application/json' }),
@@ -593,29 +625,27 @@ var BackendService = (function () {
             method: this.getRequestMethod(req),
             query: parsed.query,
             resourceUrl: parsed.resourceUrl,
-            url: url
+            url: url,
+            utils: this.requestInfoUtils
         };
         var resOptions;
-        if (/commands\/$/i.test(reqInfo.base)) {
+        if (/commands\/?$/i.test(reqInfo.apiBase)) {
             return this.commands(reqInfo);
         }
-        if (this.inMemDbService[reqInfo.method]) {
-            // InMemoryDbService has an overriding interceptor for this HTTP method; call it.
-            var interceptorArgs = {
-                requestInfo: reqInfo,
-                db: this.db,
-                config: this.config,
-                passThruBackend: this.passThruBackend
-            };
-            var interceptorResponse = this.inMemDbService[reqInfo.method](interceptorArgs);
+        var methodInterceptor = this.bind(reqInfo.method);
+        if (methodInterceptor) {
+            // Call the InMemoryDbService interceptor for this HTTP method.
+            // if interceptor produced a response, return it.
+            // else InMemoryDbService chose not to intercept; continue processing.
+            var interceptorResponse = methodInterceptor(reqInfo);
             if (interceptorResponse) {
-                return this.addDelay(interceptorResponse);
+                return interceptorResponse;
             }
+            
         }
         if (reqInfo.collection) {
             // request is for a collection created by the InMemoryDbService
-            var resOptions$ = this.createResponseOptions$(function () { return _this.collectionHandler(reqInfo); });
-            return this.createResponse$(this.addDelay(resOptions$));
+            return this.createResponse$(function () { return _this.collectionHandler(reqInfo); });
         }
         else if (this.passThruBackend) {
             // Passes request thru to a "real" backend.
@@ -624,8 +654,7 @@ var BackendService = (function () {
         else {
             // can't handle this request
             resOptions = this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
-            var resOptions$ = this.createResponseOptions$(function () { return resOptions; });
-            return this.createResponse$(this.addDelay(resOptions$));
+            return this.createResponse$(function () { return resOptions; });
         }
     };
     /**
@@ -663,6 +692,13 @@ var BackendService = (function () {
             return ok;
         });
     };
+    /**
+     * Get a method from the `InMemoryDbService` (if it exists), bound to that service
+     */
+    BackendService.prototype.bind = function (methodName) {
+        var fn = this.inMemDbService[methodName];
+        return fn ? fn.bind(this.inMemDbService) : undefined;
+    };
     BackendService.prototype.bodify = function (data) {
         var body = this.clone(data);
         return this.config.dataEncapsulation ? { data: body } : body;
@@ -691,10 +727,8 @@ var BackendService = (function () {
                 break;
         }
         // If `inMemDbService.responseInterceptor` exists, let it morph the response options
-        if (this.inMemDbService['responseInterceptor']) {
-            resOptions = this.inMemDbService['responseInterceptor'](resOptions, reqInfo);
-        }
-        return resOptions;
+        var interceptor = this.bind('responseInterceptor');
+        return interceptor ? interceptor(resOptions, reqInfo) : resOptions;
     };
     /**
      * When the last segment of the `base` path is "commands", the `collectionName` is the command
@@ -717,7 +751,7 @@ var BackendService = (function () {
         var resOptions;
         switch (command) {
             case 'resetdb':
-                this.resetDb(reqInfo.req);
+                this.resetDb(reqInfo);
                 resOptions = { status: STATUS.OK };
                 break;
             case 'config':
@@ -728,7 +762,7 @@ var BackendService = (function () {
                     };
                 }
                 else {
-                    // Be nice ... any other method is a config update
+                    // any other HTTP method is assumed to be a config update
                     var body = this.getJsonBody(reqInfo.req);
                     Object.assign(this.config, body);
                     this.setPassThruBackend();
@@ -739,8 +773,7 @@ var BackendService = (function () {
                 resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
         resOptions.url = reqInfo.url;
-        var resOptions$ = this.createResponseOptions$(function () { return resOptions; });
-        return this.createResponse$(resOptions$);
+        return this.createResponse$(function () { return resOptions; }, false /* no delay */);
     };
     BackendService.prototype.createErrorResponseOptions = function (url, status, message) {
         return {
@@ -751,7 +784,19 @@ var BackendService = (function () {
         };
     };
     /**
-     * Create an Observable of ResponseOptions.
+     * Create a cold response Observable from a factory for ResponseOptions
+     * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
+     * @param withDelay - if true (default), add simulated latency delay from configuration
+     */
+    BackendService.prototype.createResponse$ = function (resOptionsFactory, withDelay) {
+        if (withDelay === void 0) { withDelay = true; }
+        var resOptions$ = this.createResponseOptions$(resOptionsFactory);
+        var resp$ = this.createResponse$fromResponseOptions$(resOptions$);
+        return withDelay ? this.addDelay(resp$) : resp$;
+    };
+    /**
+     * Create a cold Observable of ResponseOptions.
+     * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      */
     BackendService.prototype.createResponseOptions$ = function (resOptionsFactory) {
         return new rxjs_Observable.Observable(function (responseObserver) {
@@ -784,7 +829,7 @@ var BackendService = (function () {
         };
     };
     /**
-     *
+     * Find first instance of item in collection by `item.id`
      * @param collection
      * @param id
      */
@@ -794,9 +839,26 @@ var BackendService = (function () {
     /**
      * Generate the next available id for item in this collection
      * @param collection - collection of items with `id` key property
-     * This default implementation assumes integer ids.
+     * Use method from `inMemDbService` if it exists and returns a value,
+     * else delegates to genIdDefault
      */
     BackendService.prototype.genId = function (collection) {
+        var genId = this.bind('genId');
+        if (genId) {
+            var id = genId(collection);
+            // tslint:disable-next-line:triple-equals
+            if (id != undefined) {
+                return id;
+            }
+        }
+        return this.genIdDefault(collection);
+    };
+    /**
+     * Default generator of the next available id for item in this collection
+     * @param collection - collection of items with `id` key property
+     * This default implementation assumes integer ids; returns `1` otherwise
+     */
+    BackendService.prototype.genIdDefault = function (collection) {
         var maxId = 0;
         collection.reduce(function (prev, item) {
             maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
@@ -822,39 +884,20 @@ var BackendService = (function () {
             status: STATUS.OK
         };
     };
-    BackendService.prototype.getLocation = function (href) {
-        if (!href.startsWith('http')) {
+    /**
+     * Get location info from a url, even on server where `document` is not defined
+     */
+    BackendService.prototype.getLocation = function (url) {
+        if (!url.startsWith('http')) {
             // get the document iff running in browser
             var doc = (typeof document === 'undefined') ? undefined : document;
             // add host info to url before parsing.  Use a fake host when not in browser.
             var base = doc ? doc.location.protocol + '//' + doc.location.host : 'http://fake';
-            href = href.startsWith('/') ? base + href : base + '/' + href;
+            url = url.startsWith('/') ? base + url : base + '/' + url;
         }
-        var uri = this.parseuri(href);
-        var loc = {
-            host: uri.host,
-            protocol: uri.protocol,
-            port: uri.port,
-            pathname: uri.path,
-            search: uri.query ? '?' + uri.query : ''
-        };
-        return loc;
+        return parseUri(url);
     };
     
-    // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
-    BackendService.prototype.parseuri = function (str) {
-        // tslint:disable-next-line:max-line-length
-        var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
-        var key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port',
-            'relative', 'path', 'directory', 'file', 'query', 'anchor'];
-        var m = URL_REGEX.exec(str);
-        var uri = {};
-        var i = 14;
-        while (i--) {
-            uri[key[i]] = m[i] || '';
-        }
-        return uri;
-    };
     BackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
     };
@@ -868,10 +911,10 @@ var BackendService = (function () {
         return id;
     };
     /**
-     * Parses the request URL into a `ParsedUrl` object.
+     * Parses the request URL into a `ParsedRequestUrl` object.
      * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
      *
-     * Configuring the `apiBase` yields the most interesting changes to `parseUrl` behavior:
+     * Configuring the `apiBase` yields the most interesting changes to `parseRequestUrl` behavior:
      *   When apiBase=undefined and url='http://localhost/api/collection/42'
      *     {base: 'api/', collectionName: 'collection', id: '42', ...}
      *   When apiBase='some/api/root/' and url='http://localhost/some/api/root/collection'
@@ -882,9 +925,9 @@ var BackendService = (function () {
      * The actual api base segment values are ignored. Only the number of segments matters.
      * The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `two/segments'
      *
-     * To replace this default method, assign your alternative to your InMemDbService['parseUrl']
+     * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
      */
-    BackendService.prototype.parseUrl = function (url) {
+    BackendService.prototype.parseRequestUrl = function (url) {
         try {
             var loc = this.getLocation(url);
             var drop = this.config.rootPath.length;
@@ -895,7 +938,7 @@ var BackendService = (function () {
                 drop = 1; // the leading slash
                 urlRoot = loc.protocol + '//' + loc.host + '/';
             }
-            var path = loc.pathname.substring(drop);
+            var path = loc.path.substring(drop);
             var pathSegments = path.split('/');
             var segmentIx = 0;
             // apiBase: the front part of the path devoted to getting to the api route
@@ -916,15 +959,14 @@ var BackendService = (function () {
                     segmentIx = 0; // no api base at all; unwise but allowed.
                 }
             }
-            apiBase = apiBase + '/';
+            apiBase += '/';
             var collectionName = pathSegments[segmentIx++];
             // ignore anything after a '.' (e.g.,the "json" in "customers.json")
             collectionName = collectionName && collectionName.split('.')[0];
             var id = pathSegments[segmentIx++];
-            var search = loc.search && loc.search.substr(1);
-            var query = this.createQuery(search);
+            var query = this.createQueryMap(loc.query);
             var resourceUrl = urlRoot + apiBase + collectionName + '/';
-            return { base: apiBase, collectionName: collectionName, id: id, query: query, resourceUrl: resourceUrl };
+            return { apiBase: apiBase, collectionName: collectionName, id: id, query: query, resourceUrl: resourceUrl };
         }
         catch (err) {
             var msg = "unable to parse url '" + url + "'; original error: " + err.message;
@@ -1004,11 +1046,26 @@ var BackendService = (function () {
         }
         return false;
     };
+    Object.defineProperty(BackendService.prototype, "requestInfoUtils", {
+        get: function () {
+            return {
+                config: this.config,
+                createResponse$: this.createResponse$.bind(this),
+                findById: this.findById.bind(this),
+                getJsonBody: this.getJsonBody.bind(this),
+                getLocation: this.getLocation.bind(this),
+                parseRequestUrl: this.parseRequestUrl.bind(this),
+                passThruBackend: this.passThruBackend
+            };
+        },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Reset the "database" to its original state
      */
-    BackendService.prototype.resetDb = function (req) {
-        this.db = this.inMemDbService.createDb(req);
+    BackendService.prototype.resetDb = function (reqInfo) {
+        this.db = this.inMemDbService.createDb(reqInfo);
     };
     return BackendService;
 }());
@@ -1024,14 +1081,14 @@ var __extends = (undefined && undefined.__extends) || (function () {
     };
 })();
 /**
- * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
+ * For Angular `Http` simulate the behavior of a RESTy web api
+ * backed by the simple in-memory data store provided by the injected `InMemoryDbService`.
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
  *
  * ### Usage
  *
- * Create `InMemoryDataService` class that implements `InMemoryDataService`.
+ * Create an in-memory data store class that implements `InMemoryDbService`.
  * Call `forRoot` static method with this service class and optional configuration object:
  * ```
  * // other imports
@@ -1050,14 +1107,14 @@ var __extends = (undefined && undefined.__extends) || (function () {
  * export class AppModule { ... }
  * ```
  */
-var InMemoryBackendService = (function (_super) {
-    __extends(InMemoryBackendService, _super);
-    function InMemoryBackendService(injector, inMemDbService, config) {
+var HttpBackendService = (function (_super) {
+    __extends(HttpBackendService, _super);
+    function HttpBackendService(injector, inMemDbService, config) {
         var _this = _super.call(this, inMemDbService, config) || this;
         _this.injector = injector;
         return _this;
     }
-    InMemoryBackendService.prototype.createConnection = function (req) {
+    HttpBackendService.prototype.createConnection = function (req) {
         var response;
         try {
             response = this.handleRequest(req);
@@ -1065,8 +1122,7 @@ var InMemoryBackendService = (function (_super) {
         catch (error) {
             var err = error.message || error;
             var resOptions_1 = this.createErrorResponseOptions(req.url, STATUS.INTERNAL_SERVER_ERROR, "" + err);
-            var resOptions$ = this.createResponseOptions$(function () { return resOptions_1; });
-            response = this.createResponse$(this.addDelay(resOptions$));
+            response = this.createResponse$(function () { return resOptions_1; });
         }
         return {
             readyState: _angular_http.ReadyState.Done,
@@ -1075,30 +1131,31 @@ var InMemoryBackendService = (function (_super) {
         };
     };
     ////  protected overrides /////
-    InMemoryBackendService.prototype.getJsonBody = function (req) {
+    HttpBackendService.prototype.getJsonBody = function (req) {
         try {
             return req.json();
         }
         catch (e) {
-            return {};
+            var msg = "'" + req.url + "' request body-to-json error\n" + JSON.stringify(e);
+            throw new Error(msg);
         }
     };
-    InMemoryBackendService.prototype.getRequestMethod = function (req) {
+    HttpBackendService.prototype.getRequestMethod = function (req) {
         return _angular_http.RequestMethod[req.method || 0].toLowerCase();
     };
-    InMemoryBackendService.prototype.createHeaders = function (headers) {
+    HttpBackendService.prototype.createHeaders = function (headers) {
         return new _angular_http.Headers(headers);
     };
-    InMemoryBackendService.prototype.createQuery = function (search) {
+    HttpBackendService.prototype.createQueryMap = function (search) {
         return search ? new _angular_http.URLSearchParams(search).paramsMap : new Map();
     };
-    InMemoryBackendService.prototype.createResponse$ = function (resOptions$) {
+    HttpBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
         return resOptions$.map(function (opts) {
             var options = opts;
             return new _angular_http.Response(new _angular_http.ResponseOptions(options));
         });
     };
-    InMemoryBackendService.prototype.setPassThruBackend = function () {
+    HttpBackendService.prototype.setPassThruBackend = function () {
         this.passThruBackend = undefined;
         if (this.config.passThruUnknownUrl) {
             try {
@@ -1111,35 +1168,145 @@ var InMemoryBackendService = (function (_super) {
                     handle: function (req) { return xhrBackend_1.createConnection(req).response; }
                 };
             }
+            catch (e) {
+                e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
+                throw e;
+            }
+        }
+    };
+    return HttpBackendService;
+}(BackendService));
+HttpBackendService.decorators = [
+    { type: _angular_core.Injectable },
+];
+/** @nocollapse */
+HttpBackendService.ctorParameters = function () { return [
+    { type: _angular_core.Injector, },
+    { type: InMemoryDbService, },
+    { type: InMemoryBackendConfigArgs, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
+]; };
+
+var __extends$1 = (undefined && undefined.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+/**
+ * For Angular `HttpClient` simulate the behavior of a RESTy web api
+ * backed by the simple in-memory data store provided by the injected `InMemoryDbService`.
+ * Conforms mostly to behavior described here:
+ * http://www.restapitutorial.com/lessons/httpmethods.html
+ *
+ * ### Usage
+ *
+ * Create an in-memory data store class that implements `InMemoryDbService`.
+ * Call `config` static method with this service class and optional configuration object:
+ * ```
+ * // other imports
+ * import { HttpClientModule }     from '@angular/http';
+ * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+ *
+ * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
+ * @NgModule({
+ *  imports: [
+ *    HttpModule,
+ *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
+ *    ...
+ *  ],
+ *  ...
+ * })
+ * export class AppModule { ... }
+ * ```
+ */
+var HttpClientBackendService = (function (_super) {
+    __extends$1(HttpClientBackendService, _super);
+    function HttpClientBackendService(inMemDbService, config, xhrFactory) {
+        var _this = _super.call(this, inMemDbService, config) || this;
+        _this.xhrFactory = xhrFactory;
+        return _this;
+    }
+    HttpClientBackendService.prototype.handle = function (req) {
+        try {
+            return this.handleRequest(req);
+        }
+        catch (error) {
+            var err = error.message || error;
+            var resOptions_1 = this.createErrorResponseOptions(req.url, STATUS.INTERNAL_SERVER_ERROR, "" + err);
+            return this.createResponse$(function () { return resOptions_1; });
+        }
+    };
+    ////  protected overrides /////
+    HttpClientBackendService.prototype.getJsonBody = function (req) {
+        return req.body;
+    };
+    HttpClientBackendService.prototype.getRequestMethod = function (req) {
+        return (req.method || 'get').toLowerCase();
+    };
+    HttpClientBackendService.prototype.createHeaders = function (headers) {
+        return new _angular_common_http.HttpHeaders(headers);
+    };
+    HttpClientBackendService.prototype.createQueryMap = function (search) {
+        var map = new Map();
+        if (search) {
+            var params_1 = new _angular_common_http.HttpParams({ fromString: search });
+            params_1.keys().forEach(function (p) { return map.set(p, params_1.getAll(p)); });
+        }
+        return map;
+    };
+    HttpClientBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
+        return resOptions$.map(function (opts) { return new _angular_common_http.HttpResponse(opts); });
+    };
+    HttpClientBackendService.prototype.setPassThruBackend = function () {
+        this.passThruBackend = undefined;
+        if (this.config.passThruUnknownUrl) {
+            try {
+                this.passThruBackend = new _angular_common_http.HttpXhrBackend(this.xhrFactory);
+            }
             catch (ex) {
                 ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
                 throw ex;
             }
         }
     };
-    return InMemoryBackendService;
+    return HttpClientBackendService;
 }(BackendService));
-InMemoryBackendService.decorators = [
+HttpClientBackendService.decorators = [
     { type: _angular_core.Injectable },
 ];
 /** @nocollapse */
-InMemoryBackendService.ctorParameters = function () { return [
-    { type: _angular_core.Injector, },
+HttpClientBackendService.ctorParameters = function () { return [
     { type: InMemoryDbService, },
     { type: InMemoryBackendConfigArgs, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
+    { type: _angular_common_http.XhrFactory, },
 ]; };
 
+// Internal - Creates the in-mem backend for the Http module
 // AoT requires factory to be exported
-function inMemoryBackendServiceFactory(injector, dbService, options) {
-    var backend = new InMemoryBackendService(injector, dbService, options);
+function httpInMemBackendServiceFactory(injector, dbService, options) {
+    var backend = new HttpBackendService(injector, dbService, options);
+    return backend;
+}
+// Internal - Creates the in-mem backend for the HttpClient module
+// AoT requires factory to be exported
+function httpClientInMemBackendServiceFactory(dbService, options, xhrFactory) {
+    var backend = new HttpClientBackendService(dbService, options, xhrFactory);
     return backend;
 }
 var InMemoryWebApiModule = (function () {
     function InMemoryWebApiModule() {
     }
     /**
-    *  Prepare in-memory-web-api in the root/boot application module
+    *  Redirect both Angular `Http` and `HttpClient` XHR calls
+    *  to in-memory data store that implements `InMemoryDbService`.
     *  with class that implements InMemoryDbService and creates an in-memory database.
+    *
+    *  Usually imported in the root application module.
+    *  Can import in a lazy feature module too, which will shadow modules loaded earlier
     *
     * @param {Type} dbCreator - Class that creates seed data for in-memory database. Must implement InMemoryDbService.
     * @param {InMemoryBackendConfigArgs} [options]
@@ -1154,19 +1321,28 @@ var InMemoryWebApiModule = (function () {
             providers: [
                 { provide: InMemoryDbService, useClass: dbCreator },
                 { provide: InMemoryBackendConfig, useValue: options },
+                { provide: _angular_http.XHRBackend,
+                    useFactory: httpInMemBackendServiceFactory,
+                    deps: [_angular_core.Injector, InMemoryDbService, InMemoryBackendConfig] },
+                { provide: _angular_common_http.HttpBackend,
+                    useFactory: httpClientInMemBackendServiceFactory,
+                    deps: [InMemoryDbService, InMemoryBackendConfig, _angular_common_http.XhrFactory] }
             ]
         };
+    };
+    /**
+     *
+     * Enable and configure the in-memory web api in a lazy-loaded feature module.
+     * Same as `forRoot`.
+     * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
+     */
+    InMemoryWebApiModule.forFeature = function (dbCreator, options) {
+        return InMemoryWebApiModule.forRoot(dbCreator, options);
     };
     return InMemoryWebApiModule;
 }());
 InMemoryWebApiModule.decorators = [
-    { type: _angular_core.NgModule, args: [{
-                // Must useFactory for AoT
-                // https://github.com/angular/angular/issues/11178
-                providers: [{ provide: _angular_http.XHRBackend,
-                        useFactory: inMemoryBackendServiceFactory,
-                        deps: [_angular_core.Injector, InMemoryDbService, InMemoryBackendConfig] }]
-            },] },
+    { type: _angular_core.NgModule, args: [{},] },
 ];
 /** @nocollapse */
 InMemoryWebApiModule.ctorParameters = function () { return []; };
@@ -1176,12 +1352,15 @@ exports.STATUS = STATUS;
 exports.STATUS_CODE_INFO = STATUS_CODE_INFO;
 exports.getStatusText = getStatusText;
 exports.isSuccess = isSuccess;
-exports.InMemoryBackendService = InMemoryBackendService;
-exports.inMemoryBackendServiceFactory = inMemoryBackendServiceFactory;
+exports.HttpBackendService = HttpBackendService;
+exports.HttpClientBackendService = HttpClientBackendService;
+exports.httpInMemBackendServiceFactory = httpInMemBackendServiceFactory;
+exports.httpClientInMemBackendServiceFactory = httpClientInMemBackendServiceFactory;
 exports.InMemoryWebApiModule = InMemoryWebApiModule;
 exports.InMemoryDbService = InMemoryDbService;
 exports.InMemoryBackendConfigArgs = InMemoryBackendConfigArgs;
 exports.InMemoryBackendConfig = InMemoryBackendConfig;
+exports.parseUri = parseUri;
 exports.removeTrailingSlash = removeTrailingSlash;
 
 Object.defineProperty(exports, '__esModule', { value: true });

@@ -44,11 +44,14 @@ gulp.task('clean', function() {
     clean(['src/app/**.*js','src/**/*.js.map', 'src/**/*.d.ts','src/**/*.metadata.json']),
     clean(['src/in-mem/node_modules/**/*.*','src/in-mem/**.*js','src/**/*.ngsummary.json', 'src/**/*.ngfactory.ts']),
     clean([
-       './http-status-codes.*',
-       './http-backend.service.*',
-       './in-memory-web-api.module.*',
-       './index.*',
-       './bundles/in-memory-web-api.umd.js'
+      './backend.service.*',
+      './http-status-codes.*',
+      './http-backend.service.*',
+      './http-client-backend.service.*',
+      './interfaces.*',
+      './in-memory-web-api.module.*',
+      './index.*',
+      './bundles/in-memory-web-api.umd.js'
     ])
   ])
   .then(() => console.log('Cleaned successfully'));

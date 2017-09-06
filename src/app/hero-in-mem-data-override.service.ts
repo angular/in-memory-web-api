@@ -3,16 +3,14 @@
  */
 import { Injectable } from '@angular/core';
 
-import { Headers, Response,
-  ResponseOptions, ResponseOptionsArgs, URLSearchParams
-} from '@angular/http';
+import { URLSearchParams } from '@angular/http';
 
+// tslint:disable-next-line:no-unused-variable
 import { Observable } from 'rxjs/Observable';
-import { Observer }   from 'rxjs/Observer';
 
-import { HttpMethodInterceptorArgs, ParsedUrl, RequestInfo } from '../in-mem/interfaces';
+import { ParsedRequestUrl, RequestInfo, RequestInfoUtilities, ResponseOptions } from '../in-mem/interfaces';
 
-import { getStatusText, isSuccess, STATUS } from '../in-mem/http-status-codes';
+import { getStatusText, STATUS } from '../in-mem/http-status-codes';
 
 import { HeroInMemDataService } from './hero-in-mem-data.service';
 
@@ -25,109 +23,74 @@ const villains = [
 @Injectable()
 export class HeroInMemDataOverrideService extends HeroInMemDataService {
 
-  // parseUrl override
-  parseUrl(url: string): ParsedUrl {
-    try {
-      const loc = this.getLocation(url);
-      let drop = 0;
-      let urlRoot = '';
-      if (loc.host !== undefined) {
-        // url for a server on a different host!
-        // assume its collection is actually here too.
-        drop = 1; // the leading slash
-        urlRoot = loc.protocol + '//' + loc.host + '/';
-      }
-      const path = loc.pathname.substring(drop);
-      let [base, collectionName, id] = path.split('/');
-      const resourceUrl = urlRoot + base + '/' + collectionName + '/';
-      [collectionName] = collectionName.split('.'); // ignore anything after the '.', e.g., '.json'
-      const search = loc.search && loc.search.substr(1);
-      const query = search ? new URLSearchParams(search).paramsMap : new Map<string, string[]>();
-
-      const result = { base, collectionName, id, query, resourceUrl };
-      console.log('override parseUrl:');
-      console.log(result);
-      return result;
-
-    } catch (err) {
-      const msg = `unable to parse url '${url}'; original error: ${err.message}`;
-      throw new Error(msg);
+  // Overrides id generator and delivers next available `id`, starting with 1001.
+  genId<T extends { id: any }>(collection: T[]): any {
+    console.log('genId override');
+    if (collection) {
+      return 1 + collection.reduce((prev, curr) => Math.max(prev, curr.id || 0), 1000);
     }
   }
 
-  // intercept ResponseOptions from default HTTP method handlers to log them
-  responseInterceptor(response: ResponseOptions, reqInfo: RequestInfo) {
-
-    const method = reqInfo.method.toUpperCase();
-    const body = JSON.stringify(response.body || {});
-    console.log(`responseInterceptor: ${method} ${reqInfo.req.url}: \n${body}`);
-
-    return response;
+  // HTTP GET interceptor
+  get(reqInfo: RequestInfo) {
+    const collectionName = reqInfo.collectionName;
+    if (collectionName === 'villains') {
+      return this.getVillains(reqInfo);
+    }
+    return undefined; // let the default GET handle all others
   }
 
   // HTTP GET interceptor handles requests for villains
-  protected get(interceptorArgs: HttpMethodInterceptorArgs) {
-
-    const collectionName = interceptorArgs.requestInfo.collectionName;
-
-    if (collectionName !== 'villains') {
-      return undefined; // let the default GET handle it.
-    }
-
-    const {id, headers, url} = interceptorArgs.requestInfo;
-
-    return this.createResponse$(() => {
+  private getVillains(reqInfo: RequestInfo) {
+    return reqInfo.utils.createResponse$(() => {
       console.log('HTTP GET override');
 
       const collection = villains.slice();
+      const id = reqInfo.id;
 
       // tslint:disable-next-line:triple-equals
-      const data = id == undefined ? collection : this.findById(collection, id);
+      const data = id == undefined ? collection : reqInfo.utils.findById(collection, id);
 
-      const options: ResponseOptionsArgs = data ?
+      const options: ResponseOptions = data ?
         {
           body: { data },
           status: STATUS.OK
         } :
         {
-          body: { error: `'${collectionName}' with id='${id}' not found` },
+          body: { error: `'Villains' with id='${id}' not found` },
           status: STATUS.NOT_FOUND
         };
-
-      return this.createResponse(options, headers as Headers, url);
+      return this.finishOptions(options, reqInfo);
     });
   }
 
-  /////////// private ///////////////
+  // parseRequestUrl override that logs the result
+  // a more interesting example would give special treatment to some URLs
+  // while leaving the others for the default parser.
+  parseRequestUrl(url: string, utils: RequestInfoUtilities): ParsedRequestUrl {
+    const parsed = utils.parseRequestUrl(url);
+    console.log('parseRequestUrl override:', parsed);
+    return parsed;
+  }
 
-  private createResponse(options: ResponseOptionsArgs, headers: Headers, url: string) {
+  // intercept ResponseOptions from default HTTP method handlers
+  // add a response header and report interception to console.log
+  responseInterceptor(resOptions: ResponseOptions, reqInfo: RequestInfo) {
+
+    resOptions.headers.set('x-test', 'test-header');
+    const method = reqInfo.method.toUpperCase();
+    const body = JSON.stringify(resOptions);
+    console.log(`responseInterceptor: ${method} ${reqInfo.req.url}: \n${body}`);
+
+    return resOptions;
+  }
+
+  /////////// helpers ///////////////
+
+  private finishOptions(options: ResponseOptions, {headers, url}: RequestInfo) {
     options.statusText = getStatusText(options.status);
-    options.headers = headers as Headers;
+    options.headers = headers;
     options.url = url;
-    return new Response(new ResponseOptions(options));
+    return options;
   }
-
-  // Return a "cold" observable that won't be executed until something subscribes.
-  private createResponse$(responseFactory: () => Response) {
-    return new Observable<Response>((observer: Observer<Response>) => {
-      const response = responseFactory();
-      if (isSuccess(response.status)) {
-        observer.next(response);
-        observer.complete();
-      } else {
-        observer.error(response);
-      }
-      return () => { }; // unsubscribe function
-    });
-  };
-
-  private findById<T extends { id: number }>(collection: T[], id: number): T {
-    return collection.find((item: T) => item.id === id);
-  }
-
-  private getLocation(href: string) {
-    const l = document.createElement('a');
-    l.href = href;
-    return l;
-  };
 }

@@ -18,7 +18,7 @@ BREAKING CHANGES: Massive refactoring.
 Many low-level and customization options have changed.
 Apps that stuck with defaults should be (mostly) OK.
 
-* added support for `HttpClient`
+* added support for `HttpClient` -> renaming of backend service classes
 * added tests
 * refactor existing code to support tests
 * correct bugs and clarify choices as result of test
@@ -30,6 +30,9 @@ Apps that stuck with defaults should be (mostly) OK.
 so you can optionally reset the database dynamically
 to arbitrary initial states (issue #128)
 * when HTTP method interceptor returns null/undefined, continue with service's default processing (pr #120)
+* can substitute your own id generator, `geniD`
+* parseUrl -> parseRequestUrl
+* utility methods exposed in `RequestInfo.utils`
 * reorganize files into src/app and src/in-mem
 * adjust gulp tasks accordingly
 
