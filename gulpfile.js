@@ -45,7 +45,7 @@ gulp.task('clean', function() {
     clean(['src/in-mem/node_modules/**/*.*','src/in-mem/**.*js','src/**/*.ngsummary.json', 'src/**/*.ngfactory.ts']),
     clean([
        './http-status-codes.*',
-       './in-memory-backend.service.*',
+       './http-backend.service.*',
        './in-memory-web-api.module.*',
        './index.*',
        './bundles/in-memory-web-api.umd.js'

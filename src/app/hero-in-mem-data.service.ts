@@ -6,7 +6,7 @@
  */
 import { Injectable } from '@angular/core';
 import { Request } from '@angular/http';
-import { InMemoryDbService } from '../in-mem/in-memory-backend.service';
+import { InMemoryDbService } from '../in-mem/interfaces';
 
 @Injectable()
 export class HeroInMemDataService implements InMemoryDbService {
@@ -19,7 +19,7 @@ export class HeroInMemDataService implements InMemoryDbService {
     ];
 
     // demonstrate POST commands/resetDb with options
-    if (req) {
+    if (req instanceof Request) {
       const body = JSON.parse(req.getBody() || '{}');
       if (body.clear === true) { heroes.length = 0; }
     }

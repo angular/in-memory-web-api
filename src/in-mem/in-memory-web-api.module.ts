@@ -4,9 +4,10 @@ import { XHRBackend } from '@angular/http';
 import {
   InMemoryBackendConfigArgs,
   InMemoryBackendConfig,
-  InMemoryBackendService,
   InMemoryDbService
-} from './in-memory-backend.service';
+} from './interfaces';
+
+import { InMemoryBackendService } from './http-backend.service';
 
 // AoT requires factory to be exported
 export function inMemoryBackendServiceFactory(

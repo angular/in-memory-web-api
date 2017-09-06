@@ -451,4 +451,15 @@ export var STATUS_CODE_INFO = {
         'spec_href': 'http://tools.ietf.org/html/rfc6585#section-6'
     }
 };
+/**
+ * get the status text from StatusCode
+ */
+export function getStatusText(status) {
+    return STATUS_CODE_INFO[status].text || 'Unknown Status';
+}
+/**
+ * Returns true if the the Http Status Code is 200-299 (success)
+ */
+export function isSuccess(status) { return status >= 200 && status < 300; }
+;
 //# sourceMappingURL=http-status-codes.js.map

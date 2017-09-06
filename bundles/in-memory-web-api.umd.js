@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@angular/core'), require('@angular/http'), require('rxjs/Observable'), require('rxjs/add/operator/delay')) :
-	typeof define === 'function' && define.amd ? define(['exports', '@angular/core', '@angular/http', 'rxjs/Observable', 'rxjs/add/operator/delay'], factory) :
-	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = global.ng.inMemoryWebApi || {}),global.ng.core,global.ng.http,global.Rx));
-}(this, (function (exports,_angular_core,_angular_http,rxjs_Observable) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/Observable'), require('rxjs/add/operator/delay'), require('@angular/core'), require('@angular/http'), require('rxjs/add/operator/map')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'rxjs/Observable', 'rxjs/add/operator/delay', '@angular/core', '@angular/http', 'rxjs/add/operator/map'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = {}),global.Rx,global.Rx,global.ng.core,global.ng.http));
+}(this, (function (exports,rxjs_Observable,rxjs_add_operator_delay,_angular_core,_angular_http) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
@@ -457,45 +457,17 @@ var STATUS_CODE_INFO = {
         'spec_href': 'http://tools.ietf.org/html/rfc6585#section-6'
     }
 };
+/**
+ * get the status text from StatusCode
+ */
+function getStatusText(status) {
+    return STATUS_CODE_INFO[status].text || 'Unknown Status';
+}
+/**
+ * Returns true if the the Http Status Code is 200-299 (success)
+ */
+function isSuccess(status) { return status >= 200 && status < 300; }
 
-////////////  HELPERS ///////////
-/**
- * Create an error Response from an HTTP status code and error message
- */
-function createErrorResponse(req, status, message) {
-    return new _angular_http.ResponseOptions({
-        body: { 'error': "" + message },
-        url: req.url,
-        headers: new _angular_http.Headers({ 'Content-Type': 'application/json' }),
-        status: status
-    });
-}
-/**
- * Create an Observable response from response options.
- */
-function createObservableResponse(req, resOptions) {
-    return new rxjs_Observable.Observable(function (responseObserver) {
-        emitResponse(responseObserver, req, resOptions);
-        return function () { }; // unsubscribe function
-    });
-}
-/**
- * Create a response from response options
- * and tell "ResponseObserver" (an `Observer<Response>`) to emit it.
- * The observer's observable is either completed or in error state after call.
- */
-function emitResponse(responseObserver, req, resOptions) {
-    resOptions.url = resOptions.url || req.url; // make sure url is set
-    resOptions = setStatusText(resOptions);
-    var res = new _angular_http.Response(resOptions);
-    if (isSuccess(res.status)) {
-        responseObserver.next(res);
-        responseObserver.complete();
-    }
-    else {
-        responseObserver.error(res);
-    }
-}
 /**
 * Interface for a class that creates an in-memory database
 *
@@ -519,9 +491,6 @@ var InMemoryBackendConfigArgs = (function () {
     }
     return InMemoryBackendConfigArgs;
 }());
-function removeTrailingSlash(path) {
-    return path.replace(/\/$/, '');
-}
 /////////////////////////////////
 /**
 *  InMemoryBackendService configuration options
@@ -537,103 +506,51 @@ var InMemoryBackendConfig = (function () {
         Object.assign(this, {
             // default config:
             caseSensitiveSearch: false,
-            defaultResponseOptions: new _angular_http.BaseResponseOptions(),
+            dataEncapsulation: true,
             delay: 500,
             delete404: false,
             passThruUnknownUrl: false,
             post204: true,
+            post409: false,
             put204: true,
+            put404: false,
             apiBase: undefined,
             host: undefined,
             rootPath: undefined // default value is actually set in InMemoryBackendService ctor
         }, config);
     }
-    InMemoryBackendConfig.decorators = [
-        { type: _angular_core.Injectable },
-    ];
-    /** @nocollapse */
-    InMemoryBackendConfig.ctorParameters = function () { return [
-        { type: InMemoryBackendConfigArgs, },
-    ]; };
     return InMemoryBackendConfig;
 }());
-/**
- * Returns true if the the Http Status Code is 200-299 (success)
- */
-function isSuccess(status) { return status >= 200 && status < 300; }
+InMemoryBackendConfig.decorators = [
+    { type: _angular_core.Injectable },
+];
+/** @nocollapse */
+InMemoryBackendConfig.ctorParameters = function () { return [
+    { type: InMemoryBackendConfigArgs, },
+]; };
+function removeTrailingSlash(path) {
+    return path.replace(/\/$/, '');
+}
 
 /**
- * Set the status text in a response:
- */
-function setStatusText(options) {
-    try {
-        var statusCode = STATUS_CODE_INFO[options.status];
-        options['statusText'] = statusCode ? statusCode.text : 'Unknown Status';
-        return options;
-    }
-    catch (err) {
-        return new _angular_http.ResponseOptions({
-            status: STATUS.INTERNAL_SERVER_ERROR,
-            statusText: 'Invalid Server Operation'
-        });
-    }
-}
-////////////  InMemoryBackendService ///////////
-/**
+ * Base class for in-memory web api back-ends
  * Simulate the behavior of a RESTy web api
  * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
- *
- * ### Usage
- *
- * Create `InMemoryDataService` class that implements `InMemoryDataService`.
- * Call `forRoot` static method with this service class and optional configuration object:
- * ```
- * // other imports
- * import { HttpModule }           from '@angular/http';
- * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
- *
- * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
- * @NgModule({
- *  imports: [
- *    HttpModule,
- *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
- *    ...
- *  ],
- *  ...
- * })
- * export class AppModule { ... }
- * ```
  */
-var InMemoryBackendService = (function () {
-    function InMemoryBackendService(injector, inMemDbService, config) {
-        this.injector = injector;
+var BackendService = (function () {
+    function BackendService(inMemDbService, config) {
+        if (config === void 0) { config = {}; }
         this.inMemDbService = inMemDbService;
         this.config = new InMemoryBackendConfig();
         this.resetDb();
         var loc = this.getLocation('/');
         this.config.host = loc.host; // default to app web server host
         this.config.rootPath = loc.pathname; // default to path when app is served (e.g.'/')
-        Object.assign(this.config, config || {});
+        Object.assign(this.config, config);
         this.setPassThruBackend();
     }
-    InMemoryBackendService.prototype.createConnection = function (req) {
-        var response;
-        try {
-            response = this.handleRequest(req);
-        }
-        catch (error) {
-            var err = error.message || error;
-            var options = createErrorResponse(req, STATUS.INTERNAL_SERVER_ERROR, "" + err);
-            response = this.addDelay(createObservableResponse(req, options));
-        }
-        return {
-            readyState: _angular_http.ReadyState.Done,
-            request: req,
-            response: response
-        };
-    };
     ////  protected /////
     /**
      * Process Request and return an Observable of Http Response object
@@ -656,62 +573,65 @@ var InMemoryBackendService = (function () {
      *     If the injected inMemDbService defines an HTTP method (lowercase)
      *     The request is forwarded to that method as in
      *     `inMemDbService.get(httpMethodInterceptorArgs)`
-     *     which must return an `Observable<Response>`
+     *     which must return either an Observable of the response type
+     *     for this http library or null|undefined (which means "keep processing").
      */
-    InMemoryBackendService.prototype.handleRequest = function (req) {
-        var parsed = this.inMemDbService['parseUrl'] ?
-            // parse with override method
-            this.inMemDbService['parseUrl'](req.url) :
-            // parse with default url parser
-            this.parseUrl(req.url);
-        var base = parsed.base, collectionName = parsed.collectionName, id = parsed.id, query = parsed.query, resourceUrl = parsed.resourceUrl;
+    BackendService.prototype.handleRequest = function (req) {
+        var _this = this;
+        var url = req.url;
+        var parser = this.inMemDbService['parseUrl'];
+        var parsed = parser ? parser(url) : this.parseUrl(url);
+        var collectionName = parsed.collectionName;
         var collection = this.db[collectionName];
         var reqInfo = {
             req: req,
-            base: base,
+            base: parsed.base,
             collection: collection,
             collectionName: collectionName,
-            headers: new _angular_http.Headers({ 'Content-Type': 'application/json' }),
-            id: this.parseId(collection, id),
-            query: query,
-            resourceUrl: resourceUrl
+            headers: this.createHeaders({ 'Content-Type': 'application/json' }),
+            id: this.parseId(collection, parsed.id),
+            method: this.getRequestMethod(req),
+            query: parsed.query,
+            resourceUrl: parsed.resourceUrl,
+            url: url
         };
-        var reqMethodName = _angular_http.RequestMethod[req.method || 0].toLowerCase();
         var resOptions;
         if (/commands\/$/i.test(reqInfo.base)) {
             return this.commands(reqInfo);
         }
-        else if (this.inMemDbService[reqMethodName]) {
-            // InMemoryDbService has an overriding interceptor for this HTTP method; call it
-            // The interceptor result must be an Observable<Response>
+        if (this.inMemDbService[reqInfo.method]) {
+            // InMemoryDbService has an overriding interceptor for this HTTP method; call it.
             var interceptorArgs = {
                 requestInfo: reqInfo,
                 db: this.db,
                 config: this.config,
                 passThruBackend: this.passThruBackend
             };
-            var interceptorResponse = this.inMemDbService[reqMethodName](interceptorArgs);
-            return this.addDelay(interceptorResponse);
+            var interceptorResponse = this.inMemDbService[reqInfo.method](interceptorArgs);
+            if (interceptorResponse) {
+                return this.addDelay(interceptorResponse);
+            }
         }
-        else if (reqInfo.collection) {
+        if (reqInfo.collection) {
             // request is for a collection created by the InMemoryDbService
-            return this.addDelay(this.collectionHandler(reqInfo));
+            var resOptions$ = this.createResponseOptions$(function () { return _this.collectionHandler(reqInfo); });
+            return this.createResponse$(this.addDelay(resOptions$));
         }
         else if (this.passThruBackend) {
-            // Passes request thru to a "real" backend which returns an Observable<Response>
-            // BAIL OUT with this Observable<Response>
-            return this.passThruBackend.createConnection(req).response;
+            // Passes request thru to a "real" backend.
+            return this.passThruBackend.handle(req);
         }
         else {
             // can't handle this request
-            resOptions = createErrorResponse(req, STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
-            return this.addDelay(createObservableResponse(req, resOptions));
+            resOptions = this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Collection '" + collectionName + "' not found");
+            var resOptions$ = this.createResponseOptions$(function () { return resOptions; });
+            return this.createResponse$(this.addDelay(resOptions$));
         }
     };
     /**
      * Add configured delay to response observable unless delay === 0
      */
-    InMemoryBackendService.prototype.addDelay = function (response) {
+    BackendService.prototype.addDelay = function (response) {
         var delay = this.config.delay;
         return delay === 0 ? response : response.delay(delay || 500);
     };
@@ -720,11 +640,11 @@ var InMemoryBackendService = (function () {
      * This impl only supports RegExp queries on string properties of the collection
      * ANDs the conditions together
      */
-    InMemoryBackendService.prototype.applyQuery = function (collection, query) {
+    BackendService.prototype.applyQuery = function (collection, query) {
         // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
         var conditions = [];
         var caseSensitive = this.config.caseSensitiveSearch ? undefined : 'i';
-        query.paramsMap.forEach(function (value, name) {
+        query.forEach(function (value, name) {
             value.forEach(function (v) { return conditions.push({ name: name, rx: new RegExp(decodeURI(v), caseSensitive) }); });
         });
         var len = conditions.length;
@@ -743,38 +663,38 @@ var InMemoryBackendService = (function () {
             return ok;
         });
     };
-    InMemoryBackendService.prototype.clone = function (data) {
+    BackendService.prototype.bodify = function (data) {
+        var body = this.clone(data);
+        return this.config.dataEncapsulation ? { data: body } : body;
+    };
+    BackendService.prototype.clone = function (data) {
         return JSON.parse(JSON.stringify(data));
     };
-    InMemoryBackendService.prototype.collectionHandler = function (reqInfo) {
-        var _this = this;
-        var req = reqInfo.req;
-        return new rxjs_Observable.Observable(function (responseObserver) {
-            var resOptions;
-            switch (req.method) {
-                case _angular_http.RequestMethod.Get:
-                    resOptions = _this.get(reqInfo);
-                    break;
-                case _angular_http.RequestMethod.Post:
-                    resOptions = _this.post(reqInfo);
-                    break;
-                case _angular_http.RequestMethod.Put:
-                    resOptions = _this.put(reqInfo);
-                    break;
-                case _angular_http.RequestMethod.Delete:
-                    resOptions = _this.delete(reqInfo);
-                    break;
-                default:
-                    resOptions = createErrorResponse(req, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
-                    break;
-            }
-            // If `inMemDbService.responseInterceptor` exists, let it morph the response options
-            if (_this.inMemDbService['responseInterceptor']) {
-                resOptions = _this.inMemDbService['responseInterceptor'](resOptions, reqInfo);
-            }
-            emitResponse(responseObserver, reqInfo.req, resOptions);
-            return function () { }; // unsubscribe function
-        });
+    BackendService.prototype.collectionHandler = function (reqInfo) {
+        // const req = reqInfo.req;
+        var resOptions;
+        switch (reqInfo.method) {
+            case 'get':
+                resOptions = this.get(reqInfo);
+                break;
+            case 'post':
+                resOptions = this.post(reqInfo);
+                break;
+            case 'put':
+                resOptions = this.put(reqInfo);
+                break;
+            case 'delete':
+                resOptions = this.delete(reqInfo);
+                break;
+            default:
+                resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+                break;
+        }
+        // If `inMemDbService.responseInterceptor` exists, let it morph the response options
+        if (this.inMemDbService['responseInterceptor']) {
+            resOptions = this.inMemDbService['responseInterceptor'](resOptions, reqInfo);
+        }
+        return resOptions;
     };
     /**
      * When the last segment of the `base` path is "commands", the `collectionName` is the command
@@ -791,60 +711,100 @@ var InMemoryBackendService = (function () {
      *   http.get('commands/config');
      *   http.post('commands/config', '{"delay":1000}');
      */
-    InMemoryBackendService.prototype.commands = function (reqInfo) {
+    BackendService.prototype.commands = function (reqInfo) {
         var command = reqInfo.collectionName.toLowerCase();
-        var method = reqInfo.req.method;
+        var method = reqInfo.method;
         var resOptions;
         switch (command) {
             case 'resetdb':
-                this.resetDb();
-                resOptions = new _angular_http.ResponseOptions({ status: STATUS.OK });
+                this.resetDb(reqInfo.req);
+                resOptions = { status: STATUS.OK };
                 break;
             case 'config':
-                if (method === _angular_http.RequestMethod.Get) {
-                    resOptions = new _angular_http.ResponseOptions({
+                if (method === 'get') {
+                    resOptions = {
                         body: this.clone(this.config),
                         status: STATUS.OK
-                    });
+                    };
                 }
                 else {
                     // Be nice ... any other method is a config update
-                    var body = JSON.parse(reqInfo.req.text() || '{}');
+                    var body = this.getJsonBody(reqInfo.req);
                     Object.assign(this.config, body);
                     this.setPassThruBackend();
-                    resOptions = new _angular_http.ResponseOptions({ status: STATUS.NO_CONTENT });
+                    resOptions = { status: STATUS.NO_CONTENT };
                 }
                 break;
             default:
-                resOptions = createErrorResponse(reqInfo.req, STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
+                resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
-        return createObservableResponse(reqInfo.req, resOptions);
+        resOptions.url = reqInfo.url;
+        var resOptions$ = this.createResponseOptions$(function () { return resOptions; });
+        return this.createResponse$(resOptions$);
     };
-    InMemoryBackendService.prototype.delete = function (_a) {
-        var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
-        // tslint:disable-next-line:triple-equals
-        if (id == undefined) {
-            return createErrorResponse(req, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
-        }
-        var exists = this.removeById(collection, id);
-        return new _angular_http.ResponseOptions({
-            headers: headers,
-            status: (exists || !this.config.delete404) ? STATUS.NO_CONTENT : STATUS.NOT_FOUND
+    BackendService.prototype.createErrorResponseOptions = function (url, status, message) {
+        return {
+            body: { error: "" + message },
+            url: url,
+            headers: this.createHeaders({ 'Content-Type': 'application/json' }),
+            status: status
+        };
+    };
+    /**
+     * Create an Observable of ResponseOptions.
+     */
+    BackendService.prototype.createResponseOptions$ = function (resOptionsFactory) {
+        return new rxjs_Observable.Observable(function (responseObserver) {
+            var resOptions = resOptionsFactory();
+            var status = resOptions.status;
+            try {
+                resOptions.statusText = getStatusText(status);
+            }
+            catch (e) { }
+            if (isSuccess(status)) {
+                responseObserver.next(resOptions);
+                responseObserver.complete();
+            }
+            else {
+                responseObserver.error(resOptions);
+            }
+            return function () { }; // unsubscribe function
         });
     };
-    InMemoryBackendService.prototype.findById = function (collection, id) {
+    BackendService.prototype.delete = function (_a) {
+        var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
+        // tslint:disable-next-line:triple-equals
+        if (id == undefined) {
+            return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
+        }
+        var exists = this.removeById(collection, id);
+        return {
+            headers: headers,
+            status: (exists || !this.config.delete404) ? STATUS.NO_CONTENT : STATUS.NOT_FOUND
+        };
+    };
+    /**
+     *
+     * @param collection
+     * @param id
+     */
+    BackendService.prototype.findById = function (collection, id) {
         return collection.find(function (item) { return item.id === id; });
     };
-    InMemoryBackendService.prototype.genId = function (collection) {
-        // assumes numeric ids
+    /**
+     * Generate the next available id for item in this collection
+     * @param collection - collection of items with `id` key property
+     * This default implementation assumes integer ids.
+     */
+    BackendService.prototype.genId = function (collection) {
         var maxId = 0;
         collection.reduce(function (prev, item) {
             maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
         }, undefined);
         return maxId + 1;
     };
-    InMemoryBackendService.prototype.get = function (_a) {
-        var id = _a.id, query = _a.query, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
+    BackendService.prototype.get = function (_a) {
+        var id = _a.id, query = _a.query, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
         var data = collection;
         // tslint:disable-next-line:triple-equals
         if (id != undefined && id !== '') {
@@ -854,15 +814,15 @@ var InMemoryBackendService = (function () {
             data = this.applyQuery(collection, query);
         }
         if (!data) {
-            return createErrorResponse(req, STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
+            return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
         }
-        return new _angular_http.ResponseOptions({
-            body: { data: this.clone(data) },
+        return {
+            body: this.bodify(data),
             headers: headers,
             status: STATUS.OK
-        });
+        };
     };
-    InMemoryBackendService.prototype.getLocation = function (href) {
+    BackendService.prototype.getLocation = function (href) {
         if (!href.startsWith('http')) {
             // get the document iff running in browser
             var doc = (typeof document === 'undefined') ? undefined : document;
@@ -882,7 +842,7 @@ var InMemoryBackendService = (function () {
     };
     
     // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
-    InMemoryBackendService.prototype.parseuri = function (str) {
+    BackendService.prototype.parseuri = function (str) {
         // tslint:disable-next-line:max-line-length
         var URL_REGEX = /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/;
         var key = ['source', 'protocol', 'authority', 'userInfo', 'user', 'password', 'host', 'port',
@@ -895,18 +855,13 @@ var InMemoryBackendService = (function () {
         }
         return uri;
     };
-    InMemoryBackendService.prototype.indexOf = function (collection, id) {
+    BackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
     };
     // tries to parse id as number if collection item.id is a number.
     // returns the original param id otherwise.
-    InMemoryBackendService.prototype.parseId = function (collection, id) {
-        // tslint:disable-next-line:triple-equals
-        if (!collection || id == undefined) {
-            return undefined;
-        }
-        var isNumberId = collection[0] && typeof collection[0].id === 'number';
-        if (isNumberId) {
+    BackendService.prototype.parseId = function (collection, id) {
+        if (collection && collection[0] && typeof collection[0].id === 'number') {
             var idNum = parseFloat(id);
             return isNaN(idNum) ? id : idNum;
         }
@@ -929,7 +884,7 @@ var InMemoryBackendService = (function () {
      *
      * To replace this default method, assign your alternative to your InMemDbService['parseUrl']
      */
-    InMemoryBackendService.prototype.parseUrl = function (url) {
+    BackendService.prototype.parseUrl = function (url) {
         try {
             var loc = this.getLocation(url);
             var drop = this.config.rootPath.length;
@@ -966,7 +921,8 @@ var InMemoryBackendService = (function () {
             // ignore anything after a '.' (e.g.,the "json" in "customers.json")
             collectionName = collectionName && collectionName.split('.')[0];
             var id = pathSegments[segmentIx++];
-            var query = loc.search && new _angular_http.URLSearchParams(loc.search.substr(1));
+            var search = loc.search && loc.search.substr(1);
+            var query = this.createQuery(search);
             var resourceUrl = urlRoot + apiBase + collectionName + '/';
             return { base: apiBase, collectionName: collectionName, id: id, query: query, resourceUrl: resourceUrl };
         }
@@ -975,57 +931,72 @@ var InMemoryBackendService = (function () {
             throw new Error(msg);
         }
     };
-    InMemoryBackendService.prototype.post = function (_a) {
-        var collection = _a.collection, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl;
-        var item = JSON.parse(req.text());
+    // Create entity
+    // Can update an existing entity too if post409 is false.
+    BackendService.prototype.post = function (_a) {
+        var collection = _a.collection, /* collectionName, */ headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
+        var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
             item.id = id || this.genId(collection);
         }
-        // ignore the request id, if any. Alternatively,
-        // could reject request if id differs from item.id
-        id = item.id;
-        var existingIx = this.indexOf(collection, id);
-        var body = { data: this.clone(item) };
-        if (existingIx > -1) {
-            collection[existingIx] = item;
-            var res = this.config.post204 ?
-                { headers: headers, status: STATUS.NO_CONTENT } :
-                { headers: headers, body: body, status: STATUS.OK }; // successful; return entity
-            return new _angular_http.ResponseOptions(res);
+        if (id && id !== item.id) {
+            return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, "Request id does not match item.id");
         }
         else {
+            id = item.id;
+        }
+        var existingIx = this.indexOf(collection, id);
+        var body = this.bodify(item);
+        if (existingIx === -1) {
             collection.push(item);
             headers.set('Location', resourceUrl + '/' + id);
-            return new _angular_http.ResponseOptions({ headers: headers, body: body, status: STATUS.CREATED });
+            return { headers: headers, body: body, status: STATUS.CREATED };
         }
-    };
-    InMemoryBackendService.prototype.put = function (_a) {
-        var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req;
-        var item = JSON.parse(req.text());
-        // tslint:disable-next-line:triple-equals
-        if (item.id == undefined) {
-            return createErrorResponse(req, STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
-        }
-        // tslint:disable-next-line:triple-equals
-        if (id != item.id) {
-            return createErrorResponse(req, STATUS.BAD_REQUEST, "\"" + collectionName + "\" id does not match item.id");
-        }
-        var existingIx = this.indexOf(collection, id);
-        var body = { data: this.clone(item) };
-        if (existingIx > -1) {
-            collection[existingIx] = item;
-            var res = this.config.put204 ?
-                { headers: headers, status: STATUS.NO_CONTENT } :
-                { headers: headers, body: body, status: STATUS.OK }; // successful; return entity
-            return new _angular_http.ResponseOptions(res);
+        else if (this.config.post409) {
+            return this.createErrorResponseOptions(url, STATUS.CONFLICT, "item with id='" + id + " exists and may not be updated with PUT; use POST instead.");
         }
         else {
-            collection.push(item);
-            return new _angular_http.ResponseOptions({ headers: headers, body: body, status: STATUS.CREATED });
+            collection[existingIx] = item;
+            return this.config.post204 ?
+                { headers: headers, status: STATUS.NO_CONTENT } :
+                { headers: headers, body: body, status: STATUS.OK }; // successful; return entity
         }
     };
-    InMemoryBackendService.prototype.removeById = function (collection, id) {
+    // Update existing entity
+    // Can create an entity too if put404 is false.
+    BackendService.prototype.put = function (_a) {
+        var id = _a.id, collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, req = _a.req, url = _a.url;
+        var item = this.getJsonBody(req);
+        // tslint:disable-next-line:triple-equals
+        if (item.id == undefined) {
+            return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
+        }
+        if (id && id !== item.id) {
+            return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, "Request id does not match item.id");
+        }
+        else {
+            id = item.id;
+        }
+        var existingIx = this.indexOf(collection, id);
+        var body = this.bodify(item);
+        if (existingIx > -1) {
+            collection[existingIx] = item;
+            return this.config.put204 ?
+                { headers: headers, status: STATUS.NO_CONTENT } :
+                { headers: headers, body: body, status: STATUS.OK }; // successful; return entity
+        }
+        else if (this.config.put404) {
+            // item to update not found; use POST to create new item for this id.
+            return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "id='" + id + " not found");
+        }
+        else {
+            // create new item for id not found
+            collection.push(item);
+            return { headers: headers, body: body, status: STATUS.CREATED };
+        }
+    };
+    BackendService.prototype.removeById = function (collection, id) {
         var ix = this.indexOf(collection, id);
         if (ix > -1) {
             collection.splice(ix, 1);
@@ -1036,8 +1007,96 @@ var InMemoryBackendService = (function () {
     /**
      * Reset the "database" to its original state
      */
-    InMemoryBackendService.prototype.resetDb = function () {
-        this.db = this.inMemDbService.createDb();
+    BackendService.prototype.resetDb = function (req) {
+        this.db = this.inMemDbService.createDb(req);
+    };
+    return BackendService;
+}());
+
+var __extends = (undefined && undefined.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+/**
+ * Simulate the behavior of a RESTy web api
+ * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
+ * Conforms mostly to behavior described here:
+ * http://www.restapitutorial.com/lessons/httpmethods.html
+ *
+ * ### Usage
+ *
+ * Create `InMemoryDataService` class that implements `InMemoryDataService`.
+ * Call `forRoot` static method with this service class and optional configuration object:
+ * ```
+ * // other imports
+ * import { HttpModule }           from '@angular/http';
+ * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+ *
+ * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
+ * @NgModule({
+ *  imports: [
+ *    HttpModule,
+ *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
+ *    ...
+ *  ],
+ *  ...
+ * })
+ * export class AppModule { ... }
+ * ```
+ */
+var InMemoryBackendService = (function (_super) {
+    __extends(InMemoryBackendService, _super);
+    function InMemoryBackendService(injector, inMemDbService, config) {
+        var _this = _super.call(this, inMemDbService, config) || this;
+        _this.injector = injector;
+        return _this;
+    }
+    InMemoryBackendService.prototype.createConnection = function (req) {
+        var response;
+        try {
+            response = this.handleRequest(req);
+        }
+        catch (error) {
+            var err = error.message || error;
+            var resOptions_1 = this.createErrorResponseOptions(req.url, STATUS.INTERNAL_SERVER_ERROR, "" + err);
+            var resOptions$ = this.createResponseOptions$(function () { return resOptions_1; });
+            response = this.createResponse$(this.addDelay(resOptions$));
+        }
+        return {
+            readyState: _angular_http.ReadyState.Done,
+            request: req,
+            response: response
+        };
+    };
+    ////  protected overrides /////
+    InMemoryBackendService.prototype.getJsonBody = function (req) {
+        try {
+            return req.json();
+        }
+        catch (e) {
+            return {};
+        }
+    };
+    InMemoryBackendService.prototype.getRequestMethod = function (req) {
+        return _angular_http.RequestMethod[req.method || 0].toLowerCase();
+    };
+    InMemoryBackendService.prototype.createHeaders = function (headers) {
+        return new _angular_http.Headers(headers);
+    };
+    InMemoryBackendService.prototype.createQuery = function (search) {
+        return search ? new _angular_http.URLSearchParams(search).paramsMap : new Map();
+    };
+    InMemoryBackendService.prototype.createResponse$ = function (resOptions$) {
+        return resOptions$.map(function (opts) {
+            var options = opts;
+            return new _angular_http.Response(new _angular_http.ResponseOptions(options));
+        });
     };
     InMemoryBackendService.prototype.setPassThruBackend = function () {
         this.passThruBackend = undefined;
@@ -1047,7 +1106,10 @@ var InMemoryBackendService = (function () {
                 var browserXhr = this.injector.get(_angular_http.BrowserXhr);
                 var baseResponseOptions = this.injector.get(_angular_http.ResponseOptions);
                 var xsrfStrategy = this.injector.get(_angular_http.XSRFStrategy);
-                this.passThruBackend = new _angular_http.XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
+                var xhrBackend_1 = new _angular_http.XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
+                this.passThruBackend = {
+                    handle: function (req) { return xhrBackend_1.createConnection(req).response; }
+                };
             }
             catch (ex) {
                 ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
@@ -1055,17 +1117,17 @@ var InMemoryBackendService = (function () {
             }
         }
     };
-    InMemoryBackendService.decorators = [
-        { type: _angular_core.Injectable },
-    ];
-    /** @nocollapse */
-    InMemoryBackendService.ctorParameters = function () { return [
-        { type: _angular_core.Injector, },
-        { type: InMemoryDbService, },
-        { type: InMemoryBackendConfigArgs, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
-    ]; };
     return InMemoryBackendService;
-}());
+}(BackendService));
+InMemoryBackendService.decorators = [
+    { type: _angular_core.Injectable },
+];
+/** @nocollapse */
+InMemoryBackendService.ctorParameters = function () { return [
+    { type: _angular_core.Injector, },
+    { type: InMemoryDbService, },
+    { type: InMemoryBackendConfigArgs, decorators: [{ type: _angular_core.Inject, args: [InMemoryBackendConfig,] }, { type: _angular_core.Optional },] },
+]; };
 
 // AoT requires factory to be exported
 function inMemoryBackendServiceFactory(injector, dbService, options) {
@@ -1095,34 +1157,32 @@ var InMemoryWebApiModule = (function () {
             ]
         };
     };
-    InMemoryWebApiModule.decorators = [
-        { type: _angular_core.NgModule, args: [{
-                    // Must useFactory for AoT
-                    // https://github.com/angular/angular/issues/11178
-                    providers: [{ provide: _angular_http.XHRBackend,
-                            useFactory: inMemoryBackendServiceFactory,
-                            deps: [_angular_core.Injector, InMemoryDbService, InMemoryBackendConfig] }]
-                },] },
-    ];
-    /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
+InMemoryWebApiModule.decorators = [
+    { type: _angular_core.NgModule, args: [{
+                // Must useFactory for AoT
+                // https://github.com/angular/angular/issues/11178
+                providers: [{ provide: _angular_http.XHRBackend,
+                        useFactory: inMemoryBackendServiceFactory,
+                        deps: [_angular_core.Injector, InMemoryDbService, InMemoryBackendConfig] }]
+            },] },
+];
+/** @nocollapse */
+InMemoryWebApiModule.ctorParameters = function () { return []; };
 
+exports.BackendService = BackendService;
 exports.STATUS = STATUS;
 exports.STATUS_CODE_INFO = STATUS_CODE_INFO;
-exports.createErrorResponse = createErrorResponse;
-exports.createObservableResponse = createObservableResponse;
-exports.emitResponse = emitResponse;
-exports.InMemoryDbService = InMemoryDbService;
-exports.InMemoryBackendConfigArgs = InMemoryBackendConfigArgs;
-exports.removeTrailingSlash = removeTrailingSlash;
-exports.InMemoryBackendConfig = InMemoryBackendConfig;
+exports.getStatusText = getStatusText;
 exports.isSuccess = isSuccess;
-exports.setStatusText = setStatusText;
 exports.InMemoryBackendService = InMemoryBackendService;
 exports.inMemoryBackendServiceFactory = inMemoryBackendServiceFactory;
 exports.InMemoryWebApiModule = InMemoryWebApiModule;
+exports.InMemoryDbService = InMemoryDbService;
+exports.InMemoryBackendConfigArgs = InMemoryBackendConfigArgs;
+exports.InMemoryBackendConfig = InMemoryBackendConfig;
+exports.removeTrailingSlash = removeTrailingSlash;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

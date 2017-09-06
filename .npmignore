@@ -10,5 +10,6 @@ karma.conf.js
 rollup.config.js
 src
 tsconfig.json
+tsconfig-ngc.json
 tslint.json
 yarn.lock
