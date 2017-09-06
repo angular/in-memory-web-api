@@ -1,4 +1,4 @@
-export declare let STATUS: {
+export declare const STATUS: {
     CONTINUE: number;
     SWITCHING_PROTOCOLS: number;
     OK: number;
@@ -56,7 +56,7 @@ export declare let STATUS: {
     INSUFFICIENT_STORAGE: number;
     NETWORK_AUTHENTICATION_REQUIRED: number;
 };
-export declare let STATUS_CODE_INFO: {
+export declare const STATUS_CODE_INFO: {
     '100': {
         'code': number;
         'text': string;
@@ -450,3 +450,11 @@ export declare let STATUS_CODE_INFO: {
         'spec_href': string;
     };
 };
+/**
+ * get the status text from StatusCode
+ */
+export declare function getStatusText(status: number): any;
+/**
+ * Returns true if the the Http Status Code is 200-299 (success)
+ */
+export declare function isSuccess(status: number): boolean;

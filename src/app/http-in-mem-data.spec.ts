@@ -4,6 +4,8 @@ import { HttpModule, Http, Response } from '@angular/http';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/switchMap';
 
+import { failure } from '../testing';
+
 import { Hero } from './hero';
 import { HeroService } from './hero.service';
 import { HttpHeroService } from './http-hero.service';
@@ -40,7 +42,7 @@ describe('Http: http-in-mem-data.service', () => {
           // console.log(heroes);
           expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
         },
-        fail
+        failure
       );
     }));
 
@@ -52,7 +54,7 @@ describe('Http: http-in-mem-data.service', () => {
           // console.log(heroes);
           expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
         },
-        fail
+        failure
       );
     }));
 
@@ -78,7 +80,7 @@ describe('Http: http-in-mem-data.service', () => {
         hero => {
           expect(hero).toBeUndefined();
         },
-        fail
+        failure
       );
     }));
 
@@ -105,7 +107,7 @@ describe('Http: http-in-mem-data.service', () => {
         heroes => {
           expect(heroes.length).toBe(0, 'reset should have cleared the heroes');
         },
-        fail
+        failure
       );
     }));
   });

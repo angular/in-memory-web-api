@@ -4,6 +4,8 @@ import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/switchMap';
 
+import { failure } from '../testing';
+
 import { Hero } from './hero';
 import { HeroService } from './hero.service';
 
@@ -33,7 +35,7 @@ export class HereServiceCoreSpec {
             // console.log(heroes);
             expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
           },
-          fail
+          failure
           );
       }));
 
@@ -71,7 +73,7 @@ export class HereServiceCoreSpec {
           hero => {
             expect(hero.name).toBe('FunkyBob');
           },
-          err => fail('re-fetch of new hero failed')
+          err => failure('re-fetch of new hero failed')
           );
       }), 10000);
 
@@ -82,7 +84,7 @@ export class HereServiceCoreSpec {
           (_: {}) => {
             expect(_).toBeDefined();
           },
-          fail
+          failure
           );
       }));
 
@@ -93,7 +95,7 @@ export class HereServiceCoreSpec {
           (_: {}) => {
             expect(_).toBeDefined();
           },
-          fail
+          failure
           );
       }));
 
@@ -124,7 +126,7 @@ export class HereServiceCoreSpec {
           hero => {
             expect(hero.name).toBe(falseHero.name);
           },
-          fail
+          failure
           );
       }));
 

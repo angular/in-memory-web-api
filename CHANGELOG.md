@@ -10,10 +10,16 @@ We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
 <a id="0.4.0"></a>
-## 0.4.0 (2017-09-04)
+## 0.4.0 (2017-09-06)
+**Theme: Support `HttpClient` and add tests**.
 See PR #130.
-* Added support for `HttpClient`
-* Added tests
+
+BREAKING CHANGES: Massive refactoring.
+Many low-level and customization options have changed.
+Apps that stuck with defaults should be (mostly) OK.
+
+* added support for `HttpClient`
+* added tests
 * refactor existing code to support tests
 * correct bugs and clarify choices as result of test
 * add some configuration options

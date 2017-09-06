@@ -1,12 +1,13 @@
 import { Injector, NgModule } from '@angular/core';
 import { XHRBackend } from '@angular/http';
-import { InMemoryBackendConfig, InMemoryBackendService, InMemoryDbService } from './in-memory-backend.service';
+import { InMemoryBackendConfig, InMemoryDbService } from './interfaces';
+import { InMemoryBackendService } from './http-backend.service';
 // AoT requires factory to be exported
 export function inMemoryBackendServiceFactory(injector, dbService, options) {
     var backend = new InMemoryBackendService(injector, dbService, options);
     return backend;
 }
-export var InMemoryWebApiModule = (function () {
+var InMemoryWebApiModule = (function () {
     function InMemoryWebApiModule() {
     }
     /**
@@ -29,17 +30,18 @@ export var InMemoryWebApiModule = (function () {
             ]
         };
     };
-    InMemoryWebApiModule.decorators = [
-        { type: NgModule, args: [{
-                    // Must useFactory for AoT
-                    // https://github.com/angular/angular/issues/11178
-                    providers: [{ provide: XHRBackend,
-                            useFactory: inMemoryBackendServiceFactory,
-                            deps: [Injector, InMemoryDbService, InMemoryBackendConfig] }]
-                },] },
-    ];
-    /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
+export { InMemoryWebApiModule };
+InMemoryWebApiModule.decorators = [
+    { type: NgModule, args: [{
+                // Must useFactory for AoT
+                // https://github.com/angular/angular/issues/11178
+                providers: [{ provide: XHRBackend,
+                        useFactory: inMemoryBackendServiceFactory,
+                        deps: [Injector, InMemoryDbService, InMemoryBackendConfig] }]
+            },] },
+];
+/** @nocollapse */
+InMemoryWebApiModule.ctorParameters = function () { return []; };
 //# sourceMappingURL=in-memory-web-api.module.js.map
