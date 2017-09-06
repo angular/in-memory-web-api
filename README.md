@@ -1,10 +1,32 @@
 # Angular in-memory-web-api
 [![Build Status][travis-badge]][travis-badge-url]
 
-An in-memory web api for Angular demos and tests.
+An in-memory web api for Angular demos and tests
+that emulates CRUD operations over a RESTy API.
 
-It intercepts Angular `Http` requests that would otherwise go to the remote server
-via the Angular `XHRBackend` service
+It intercepts Angular `Http` and `HttpClient` requests that would otherwise go to the remote server and redirects them to an in-memory data store that you control.
+
+## Use cases
+
+* Demo apps that need to simulate CRUD data persistence operations without a real server.
+You won't have to build and start a test server.
+
+* Whip up prototypes and proofs of concept.
+
+* Share examples with the community in a web coding environment such as Plunker or CodePen.
+Create Angular issues and StackOverflow answers supported by live code.
+
+* Simulate operations against data collections that aren't yet implemented on your dev/test server. 
+You can pass requests thru to the dev/test server for collections that are supported.
+
+* Write unit test apps that read and write data.
+Avoid the hassle of intercepting multiple http calls and manufacturing sequences of responses.
+The in-memory data store resets for each test so there is no cross-test data pollution.
+
+* End-to-end tests. If you can toggle the app into test mode
+using the in-mem web api, you won't disturb the real database.
+This can be especially useful for CI (continuous integration) builds.
+
 
 >**LIMITATIONS**
 >
@@ -86,17 +108,16 @@ export class InMemHeroService implements InMemoryDbService {
 
 >This library _currently_ assumes that every collection has a primary key called `id`.
 
-Register this module and your service implementation in `AppModule.imports`
+Register this module and your data store service implementation in `AppModule.imports`
 calling the `forRoot` static method with this service class and optional configuration object:
 ```ts
-// other imports
-import { HttpModule }           from '@angular/http';
+import { HttpClientModule }     from '@angular/common/http';
 import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
 
-import { InMemHeroService }     from '../app/hero-data';
+import { InMemHeroService }     from '../app/hero.service';
 @NgModule({
  imports: [
-   HttpModule,
+   HttpClientModule,
    InMemoryWebApiModule.forRoot(InMemHeroService),
    ...
  ],
@@ -105,12 +126,37 @@ import { InMemHeroService }     from '../app/hero-data';
 export class AppModule { ... }
 ```
 
-See examples in the Angular.io such as the
-[Server Communication](https://angular.io/docs/ts/latest/guide/server-communication.html) and
-[Tour of Heroes](https://angular.io/docs/ts/latest/tutorial/toh-pt6.html) chapters.
+**_Notes_**
 
->Always import the `InMemoryWebApiModule` _after_ the `HttpModule` to ensure that 
-the `XHRBackend` provider of the `InMemoryWebApiModule` supersedes all others.
+* Always import the `InMemoryWebApiModule` _after_ the `HttpClientModule` to ensure that 
+the in-memory backed provider supersedes the Angular version.
+
+* You can setup the in-memory web api within a lazy loaded feature module by calling the `.forFeature` method as you would `.forRoot`.
+
+* You can still use the in-memory web api with the older `Http` module.
+
+  ```ts
+  import { HttpModule }           from '@angular/http';
+  import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+
+  import { InMemHeroService }     from '../app/hero.service';
+  @NgModule({
+  imports: [
+    HttpModule,
+    InMemoryWebApiModule.forRoot(InMemHeroService),
+    ...
+  ],
+  ...
+  })
+  export class AppModule { ... }
+  ```
+
+### Examples
+The tests (`src/app/*.spec.ts` files) in the [github repo](https://github.com/angular/in-memory-web-api/tree/master/src/app) are a good place to learn how to setup and use this in-memory web api library.
+
+See also the example source code in the official Angular.io documentation such as the
+[HttpClient](https://angular.io/guide/http) guide and the
+[Tour of Heroes](https://angular.io/tutorial/toh-pt6). 
 
 # Bonus Features
 Some features are not readily apparent in the basic usage example.
@@ -164,32 +210,32 @@ If an existing, running remote server should handle requests for collections
 that are not in the in-memory database, set `Config.passThruUnknownUrl: true`.
 This service will forward unrecognized requests via a base version of the Angular `XHRBackend`.
 
-## _parseUrl_ and your override
+## _parseRequestUrl_ and your override
 
-The `parseUrl` parses the request URL into a `ParsedUrl` object.
-`ParsedUrl` is a public interface whose properties guide the in-memory web api
+The `parseRequestUrl` parses the request URL into a `ParsedRequestUrl` object.
+`ParsedRequestUrl` is a public interface whose properties guide the in-memory web api
 as it processes the request.
 
-### Default _parseUrl_
+### Default _parseRequestUrl_
 
 Default parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
 Read the source code for the complete story.
 
-Configuring the `apiBase` yields the most interesting changes to `parseUrl` behavior:
+Configuring the `apiBase` yields the most interesting changes to `parseRequestUrl` behavior:
 
 * For `apiBase=undefined` and `url='http://localhost/api/customers/42'`
     ```
-    {base: 'api/', collectionName: 'customers', id: '42', ...}
+    {apiBase: 'api/', collectionName: 'customers', id: '42', ...}
     ```
 
 *  For `apiBase='some/api/root/'` and `url='http://localhost/some/api/root/customers'`
     ```
-    {base: 'some/api/root/', collectionName: 'customers', id: undefined, ...}
+    { apiBase: 'some/api/root/', collectionName: 'customers', id: undefined, ... }
     ```
 
 *  For `apiBase='/'` and `url='http://localhost/customers'`
     ```
-    {base: '/', collectionName: 'customers', id: undefined, ...}
+    { apiBase: '/', collectionName: 'customers', id: undefined, ... }
     ```
 
 **The actual api base segment values are ignored**. Only the number of segments matters.
@@ -197,18 +243,37 @@ The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `
 
 This means that URLs that work with the in-memory web api may be rejected by the real server.
 
-### Custom _parseUrl_
+### Custom _parseRequestUrl_
 
-You can override the default by implementing a `parseUrl` method in your `InMemoryDbService`.
-Such a method must take the incoming request URL string and return a `ParsedUrl` object. 
+You can override the default parser by implementing a `parseRequestUrl` method in your `InMemoryDbService`.
 
-Assign your alternative to `InMemDbService['parseUrl']`
+The service calls your method with two arguments.
+1. `url` - the request URL string
+1. `requestInfoUtils` - utility methods in a `RequestInfoUtilities` object, including the default parser.
+Note that some values have not yet been set as they depend on the outcome of parsing.
+
+Your method must either return a `ParsedRequestUrl` object or null|undefined,
+in which case the service uses the default parser.
+In this way you can intercept and parse some URLs and leave the others to the default parser.
+
+### Custom _genId_
+
+Collection items are presumed to have a primary key property called `id`.
+When you can specify the id when you add a new item; 
+the service does not check for uniqueness.
+
+If you do not specify the `id`, the service generates one via the `genId` method.
+You can override the default generator with a `genId` method in your `InMemoryDbService`.
+Your method receives the new item's collection and should return the generated id.
+If your generator returns null|undefined, the service uses the default generator. 
 
 ## _responseInterceptor_
 
-You can morph the response returned by the default HTTP methods, called by `collectionHandler`, 
-to suit your needs by adding a `responseInterceptor` method to your `InMemoryDbService` class. 
-The `collectionHandler` calls your interceptor like this:
+You can morph the response returned by the services default HTTP methods.
+A typical reason to intercept is to add a header that your application is expecting.
+
+To intercept responses, add a `responseInterceptor` method to your `InMemoryDbService` class. 
+The service calls your interceptor like this:
 ```ts
 responseOptions = this.responseInterceptor(responseOptions, requestInfo);
 ```
@@ -240,8 +305,16 @@ requestInfo: RequestInfo;           // parsed request
 db: Object;                         // the current in-mem database collections
 config: InMemoryBackendConfigArgs;  // the current config
 passThruBackend: ConnectionBackend; // pass through backend, if it exists
+
+/**
+  * Create a cold response Observable from a factory for ResponseOptions
+  * the same way that the in-mem backend service does.
+  * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
+  * @param withDelay - if true (default), add simulated latency delay from configuration
+  */
+createResponse$: (resOptionsFactory: () => ResponseOptions) => Observable<any>;
 ```
-## Examples
+## In-memory Web Api Examples
 
 The file `src/app/hero-in-mem-data.service.ts` is an example of a Hero-oriented `InMemoryDbService`,
 such as you might see in an HTTP sample in the Angular documentation.
@@ -251,8 +324,8 @@ To try it, add the following line to `AppModule.imports`
 InMemoryWebApiModule.forRoot(HeroInMemDataService)
 ```
   
-See the `src/app/hero-in-mem-data-override.service.ts` class that demonstrates overriding
-the `parseUrl` method. It also has a "cold" HTTP GET interceptor.
+For examples of overriding service methods,
+see the `src/app/hero-in-mem-data-override.service.ts` class.
 
 Add the following line to `AppModule.imports` to see this version of the data service in action:
 ```ts

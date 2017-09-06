@@ -1,6 +1,6 @@
 import { Inject, Injectable, Injector, Optional } from '@angular/core';
 
-import { BrowserXhr, Connection,
+import { BrowserXhr, Connection, ConnectionBackend,
          Headers, ReadyState, Request, RequestMethod,
          Response,
          ResponseOptions as HttpResponseOptions,
@@ -23,14 +23,14 @@ import {
 import { BackendService } from './backend.service';
 
 /**
- * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected InMemoryDataService service.
+ * For Angular `Http` simulate the behavior of a RESTy web api
+ * backed by the simple in-memory data store provided by the injected `InMemoryDbService`.
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
  *
  * ### Usage
  *
- * Create `InMemoryDataService` class that implements `InMemoryDataService`.
+ * Create an in-memory data store class that implements `InMemoryDbService`.
  * Call `forRoot` static method with this service class and optional configuration object:
  * ```
  * // other imports
@@ -50,7 +50,7 @@ import { BackendService } from './backend.service';
  * ```
  */
 @Injectable()
-export class InMemoryBackendService extends BackendService {
+export class HttpBackendService extends BackendService implements ConnectionBackend {
 
   constructor(
     private injector: Injector,
@@ -64,12 +64,13 @@ export class InMemoryBackendService extends BackendService {
     let response: Observable<Response>;
     try {
       response = this.handleRequest(req);
+
     } catch (error) {
       const err = error.message || error;
       const resOptions = this.createErrorResponseOptions(req.url, STATUS.INTERNAL_SERVER_ERROR, `${err}`);
-      const resOptions$ = this.createResponseOptions$(() => resOptions);
-      response = this.createResponse$(this.addDelay(resOptions$));
+      response = this.createResponse$(() => resOptions);
     }
+
     return {
       readyState: ReadyState.Done,
       request: req,
@@ -83,7 +84,8 @@ export class InMemoryBackendService extends BackendService {
     try {
       return req.json();
     } catch (e) {
-      return {};
+      const msg = `'${req.url}' request body-to-json error\n${JSON.stringify(e)}`;
+      throw new Error(msg);
     }
   }
 
@@ -95,11 +97,11 @@ export class InMemoryBackendService extends BackendService {
     return new Headers(headers);
   }
 
-  protected createQuery(search: string): Map<string, string[]> {
+  protected createQueryMap(search: string): Map<string, string[]> {
     return search ? new URLSearchParams(search).paramsMap : new Map<string, string[]>();
   }
 
-  protected createResponse$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
+  protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
     return resOptions$.map(opts => {
       const options = opts as ResponseOptionsArgs;
       return new Response(new HttpResponseOptions(options));
@@ -120,9 +122,9 @@ export class InMemoryBackendService extends BackendService {
           handle: (req: Request) => xhrBackend.createConnection(req).response
         };
 
-      } catch (ex) {
-        ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
-        throw ex;
+      } catch (e) {
+        e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
+        throw e;
       }
     }
   }

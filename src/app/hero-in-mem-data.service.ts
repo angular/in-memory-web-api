@@ -5,12 +5,12 @@
  *   InMemoryWebApiModule.forRoot(HeroInMemDataService) // or HeroInMemDataOverrideService
  */
 import { Injectable } from '@angular/core';
-import { Request } from '@angular/http';
-import { InMemoryDbService } from '../in-mem/interfaces';
+import { InMemoryDbService, RequestInfo } from '../in-mem/interfaces';
 
 @Injectable()
 export class HeroInMemDataService implements InMemoryDbService {
-  createDb(req?: Request) {
+  createDb(reqInfo?: RequestInfo) {
+
     const heroes = [
       { id: 1, name: 'Windstorm' },
       { id: 2, name: 'Bombasto' },
@@ -18,12 +18,18 @@ export class HeroInMemDataService implements InMemoryDbService {
       { id: 4, name: 'Tornado' }
     ];
 
-    // demonstrate POST commands/resetDb with options
-    if (req instanceof Request) {
-      const body = JSON.parse(req.getBody() || '{}');
-      if (body.clear === true) { heroes.length = 0; }
+    const nobodies: any[] = [ ];
+
+    // demonstrate POST commands/resetDb
+    // this example clears the collections if the request body tells it to do so
+    if (reqInfo) {
+      const body = reqInfo.utils.getJsonBody(reqInfo.req) || {};
+      if (body.clear === true) {
+        heroes.length = 0;
+        nobodies.length = 0;
+      }
     }
 
-    return {heroes};
+    return {heroes, nobodies};
   }
 }
