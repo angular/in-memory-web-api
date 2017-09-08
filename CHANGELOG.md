@@ -10,7 +10,7 @@ We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
 <a id="0.4.0"></a>
-## 0.4.0 (2017-09-06)
+## 0.4.0 (2017-09-08)
 **Theme: Support `HttpClient` and add tests**.
 See PR #130.
 

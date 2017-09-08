@@ -6,6 +6,34 @@ that emulates CRUD operations over a RESTy API.
 
 It intercepts Angular `Http` and `HttpClient` requests that would otherwise go to the remote server and redirects them to an in-memory data store that you control.
 
+---
+## **v0.4.0 supports `HttpClient`!**
+>Release v0.4.0  (8 Sept 2017) is a major overhaul of this library.
+>
+>You don't have to change your existing application _code_ if your app uses this library without customizations. 
+>
+>
+>This v0.4.0 release has *breaking changes* that affect developers who used the customization features.
+>We're pretty sure you'll think these changes are worthwhile.
+>
+>**Read this README** and the CHANGELOG to learn what's new.
+>The new unit tests are worth a look as well.
+>
+---
+>If you’re loading application files with **SystemJS**, you’ll have to configure it to load Angular’s `umd.js` for `HttpModule`.
+>To see how, look for the following line in the 
+>`src/systemjs.config.js` of this project:
+>
+>`'angular/common/http': 'npm:@angular/common/bundles/common-http.umd.js'`
+>
+>You've already made this change if you are using `HttpClient` today.
+>
+>If you’re sticking with the original Angular `Http` module, you _must make this change anyway!_ Your app will break as soon as you run `npm install` and it installs v0.4.0.
+>
+>If you're using webpack (as CLI devs do), you don't have to worry about this stuff because webpack bundles the dependencies for you.
+
+---
+
 ## Use cases
 
 * Demo apps that need to simulate CRUD data persistence operations without a real server.
@@ -39,13 +67,6 @@ We will make breaking changes and we won't feel bad about it
 because this is a development tool, not a production product. 
 We do try to tell you about such changes in the `CHANGELOG.md`
 and we fix bugs as fast as we can.
-
-
->**UPDATE NOTICE**
->
->As of v.0.1.0, the npm package was renamed from `angular2-in-memory-web-api` to its current name,
-`angular-in-memory-web-api`. All versions ***after 0.0.21*** are shipped under this name.
-**Be sure to update your `package.json` and import statements**.
 
 ## HTTP request handling
 This in-memory web api service processes an HTTP request and 
