@@ -90,22 +90,19 @@ var HttpBackendService = (function (_super) {
         });
     };
     HttpBackendService.prototype.setPassThruBackend = function () {
-        this.passThruBackend = undefined;
-        if (this.config.passThruUnknownUrl) {
-            try {
-                // copied from @angular/http/backends/xhr_backend
-                var browserXhr = this.injector.get(BrowserXhr);
-                var baseResponseOptions = this.injector.get(HttpResponseOptions);
-                var xsrfStrategy = this.injector.get(XSRFStrategy);
-                var xhrBackend_1 = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
-                this.passThruBackend = {
-                    handle: function (req) { return xhrBackend_1.createConnection(req).response; }
-                };
-            }
-            catch (e) {
-                e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
-                throw e;
-            }
+        try {
+            // copied from @angular/http/backends/xhr_backend
+            var browserXhr = this.injector.get(BrowserXhr);
+            var baseResponseOptions = this.injector.get(HttpResponseOptions);
+            var xsrfStrategy = this.injector.get(XSRFStrategy);
+            var xhrBackend_1 = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
+            this.passThruBackend = {
+                handle: function (req) { return xhrBackend_1.createConnection(req).response; }
+            };
+        }
+        catch (e) {
+            e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
+            throw e;
         }
     };
     return HttpBackendService;

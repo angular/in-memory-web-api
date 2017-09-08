@@ -19,7 +19,6 @@ var BackendService = (function () {
         this.config.host = loc.host; // default to app web server host
         this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
         Object.assign(this.config, config);
-        this.setPassThruBackend();
     }
     ////  protected /////
     /**
@@ -88,8 +87,11 @@ var BackendService = (function () {
             // request is for a collection created by the InMemoryDbService
             return this.createResponse$(function () { return _this.collectionHandler(reqInfo); });
         }
-        else if (this.passThruBackend) {
+        else if (this.config.passThruUnknownUrl) {
             // Passes request thru to a "real" backend.
+            if (!this.passThruBackend) {
+                this.setPassThruBackend();
+            }
             return this.passThruBackend.handle(req);
         }
         else {

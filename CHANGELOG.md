@@ -9,12 +9,23 @@ We do try to tell you about such changes in this `CHANGELOG.md`
 
 and we fix bugs as fast as we can.
 
+<a id="0.4.1"></a>
+## 0.4.1 (2017-09-08)
+**Support PassThru.**
+
+The passthru feature was broken by 0.4.0
+- add passthru to both `Http` and `HttpClient`
+- test passThru feature with jasmine-ajax mock-ajax plugin 
+to intercept Angular's attempt to call browser's XHR
+- update devDependency packages
+- update karma.conf with jasmine-ajax plugin
+
 <a id="0.4.0"></a>
-## 0.4.0 (2017-09-08)
+## 0.4.0 (2017-09-07)
 **Theme: Support `HttpClient` and add tests**.
 See PR #130.
 
-BREAKING CHANGES: Massive refactoring.
+**BREAKING CHANGES**: Massive refactoring.
 Many low-level and customization options have changed.
 Apps that stuck with defaults should be (mostly) OK.
 
