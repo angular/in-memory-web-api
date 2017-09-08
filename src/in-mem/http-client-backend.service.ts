@@ -100,14 +100,11 @@ export class HttpClientBackendService extends BackendService implements HttpBack
   }
 
   protected setPassThruBackend() {
-    this.passThruBackend = undefined;
-    if (this.config.passThruUnknownUrl) {
-      try {
-        this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
-      } catch (ex) {
-        ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
-        throw ex;
-      }
+    try {
+      this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
+    } catch (ex) {
+      ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
+      throw ex;
     }
   }
 }

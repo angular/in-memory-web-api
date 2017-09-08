@@ -385,7 +385,7 @@ compiling your application project.
 
 - `npm run build` to confirm the project compiles w/o error (sanity check)
 
-- `npm test`  to build and run tests (see "Testing" below)
+- `npm test`  to build and run tests (see ["Testing"](#testing) below)
 
 - `gulp build`
 - commit and push

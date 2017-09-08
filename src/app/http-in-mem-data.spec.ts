@@ -1,5 +1,5 @@
 import { async, TestBed } from '@angular/core/testing';
-import { HttpModule, Http } from '@angular/http';
+import { HttpModule, Http, XHRBackend } from '@angular/http';
 
 import 'rxjs/add/operator/concat';
 import 'rxjs/add/operator/map';
@@ -7,6 +7,8 @@ import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/operator/zip';
 
 import { failure } from '../testing';
+
+import { HttpBackendService } from '../in-mem/http-backend.service';
 
 import { Hero } from './hero';
 import { HeroService } from './hero.service';
@@ -38,7 +40,7 @@ describe('Http: in-mem-data.service', () => {
     });
 
     it('can get heroes', async(() => {
-      http.get('app/heroes')
+      http.get('api/heroes')
       .map(res => res.json().data as Hero[])
       .subscribe(
         heroes => {
@@ -62,7 +64,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should 404 when GET unknown collection', async(() => {
-      const url = 'app/unknown-collection';
+      const url = 'api/unknown-collection';
       http.get(url)
       .subscribe(
         _ => {
@@ -76,7 +78,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should return 1-item array for GET app/heroes/?id=1', async(() => {
-      http.get('app/heroes/?id=1')
+      http.get('api/heroes/?id=1')
       .map(res => res.json().data as Hero[])
       .subscribe(
         heroes => {
@@ -87,7 +89,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should return 1-item array for GET app/heroes?id=1', async(() => {
-      http.get('app/heroes?id=1')
+      http.get('api/heroes?id=1')
       .map(res => res.json().data as Hero[])
       .subscribe(
         heroes => {
@@ -98,7 +100,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should return undefined for GET app/heroes?id=not-found-id', async(() => {
-      http.get('app/heroes?id=123456')
+      http.get('api/heroes?id=123456')
       .map(res => res.json().data[0] as Hero)
       .subscribe(
         hero => {
@@ -109,7 +111,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should return 404 for GET app/heroes/not-found-id', async(() => {
-      const url = 'app/heroes/123456';
+      const url = 'api/heroes/123456';
       http.get(url)
       .subscribe(
         _ => {
@@ -123,7 +125,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('can get nobodies (empty collection)', async(() => {
-      http.get('app/nobodies')
+      http.get('api/nobodies')
       .map(res => res.json().data)
       .subscribe(
         nobodies => {
@@ -134,8 +136,8 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('can add to nobodies (empty collection)', async(() => {
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
-      .switchMap(() => http.get('app/nobodies'))
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
+      .switchMap(() => http.get('api/nobodies'))
       .map(res => res.json().data)
       .subscribe(
         nobodies => {
@@ -149,14 +151,14 @@ describe('Http: in-mem-data.service', () => {
 
     it('can reset the database to empty', async(() => {
       // Add a nobody so that we have one
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
       .switchMap(
         // Reset database with "clear" option
         () => http.post('commands/resetDb', { clear: true })
         // then count the collections
-        .switchMap(() => http.get('app/heroes'))
+        .switchMap(() => http.get('api/heroes'))
         .zip(
-          http.get('app/nobodies'),
+          http.get('api/nobodies'),
           (h, n) => ({
             heroes:   h.json().data.length,
             nobodies: n.json().data.length
@@ -190,7 +192,7 @@ describe('Http: in-mem-data.service', () => {
     });
 
     it('can get heroes', async(() => {
-      http.get('app/heroes')
+      http.get('api/heroes')
       .map(res => res.json().data as Hero[])
       .subscribe(
         heroes => {
@@ -202,7 +204,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('can get villains', async(() => {
-      http.get('app/villains')
+      http.get('api/villains')
       .map(res => res.json().data as Hero[])
       .subscribe(
         villains => {
@@ -214,7 +216,7 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('should 404 when POST to villains', async(() => {
-      const url = 'app/villains';
+      const url = 'api/villains';
       http.post(url, {id: 42, name: 'Dr. Evil'})
       .subscribe(
         _ => {
@@ -227,7 +229,7 @@ describe('Http: in-mem-data.service', () => {
       );
     }));
     it('should 404 when GET unknown collection', async(() => {
-      const url = 'app/unknown-collection';
+      const url = 'api/unknown-collection';
       http.get(url)
       .subscribe(
         _ => {
@@ -241,8 +243,8 @@ describe('Http: in-mem-data.service', () => {
     }));
 
     it('can add new hero, "Maxinius", using genId override', async(() => {
-      http.post('app/heroes', { name: 'Maxinius' })
-      .switchMap(() => http.get('app/heroes?name=Maxi'))
+      http.post('api/heroes', { name: 'Maxinius' })
+      .switchMap(() => http.get('api/heroes?name=Maxi'))
       .map(res => res.json().data)
       .subscribe(
         heroes => {
@@ -256,15 +258,15 @@ describe('Http: in-mem-data.service', () => {
 
     it('can reset the database to empty', async(() => {
       // Add a nobody so that we have one
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
       .switchMap(
         // Reset database with "clear" option
         () => http.post('commands/resetDb', { clear: true })
         // then count the collections
-        .switchMap(() => http.get('app/heroes'))
+        .switchMap(() => http.get('api/heroes'))
         .zip(
-          http.get('app/nobodies'),
-          http.get('app/villains'),
+          http.get('api/nobodies'),
+          http.get('api/villains'),
           (h, n, v) => ({
             heroes:   h.json().data.length,
             nobodies: n.json().data.length,
@@ -304,11 +306,83 @@ describe('Http: in-mem-data.service', () => {
   });
 
   ////////////////
-  describe('Http passThru (TODO)', () => {
-    // Todo: test passthru.
-    // probably have to let Jasmine intercept the Http call
-    // because Http's own testing support leans on the backend that we're replacing.
+  ////////////////
+  describe('Http passThru', () => {
+    let http: Http;
+    let httpBackend: HttpBackendService;
+    let setPassThruBackend: jasmine.Spy;
 
-    it('should pass request for unknown collection thru to the "real" backend');
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          HttpModule,
+          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
+        ]
+      });
+
+      http = TestBed.get(Http);
+      httpBackend = TestBed.get(XHRBackend);
+      setPassThruBackend = spyOn(<any>httpBackend, 'setPassThruBackend').and.callThrough();
+    });
+
+    beforeEach(function() {
+      jasmine.Ajax.install();
+    });
+
+    afterEach(function() {
+      jasmine.Ajax.uninstall();
+    });
+
+    it('can get heroes (no passthru)', async(() => {
+      http.get('api/heroes')
+      .map(res => res.json().data as Hero[])
+      .subscribe(
+        heroes => {
+            expect(setPassThruBackend).not.toHaveBeenCalled();
+            expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+          },
+          failure
+        );
+    }));
+
+    // `passthru` is NOT a collection in the data store
+    // so requests for it should pass thru to the "real" server
+
+    it('can GET passthru', async(() => {
+
+      jasmine.Ajax.stubRequest('api/passthru').andReturn({
+        'status': 200,
+        'contentType': 'application/json',
+        'response': JSON.stringify({ data: [ {id: 42, name: 'Dude' }] })
+      });
+
+      http.get('api/passthru')
+        .map(res => res.json().data as any[])
+        .subscribe(
+          passthru => {
+            console.log('passthru data', passthru);
+            expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
+          },
+          failure
+        );
+    }));
+
+    it('can ADD to passthru', async(() => {
+      jasmine.Ajax.stubRequest('api/passthru').andReturn({
+        'status': 200,
+        'contentType': 'application/json',
+        'response': JSON.stringify({ data: [{ id: 42, name: 'Dude' }] })
+      });
+
+      http.post('api/passthru', { name: 'Dude' })
+        .map(res => res.json().data as any[])
+        .subscribe(
+          passthru => {
+            console.log('passthru data', passthru);
+            expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
+          },
+          failure
+        );
+    }));
   });
 });

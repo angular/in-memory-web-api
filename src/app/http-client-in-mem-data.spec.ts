@@ -75,7 +75,7 @@ describe('HttpClient: in-mem-data.service', () => {
     });
 
     it('can get heroes', async(() => {
-      http.get<Data>('app/heroes')
+      http.get<Data>('api/heroes')
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -99,7 +99,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should 404 when GET unknown collection', async(() => {
-      const url = 'app/unknown-collection';
+      const url = 'api/unknown-collection';
       http.get<Data>(url)
       .subscribe(
         _ => {
@@ -113,7 +113,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should return 1-item array for GET app/heroes/?id=1', async(() => {
-      http.get<Data>('app/heroes/?id=1')
+      http.get<Data>('api/heroes/?id=1')
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -124,7 +124,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should return 1-item array for GET app/heroes?id=1', async(() => {
-      http.get<Data>('app/heroes?id=1')
+      http.get<Data>('api/heroes?id=1')
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -135,7 +135,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should return undefined for GET app/heroes?id=not-found-id', async(() => {
-      http.get<Data>('app/heroes?id=123456')
+      http.get<Data>('api/heroes?id=123456')
       .map(data => data.data[0] as Hero)
       .subscribe(
         hero => {
@@ -146,7 +146,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should return 404 for GET app/heroes/not-found-id', async(() => {
-      const url = 'app/heroes/123456';
+      const url = 'api/heroes/123456';
       http.get<Data>(url)
       .subscribe(
         _ => {
@@ -160,7 +160,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('can get nobodies (empty collection)', async(() => {
-      http.get<Data>('app/nobodies')
+      http.get<Data>('api/nobodies')
       .map(data => data.data as any[])
       .subscribe(
         nobodies => {
@@ -171,8 +171,8 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('can add to nobodies (empty collection)', async(() => {
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
-      .switchMap(() => http.get<Data>('app/nobodies'))
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
+      .switchMap(() => http.get<Data>('api/nobodies'))
       .map(data => data.data as Hero[])
       .subscribe(
         nobodies => {
@@ -186,14 +186,14 @@ describe('HttpClient: in-mem-data.service', () => {
 
     it('can reset the database to empty', async(() => {
       // Add a nobody so that we have one
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
       .switchMap(
         // Reset database with "clear" option
         () => http.post('commands/resetDb', { clear: true })
         // then count the collections
-        .switchMap(() => http.get<Data>('app/heroes'))
+        .switchMap(() => http.get<Data>('api/heroes'))
         .zip(
-          http.get<Data>('app/nobodies'),
+          http.get<Data>('api/nobodies'),
           (h, n) => ({
             heroes:   h.data.length,
             nobodies: n.data.length
@@ -228,7 +228,7 @@ describe('HttpClient: in-mem-data.service', () => {
     });
 
     it('can get heroes', async(() => {
-      http.get<Data>('app/heroes')
+      http.get<Data>('api/heroes')
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -240,7 +240,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('can get villains', async(() => {
-      http.get<Data>('app/villains')
+      http.get<Data>('api/villains')
       .map(data => data.data as Hero[])
       .subscribe(
         villains => {
@@ -252,7 +252,7 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('should 404 when POST to villains', async(() => {
-      const url = 'app/villains';
+      const url = 'api/villains';
       http.post<Data>(url, {id: 42, name: 'Dr. Evil'})
       .subscribe(
         _ => {
@@ -265,7 +265,7 @@ describe('HttpClient: in-mem-data.service', () => {
       );
     }));
     it('should 404 when GET unknown collection', async(() => {
-      const url = 'app/unknown-collection';
+      const url = 'api/unknown-collection';
       http.get<Data>(url)
       .subscribe(
         _ => {
@@ -279,8 +279,8 @@ describe('HttpClient: in-mem-data.service', () => {
     }));
 
     it('can add new hero, "Maxinius", using genId override', async(() => {
-      http.post('app/heroes', { name: 'Maxinius' })
-      .switchMap(() => http.get<Data>('app/heroes?name=Maxi'))
+      http.post('api/heroes', { name: 'Maxinius' })
+      .switchMap(() => http.get<Data>('api/heroes?name=Maxi'))
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -294,15 +294,15 @@ describe('HttpClient: in-mem-data.service', () => {
 
     it('can reset the database to empty', async(() => {
       // Add a nobody so that we have one
-      http.post('app/nobodies', { id: 42, name: 'Noman' })
+      http.post('api/nobodies', { id: 42, name: 'Noman' })
       .switchMap(
         // Reset database with "clear" option
         () => http.post('commands/resetDb', { clear: true })
         // then count the collections
-        .switchMap(() => http.get<Data>('app/heroes'))
+        .switchMap(() => http.get<Data>('api/heroes'))
         .zip(
-          http.get<Data>('app/nobodies'),
-          http.get<Data>('app/villains'),
+          http.get<Data>('api/nobodies'),
+          http.get<Data>('api/villains'),
           (h, n, v) => ({
             heroes:   h.data.length,
             nobodies: n.data.length,
@@ -375,7 +375,7 @@ describe('HttpClient: in-mem-data.service', () => {
     it('should have GET request header from test interceptor', async(() => {
       const handle = spyOn(httpBackend, 'handle').and.callThrough();
 
-      http.get<Data>('app/heroes')
+      http.get<Data>('api/heroes')
         .map(data => data.data as Hero[])
         .subscribe(
           heroes => {
@@ -392,7 +392,7 @@ describe('HttpClient: in-mem-data.service', () => {
 
     it('should have GET response header from test interceptor', async(() => {
       let gotResponse = false;
-      const req = new HttpRequest<any>('GET', 'app/heroes');
+      const req = new HttpRequest<any>('GET', 'api/heroes');
       http.request<Data>(req)
         .subscribe(
           event => {
@@ -416,11 +416,83 @@ describe('HttpClient: in-mem-data.service', () => {
 
 
   ////////////////
-  describe('Http passThru (TODO)', () => {
-    // Todo: test passthru.
-    // probably have to let Jasmine intercept the Http call
-    // because HttpClient's own testing support leans on the backend that we're replacing.
+  describe('HttpClient passThru', () => {
+    let http: HttpClient;
+    let httpBackend: HttpClientBackendService;
+    let setPassThruBackend: jasmine.Spy;
 
-    it('should pass request for unknown collection thru to the "real" backend');
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          HttpClientModule,
+          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
+        ]
+      });
+
+      http = TestBed.get(HttpClient);
+      httpBackend = TestBed.get(HttpBackend);
+      setPassThruBackend = spyOn(<any>httpBackend, 'setPassThruBackend').and.callThrough();
+    });
+
+    beforeEach(function() {
+      jasmine.Ajax.install();
+    });
+
+    afterEach(function() {
+      jasmine.Ajax.uninstall();
+    });
+
+    it('can get heroes (no passthru)', async(() => {
+      http.get<Data>('api/heroes')
+        .map(data => data.data as Hero[])
+        .subscribe(
+          heroes => {
+            expect(setPassThruBackend).not.toHaveBeenCalled();
+            expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+          },
+          failure
+        );
+    }));
+
+    // `passthru` is NOT a collection in the data store
+    // so requests for it should pass thru to the "real" server
+
+    it('can GET passthru', async(() => {
+
+      jasmine.Ajax.stubRequest('api/passthru').andReturn({
+        'status': 200,
+        'contentType': 'application/json',
+        'response': JSON.stringify({ data: [{ id: 42, name: 'Dude' }] })
+      });
+
+      http.get<Data>('api/passthru')
+        .map(data => data.data as any[])
+        .subscribe(
+          passthru => {
+            console.log('passthru data', passthru);
+            expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
+          },
+          failure
+        );
+    }));
+
+    it('can ADD to passthru', async(() => {
+      jasmine.Ajax.stubRequest('api/passthru').andReturn({
+        'status': 200,
+        'contentType': 'application/json',
+        'response': JSON.stringify({ data: [{ id: 42, name: 'Dude' }] })
+      });
+
+      http.post<Data>('api/passthru', { name: 'Dude' })
+        .map(data => data.data as any[])
+        .subscribe(
+          passthru => {
+            console.log('passthru data', passthru);
+            expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
+          },
+          failure
+        );
+    }));
   });
 });
+

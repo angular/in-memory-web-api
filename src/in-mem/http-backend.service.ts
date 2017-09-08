@@ -109,23 +109,20 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   }
 
   protected setPassThruBackend() {
-    this.passThruBackend = undefined;
-    if (this.config.passThruUnknownUrl) {
-      try {
-        // copied from @angular/http/backends/xhr_backend
-        const browserXhr = this.injector.get(BrowserXhr);
-        const baseResponseOptions = this.injector.get(HttpResponseOptions);
-        const xsrfStrategy = this.injector.get(XSRFStrategy);
-        const xhrBackend = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
+    try {
+      // copied from @angular/http/backends/xhr_backend
+      const browserXhr = this.injector.get(BrowserXhr);
+      const baseResponseOptions = this.injector.get(HttpResponseOptions);
+      const xsrfStrategy = this.injector.get(XSRFStrategy);
+      const xhrBackend = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
 
-        this.passThruBackend = {
-          handle: (req: Request) => xhrBackend.createConnection(req).response
-        };
+      this.passThruBackend = {
+        handle: (req: Request) => xhrBackend.createConnection(req).response
+      };
 
-      } catch (e) {
-        e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
-        throw e;
-      }
+    } catch (e) {
+      e.message = 'Cannot create passThru404 backend; ' + (e.message || '');
+      throw e;
     }
   }
 }

@@ -80,15 +80,12 @@ var HttpClientBackendService = (function (_super) {
         return resOptions$.map(function (opts) { return new HttpResponse(opts); });
     };
     HttpClientBackendService.prototype.setPassThruBackend = function () {
-        this.passThruBackend = undefined;
-        if (this.config.passThruUnknownUrl) {
-            try {
-                this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
-            }
-            catch (ex) {
-                ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
-                throw ex;
-            }
+        try {
+            this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
+        }
+        catch (ex) {
+            ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
+            throw ex;
         }
     };
     return HttpClientBackendService;
