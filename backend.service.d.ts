@@ -13,6 +13,7 @@ export declare abstract class BackendService {
     protected passThruBackend: PassThruBackend;
     protected config: InMemoryBackendConfigArgs;
     protected db: Object;
+    private _firstTime;
     constructor(inMemDbService: InMemoryDbService, config?: InMemoryBackendConfigArgs);
     /**
      * Process Request and return an Observable of Http Response object
@@ -108,6 +109,8 @@ export declare abstract class BackendService {
     protected findById<T extends {
         id: any;
     }>(collection: T[], id: any): T;
+    /** true when `handleRequest` called for the first time */
+    protected readonly firstTime: boolean;
     /**
      * Generate the next available id for item in this collection
      * @param collection - collection of items with `id` key property
@@ -140,6 +143,12 @@ export declare abstract class BackendService {
      */
     protected abstract getRequestMethod(req: any): string;
     protected indexOf(collection: any[], id: number): number;
+    /**
+     * Initialize the service
+     * Initializes the in-mem database.
+     * Complete your preparation of that database before the first `Http`/`HttpClient` call.
+     **/
+    protected initialize(): void;
     protected parseId(collection: {
         id: any;
     }[], id: string): any;

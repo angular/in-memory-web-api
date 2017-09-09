@@ -172,14 +172,19 @@ the in-memory backed provider supersedes the Angular version.
   export class AppModule { ... }
   ```
 
-### Examples
+* The `createDb` method is synchronous.
+The service calls `createDb` when it handles the _first_ `HttpClient` (or `Http`) request.
+If you load your in-memory database service from a JSON file,
+complete that asynchronous operation _before_ making the first HTTP request.
+
+## In-memory web api examples
 The tests (`src/app/*.spec.ts` files) in the [github repo](https://github.com/angular/in-memory-web-api/tree/master/src/app) are a good place to learn how to setup and use this in-memory web api library.
 
 See also the example source code in the official Angular.io documentation such as the
 [HttpClient](https://angular.io/guide/http) guide and the
 [Tour of Heroes](https://angular.io/tutorial/toh-pt6). 
 
-# Bonus Features
+# Advanced Features
 Some features are not readily apparent in the basic usage example.
 
 The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
@@ -194,7 +199,7 @@ The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second
 This service can evaluate requests in multiple ways depending upon the configuration.
 Here's how it reasons:
 1. If it looks like a [command](#commands), process as a command
-2. If the [HTTP method is overridden](#method-override) 
+2. If the [HTTP method is overridden](#method-override), try the override.
 3. If the resource name (after the api base path) matches one of the configured collections, process that
 4. If not but the `Config.passThruUnknownUrl` flag is `true`, try to [pass the request along to a real _XHR_](#passthru).
 5. Return a 404.

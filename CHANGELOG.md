@@ -9,6 +9,11 @@ We do try to tell you about such changes in this `CHANGELOG.md`
 
 and we fix bugs as fast as we can.
 
+<a id="0.4.2"></a>
+## 0.4.2 (2017-09-08)
+Postpone the in-memory database initialization (via `resetDb`) until the first HTTP request.
+This gives you time to prime your data store, perhaps asynchronously, before the in-memory service needs it. Issue #113.
+
 <a id="0.4.1"></a>
 ## 0.4.1 (2017-09-08)
 **Support PassThru.**

@@ -31,13 +31,12 @@ export abstract class BackendService {
   protected passThruBackend: PassThruBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
+  private _firstTime = true;
 
   constructor(
     protected inMemDbService: InMemoryDbService,
     config: InMemoryBackendConfigArgs = {}
-    ) {
-    this.resetDb();
-
+  ) {
     const loc = this.getLocation('/');
     this.config.host = loc.host;     // default to app web server host
     this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
@@ -45,7 +44,6 @@ export abstract class BackendService {
   }
 
   ////  protected /////
-
   /**
    * Process Request and return an Observable of Http Response object
    * in the manner of a RESTy web api.
@@ -71,6 +69,11 @@ export abstract class BackendService {
    *     for this http library or null|undefined (which means "keep processing").
    */
   protected handleRequest(req: RequestCore): Observable<any> {
+
+    if (this.firstTime) {
+      this.initialize();
+      this._firstTime = false;
+    }
 
     const url = req.url;
 
@@ -335,6 +338,9 @@ export abstract class BackendService {
     return collection.find((item: T) => item.id === id);
   }
 
+  /** true when `handleRequest` called for the first time */
+  protected get firstTime() { return this._firstTime; }
+
   /**
    * Generate the next available id for item in this collection
    * @param collection - collection of items with `id` key property
@@ -411,6 +417,15 @@ export abstract class BackendService {
 
   protected indexOf(collection: any[], id: number) {
     return collection.findIndex((item: any) => item.id === id);
+  }
+
+  /**
+   * Initialize the service
+   * Initializes the in-mem database.
+   * Complete your preparation of that database before the first `Http`/`HttpClient` call.
+   **/
+  protected initialize() {
+    this.resetDb();
   }
 
   // tries to parse id as number if collection item.id is a number.

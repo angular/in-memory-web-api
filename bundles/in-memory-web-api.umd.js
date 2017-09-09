@@ -573,7 +573,7 @@ var BackendService = (function () {
         if (config === void 0) { config = {}; }
         this.inMemDbService = inMemDbService;
         this.config = new InMemoryBackendConfig();
-        this.resetDb();
+        this._firstTime = true;
         var loc = this.getLocation('/');
         this.config.host = loc.host; // default to app web server host
         this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
@@ -606,6 +606,10 @@ var BackendService = (function () {
      */
     BackendService.prototype.handleRequest = function (req) {
         var _this = this;
+        if (this.firstTime) {
+            this.initialize();
+            this._firstTime = false;
+        }
         var url = req.url;
         // Try override parser
         // If no override parser or it returns nothing, use default parser
@@ -838,6 +842,12 @@ var BackendService = (function () {
     BackendService.prototype.findById = function (collection, id) {
         return collection.find(function (item) { return item.id === id; });
     };
+    Object.defineProperty(BackendService.prototype, "firstTime", {
+        /** true when `handleRequest` called for the first time */
+        get: function () { return this._firstTime; },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Generate the next available id for item in this collection
      * @param collection - collection of items with `id` key property
@@ -902,6 +912,14 @@ var BackendService = (function () {
     
     BackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
+    };
+    /**
+     * Initialize the service
+     * Initializes the in-mem database.
+     * Complete your preparation of that database before the first `Http`/`HttpClient` call.
+     **/
+    BackendService.prototype.initialize = function () {
+        this.resetDb();
     };
     // tries to parse id as number if collection item.id is a number.
     // returns the original param id otherwise.
