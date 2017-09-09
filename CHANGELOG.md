@@ -6,13 +6,16 @@ It is not supposed to emulate every possible real world web API and is not inten
 We will make breaking changes and we won't feel bad about it 
 because this is a development tool, not a production product. 
 We do try to tell you about such changes in this `CHANGELOG.md`
-
 and we fix bugs as fast as we can.
 
 <a id="0.4.2"></a>
 ## 0.4.2 (2017-09-08)
-Postpone the in-memory database initialization (via `resetDb`) until the first HTTP request.
-This gives you time to prime your data store, perhaps asynchronously, before the in-memory service needs it. Issue #113.
+- Postpones the in-memory database initialization (via `resetDb`) until the first HTTP request.
+
+- Your `createDb` method _can_ be asynchronous.
+You may return the database object (synchronous), an observable of it, or a promise of it. Issue #113.
+
+- fixed some rare race conditions.
 
 <a id="0.4.1"></a>
 ## 0.4.1 (2017-09-08)

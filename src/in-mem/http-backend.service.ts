@@ -9,7 +9,7 @@ import { BrowserXhr, Connection, ConnectionBackend,
          XHRBackend, XSRFStrategy } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
+import { map } from 'rxjs/operator/map';
 
 import { STATUS } from './http-status-codes';
 
@@ -102,13 +102,12 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
-    return resOptions$.map(opts => {
-      const options = opts as ResponseOptionsArgs;
-      return new Response(new HttpResponseOptions(options));
+    return map.call(resOptions$, (opts: ResponseOptionsArgs) => {
+      return new Response(new HttpResponseOptions(opts));
     });
   }
 
-  protected setPassThruBackend() {
+  protected createPassThruBackend() {
     try {
       // copied from @angular/http/backends/xhr_backend
       const browserXhr = this.injector.get(BrowserXhr);
@@ -116,7 +115,7 @@ export class HttpBackendService extends BackendService implements ConnectionBack
       const xsrfStrategy = this.injector.get(XSRFStrategy);
       const xhrBackend = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
 
-      this.passThruBackend = {
+      return {
         handle: (req: Request) => xhrBackend.createConnection(req).response
       };
 

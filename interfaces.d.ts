@@ -20,16 +20,18 @@ export declare abstract class InMemoryDbService {
     * Creates an in-memory "database" hash whose keys are collection names
     * and whose values are arrays of collection objects to return or update.
     *
+    * returns Observable of the database because could have to create it asynchronously.
+    *
     * This method must be safe to call repeatedly.
     * Each time it should return a new object with new arrays containing new item objects.
     * This condition allows the in-memory backend service to mutate the collections
     * and their items without touching the original source data.
     *
-    * When constructed the in-mem backend service calls this method without a value.
-    * The service calls it with the RequestInfo when it receives a POST `commands/resetDb` request.
+    * The in-mem backend service calls this method without a value the first time.
+    * The service calls it with the `RequestInfo` when it receives a POST `commands/resetDb` request.
     * Your InMemoryDbService can adjust its behavior accordingly.
     */
-    abstract createDb(reqInfo?: RequestInfo): {};
+    abstract createDb(reqInfo?: RequestInfo): {} | Observable<{}> | Promise<{}>;
 }
 /**
 * Interface for InMemoryBackend configuration options
@@ -154,7 +156,6 @@ export interface RequestCore {
 export interface RequestInfo {
     req: RequestCore;
     apiBase: string;
-    collection: any[];
     collectionName: string;
     headers: HeadersCore;
     method: string;
@@ -178,10 +179,14 @@ export interface RequestInfoUtilities {
      * @param withDelay - if true (default), add simulated latency delay from configuration
      */
     createResponse$: (resOptionsFactory: () => ResponseOptions) => Observable<any>;
+    /** Get the in-mem service's copy of the "database" */
+    getDb(): {};
     /** Get JSON body from the request object */
     getJsonBody(req: any): any;
     /** Get location info from a url, even on server where `document` is not defined */
     getLocation(url: string): UriInfo;
+    /** Get (or create) the "real" backend */
+    getPassThruBackend: PassThruBackend;
     /**
      * Parses the request URL into a `ParsedRequestUrl` object.
      * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
@@ -194,8 +199,6 @@ export interface RequestInfoUtilities {
      */ findById<T extends {
         id: any;
     }>(collection: T[], id: any): T;
-    /**  pass through backend, if it exists */
-    passThruBackend: PassThruBackend;
 }
 /**
  * Provide a `responseInterceptor` method of this type in your `inMemDbService` to

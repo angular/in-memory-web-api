@@ -1,6 +1,15 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer }   from 'rxjs/Observer';
-import 'rxjs/add/operator/delay';
+import { Observable }      from 'rxjs/Observable';
+import { Observer }        from 'rxjs/Observer';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+
+import { of }              from 'rxjs/observable/of';
+import { fromPromise }     from 'rxjs/observable/fromPromise';
+import { isPromise }       from 'rxjs/util/isPromise';
+
+import { delay }           from 'rxjs/operator/delay';
+import { filter }          from 'rxjs/operator/filter';
+import { first }           from 'rxjs/operator/first';
+import { switchMap }       from 'rxjs/operator/switchMap';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 
@@ -28,10 +37,10 @@ import {
  * http://www.restapitutorial.com/lessons/httpmethods.html
  */
 export abstract class BackendService {
-  protected passThruBackend: PassThruBackend;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
-  private _firstTime = true;
+  protected dbReadySubject: BehaviorSubject<boolean>;
+  private passThruBackend: PassThruBackend;
 
   constructor(
     protected inMemDbService: InMemoryDbService,
@@ -44,6 +53,16 @@ export abstract class BackendService {
   }
 
   ////  protected /////
+  protected get dbReady(): Observable<boolean> {
+    if (!this.dbReadySubject) {
+      // first time the service is called.
+      this.dbReadySubject = new BehaviorSubject(false);
+      this.resetDb();
+    }
+    return first.call(
+          filter.call(this.dbReadySubject.asObservable(), (r: boolean) => r));
+  }
+
   /**
    * Process Request and return an Observable of Http Response object
    * in the manner of a RESTy web api.
@@ -69,11 +88,11 @@ export abstract class BackendService {
    *     for this http library or null|undefined (which means "keep processing").
    */
   protected handleRequest(req: RequestCore): Observable<any> {
+    //  handle the request when there is an in-memory database
+    return switchMap.call(this.dbReady, () => this.handleRequest_(req));
+  }
 
-    if (this.firstTime) {
-      this.initialize();
-      this._firstTime = false;
-    }
+  protected handleRequest_(req: RequestCore): Observable<any> {
 
     const url = req.url;
 
@@ -85,14 +104,12 @@ export abstract class BackendService {
       this.parseRequestUrl(url);
 
     const collectionName = parsed.collectionName;
-    const collection = this.db[collectionName];
     const reqInfo: RequestInfo = {
       req: req,
       apiBase: parsed.apiBase,
-      collection: collection,
       collectionName: collectionName,
       headers: this.createHeaders({ 'Content-Type': 'application/json' }),
-      id: this.parseId(collection, parsed.id),
+      id: this.parseId(parsed.id),
       method: this.getRequestMethod(req),
       query: parsed.query,
       resourceUrl: parsed.resourceUrl,
@@ -108,35 +125,40 @@ export abstract class BackendService {
 
     const methodInterceptor = this.bind(reqInfo.method);
     if (methodInterceptor) {
-      // Call the InMemoryDbService interceptor for this HTTP method.
+      // InMemoryDbService intercepts this HTTP method.
       // if interceptor produced a response, return it.
       // else InMemoryDbService chose not to intercept; continue processing.
       const interceptorResponse = methodInterceptor(reqInfo);
-      if (interceptorResponse) { return interceptorResponse; };
+      if (interceptorResponse) {
+        return interceptorResponse;
+      };
     }
 
-    if (reqInfo.collection) {
-      // request is for a collection created by the InMemoryDbService
+    if (this.db[collectionName]) {
+      // request is for a known collection of the InMemoryDbService
       return this.createResponse$(() => this.collectionHandler(reqInfo));
-
-    } else if (this.config.passThruUnknownUrl) {
-      // Passes request thru to a "real" backend.
-      if (!this.passThruBackend) { this.setPassThruBackend(); }
-      return this.passThruBackend.handle(req);
-
-    } else {
-      // can't handle this request
-      resOptions = this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Collection '${collectionName}' not found`);
-      return this.createResponse$(() => resOptions);
     }
+
+    if (this.config.passThruUnknownUrl) {
+      // unknown collection; pass request thru to a "real" backend.
+      return this.getPassThruBackend().handle(req);
+    }
+
+    // 404 - can't handle this request
+    resOptions = this.createErrorResponseOptions(
+      url,
+      STATUS.NOT_FOUND,
+      `Collection '${collectionName}' not found`
+    );
+    return this.createResponse$(() => resOptions);
   }
 
   /**
    * Add configured delay to response observable unless delay === 0
    */
   protected addDelay(response: Observable<any>): Observable<any> {
-    const delay = this.config.delay;
-    return delay === 0 ? response : response.delay(delay || 500);
+    const d = this.config.delay;
+    return d === 0 ? response : delay.call(response, d || 500);
   }
 
   /**
@@ -186,20 +208,21 @@ export abstract class BackendService {
   }
 
   protected collectionHandler(reqInfo: RequestInfo): ResponseOptions {
+    const collection = this.db[reqInfo.collectionName];
     // const req = reqInfo.req;
       let resOptions: ResponseOptions;
       switch (reqInfo.method) {
         case 'get':
-          resOptions = this.get(reqInfo);
+          resOptions = this.get(collection, reqInfo);
           break;
         case 'post':
-          resOptions = this.post(reqInfo);
+          resOptions = this.post(collection, reqInfo);
           break;
         case 'put':
-          resOptions = this.put(reqInfo);
+          resOptions = this.put(collection, reqInfo);
           break;
         case 'delete':
-          resOptions = this.delete(reqInfo);
+          resOptions = this.delete(collection, reqInfo);
           break;
         default:
           resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
@@ -229,32 +252,37 @@ export abstract class BackendService {
   protected commands(reqInfo: RequestInfo): Observable<any> {
     const command = reqInfo.collectionName.toLowerCase();
     const method = reqInfo.method;
-    let resOptions: ResponseOptions;
+
+    let resOptions: ResponseOptions = {
+      status: STATUS.OK,
+      url: reqInfo.url
+    };
 
     switch (command) {
       case 'resetdb':
-        this.resetDb(reqInfo);
-        resOptions = { status: STATUS.OK };
-        break;
+        return switchMap.call(
+          this.resetDb(reqInfo),
+          () => this.createResponse$(() => resOptions, false /* no delay */));
+
       case 'config':
         if (method === 'get') {
-          resOptions = {
-            body: this.clone(this.config),
-            status: STATUS.OK
-          };
+          resOptions.body = this.clone(this.config);
         } else {
           // any other HTTP method is assumed to be a config update
+          resOptions.status = STATUS.NO_CONTENT;
           const body = this.getJsonBody(reqInfo.req);
           Object.assign(this.config, body);
-          this.setPassThruBackend();
-          resOptions = { status: STATUS.NO_CONTENT };
+          this.passThruBackend = undefined; // re-create next time
         }
         break;
-      default:
-        resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.INTERNAL_SERVER_ERROR, `Unknown command "${command}"`);
-    }
 
-    resOptions.url = reqInfo.url;
+      default:
+        resOptions = this.createErrorResponseOptions(
+          reqInfo.url,
+          STATUS.INTERNAL_SERVER_ERROR,
+          `Unknown command "${command}"`
+        );
+    }
 
     return this.createResponse$(() => resOptions, false /* no delay */);
   }
@@ -273,6 +301,11 @@ export abstract class BackendService {
    * @param headers
    */
   protected abstract createHeaders(headers: {[index: string]: string}): HeadersCore;
+
+  /**
+   * create the function that passes unhandled requests through to the "real" backend.
+   */
+  protected abstract createPassThruBackend(): PassThruBackend;
 
   /**
    * return a search map from a location query/search string
@@ -317,7 +350,7 @@ export abstract class BackendService {
     });
   }
 
-  protected delete({id, collection, collectionName, headers, url}: RequestInfo): ResponseOptions {
+  protected delete(collection: any[], {id, collectionName, headers, url}: RequestInfo): ResponseOptions {
     // tslint:disable-next-line:triple-equals
     if (id == undefined) {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
@@ -337,9 +370,6 @@ export abstract class BackendService {
   protected findById<T extends { id: any }>(collection: T[], id: any): T {
     return collection.find((item: T) => item.id === id);
   }
-
-  /** true when `handleRequest` called for the first time */
-  protected get firstTime() { return this._firstTime; }
 
   /**
    * Generate the next available id for item in this collection
@@ -370,7 +400,7 @@ export abstract class BackendService {
     return maxId + 1;
   }
 
-  protected get({ id, query, collection, collectionName, headers, url }: RequestInfo): ResponseOptions {
+  protected get(collection: any[], {id,  query, collectionName, headers, url }: RequestInfo): ResponseOptions {
     let data = collection;
 
     // tslint:disable-next-line:triple-equals
@@ -408,6 +438,16 @@ export abstract class BackendService {
   };
 
   /**
+   * get or create the function that passes unhandled requests
+   * through to the "real" backend.
+   */
+  protected getPassThruBackend(): PassThruBackend {
+    return this.passThruBackend ?
+      this.passThruBackend :
+      this.passThruBackend = this.createPassThruBackend();
+  }
+
+  /**
    * return canonical HTTP method name (lowercase) from the request object
    * e.g. (req.method || 'get').toLowerCase();
    * @param req - request object from the http call
@@ -419,23 +459,10 @@ export abstract class BackendService {
     return collection.findIndex((item: any) => item.id === id);
   }
 
-  /**
-   * Initialize the service
-   * Initializes the in-mem database.
-   * Complete your preparation of that database before the first `Http`/`HttpClient` call.
-   **/
-  protected initialize() {
-    this.resetDb();
-  }
-
-  // tries to parse id as number if collection item.id is a number.
-  // returns the original param id otherwise.
-  protected parseId(collection: { id: any }[], id: string): any {
-   if (collection && collection[0] && typeof collection[0].id === 'number') {
-      const idNum = parseFloat(id);
-      return isNaN(idNum) ? id : idNum;
-    }
-    return id;
+  /** Parse the id as a number. Return original value if not a number. */
+  protected parseId(id: string): any {
+    const idNum = parseFloat(id);
+    return isNaN(idNum) ? id : idNum;
   }
 
   /**
@@ -505,7 +532,7 @@ export abstract class BackendService {
 
   // Create entity
   // Can update an existing entity too if post409 is false.
-  protected post({ collection, /* collectionName, */ headers, id, req, resourceUrl, url }: RequestInfo): ResponseOptions {
+  protected post(collection: any[], {id,  collectionName, headers, req, resourceUrl, url }: RequestInfo): ResponseOptions {
     const item = this.getJsonBody(req);
 
     // tslint:disable-next-line:triple-equals
@@ -526,7 +553,7 @@ export abstract class BackendService {
       return { headers, body, status: STATUS.CREATED };
     } else if (this.config.post409) {
       return this.createErrorResponseOptions(url, STATUS.CONFLICT,
-        `item with id='${id} exists and may not be updated with PUT; use POST instead.`);
+        `'${collectionName}' item with id='${id} exists and may not be updated with POST; use PUT instead.`);
     } else {
       collection[existingIx] = item;
       return this.config.post204 ?
@@ -537,14 +564,15 @@ export abstract class BackendService {
 
   // Update existing entity
   // Can create an entity too if put404 is false.
-  protected put({ id, collection, collectionName, headers, req, url }: RequestInfo): ResponseOptions {
+  protected put(collection: any[], {id,  collectionName, headers, req, url }: RequestInfo): ResponseOptions {
     const item = this.getJsonBody(req);
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
     if (id && id !== item.id) {
-      return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, `Request id does not match item.id`);
+      return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST,
+        `Request for '${collectionName}' id does not match item.id`);
     } else {
       id = item.id;
     }
@@ -558,7 +586,8 @@ export abstract class BackendService {
           { headers, body, status: STATUS.OK }; // successful; return entity
     } else if (this.config.put404) {
       // item to update not found; use POST to create new item for this id.
-      return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `id='${id} not found`);
+      return this.createErrorResponseOptions(url, STATUS.NOT_FOUND,
+        `'${collectionName}' item with id='${id} not found and may not be created with PUT; use POST instead.`);
     } else {
       // create new item for id not found
       collection.push(item);
@@ -580,25 +609,29 @@ export abstract class BackendService {
       config: this.config,
       createResponse$: this.createResponse$.bind(this),
       findById: this.findById.bind(this),
+      getDb: () => this.db,
       getJsonBody: this.getJsonBody.bind(this),
       getLocation: this.getLocation.bind(this),
+      getPassThruBackend: this.getPassThruBackend.bind(this),
       parseRequestUrl: this.parseRequestUrl.bind(this),
-      passThruBackend: this.passThruBackend
     };
   }
 
   /**
-   * Reset the "database" to its original state
+   * Tell your in-mem "database" to reset.
+   * returns Observable of the database because resetting it could be async
    */
-  protected resetDb(reqInfo?: RequestInfo) {
-    this.db = this.inMemDbService.createDb(reqInfo);
+  protected resetDb(reqInfo?: RequestInfo): Observable<boolean> {
+    this.dbReadySubject.next(false);
+    const db = this.inMemDbService.createDb(reqInfo);
+    const db$ = db instanceof Observable ? db :
+           isPromise(db) ? fromPromise(db) :
+           of(db);
+    first.call(db$).subscribe((d: {}) => {
+      this.db = d;
+      this.dbReadySubject.next(true);
+    });
+    return this.dbReady;
   }
-
-  /**
-   * Sets the function that passes unhandled requests
-   * through to the "real" backend if
-   * config.passThruUnknownUrl is true.
-   */
-  protected abstract setPassThruBackend(): void;
 
 }

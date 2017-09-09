@@ -172,10 +172,10 @@ the in-memory backed provider supersedes the Angular version.
   export class AppModule { ... }
   ```
 
-* The `createDb` method is synchronous.
-The service calls `createDb` when it handles the _first_ `HttpClient` (or `Http`) request.
-If you load your in-memory database service from a JSON file,
-complete that asynchronous operation _before_ making the first HTTP request.
+* The `createDb` method can be synchronous or asynchronous.
+so you can initialize your in-memory database service from a JSON file.
+Return the database object, an observable of that object, or a promise of that object.
+The in-mem web api service calls `createDb` (a) when it handles the _first_ `HttpClient` (or `Http`) request and (b) when it receives a `POST resetdb` request.
 
 ## In-memory web api examples
 The tests (`src/app/*.spec.ts` files) in the [github repo](https://github.com/angular/in-memory-web-api/tree/master/src/app) are a good place to learn how to setup and use this in-memory web api library.

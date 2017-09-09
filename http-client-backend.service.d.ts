@@ -1,6 +1,5 @@
-import { HttpBackend, HttpHeaders, HttpRequest, HttpResponse, XhrFactory } from '@angular/common/http';
+import { HttpBackend, HttpHeaders, HttpRequest, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
 import { InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
 import { BackendService } from './backend.service';
 /**
@@ -41,5 +40,5 @@ export declare class HttpClientBackendService extends BackendService implements 
     }): HttpHeaders;
     protected createQueryMap(search: string): Map<string, string[]>;
     protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<HttpResponse<any>>;
-    protected setPassThruBackend(): void;
+    protected createPassThruBackend(): HttpXhrBackend;
 }

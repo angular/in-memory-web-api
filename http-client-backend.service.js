@@ -10,7 +10,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { Inject, Injectable, Optional } from '@angular/core';
 import { HttpHeaders, HttpParams, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
-import 'rxjs/add/operator/map';
+import { map } from 'rxjs/operator/map';
 import { STATUS } from './http-status-codes';
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService } from './interfaces';
 import { BackendService } from './backend.service';
@@ -77,11 +77,11 @@ var HttpClientBackendService = (function (_super) {
         return map;
     };
     HttpClientBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
-        return resOptions$.map(function (opts) { return new HttpResponse(opts); });
+        return map.call(resOptions$, function (opts) { return new HttpResponse(opts); });
     };
-    HttpClientBackendService.prototype.setPassThruBackend = function () {
+    HttpClientBackendService.prototype.createPassThruBackend = function () {
         try {
-            this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
+            return new HttpXhrBackend(this.xhrFactory);
         }
         catch (ex) {
             ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
