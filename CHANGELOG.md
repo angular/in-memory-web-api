@@ -8,6 +8,17 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.4.3"></a>
+## 0.4.3 (2017-09-11)
+Refactoring for clarity and to correctly reflect intent.
+A **breaking change** only if your customizations depend directly and explicitly on `RequestInfo` or the `get`, `delete`, `post`, or `put` methods.
+
+- replace all `switchMap` with `concatMap` because, in all previous uses of `switchMap`,
+I really meant to wait for the source observable to complete _before_ beginning the inner observable whereas `switchMap` starts the inner observable right away.
+
+- restored `collection` to the `RequestInfo` interface and set it in `handleRequest_`
+- `get`, `delete`, `post`, and `put` methods get the `collection` from `requestInfo`; simplifies their signatures to one parameter.
+
 <a id="0.4.2"></a>
 ## 0.4.2 (2017-09-08)
 - Postpones the in-memory database initialization (via `resetDb`) until the first HTTP request.

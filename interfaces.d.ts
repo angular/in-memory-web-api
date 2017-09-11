@@ -98,23 +98,6 @@ export declare abstract class InMemoryBackendConfigArgs {
 export declare class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
     constructor(config?: InMemoryBackendConfigArgs);
 }
-/** Interface of information about a Uri  */
-export interface UriInfo {
-    source: string;
-    protocol: string;
-    authority: string;
-    userInfo: string;
-    user: string;
-    password: string;
-    host: string;
-    port: string;
-    relative: string;
-    path: string;
-    directory: string;
-    file: string;
-    query: string;
-    anchor: string;
-}
 /** Return information (UriInfo) about a URI  */
 export declare function parseUri(str: string): UriInfo;
 /**
@@ -157,6 +140,7 @@ export interface RequestInfo {
     req: RequestCore;
     apiBase: string;
     collectionName: string;
+    collection: any;
     headers: HeadersCore;
     method: string;
     id: any;
@@ -227,4 +211,21 @@ export interface ResponseOptions {
      * request url
      */
     url?: string;
+}
+/** Interface of information about a Uri  */
+export interface UriInfo {
+    source: string;
+    protocol: string;
+    authority: string;
+    userInfo: string;
+    user: string;
+    password: string;
+    host: string;
+    port: string;
+    relative: string;
+    path: string;
+    directory: string;
+    file: string;
+    query: string;
+    anchor: string;
 }

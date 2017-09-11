@@ -1,8 +1,8 @@
 import { async, TestBed } from '@angular/core/testing';
 
+import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/switchMap';
 
 import { failure } from '../testing';
 
@@ -68,7 +68,7 @@ export class HereServiceCoreSpec {
             expect(hero.name).toBe('FunkyBob');
           })
           // Get the new hero by its generated id
-          .switchMap(hero => heroService.getHero(hero.id))
+          .concatMap(hero => heroService.getHero(hero.id))
           .subscribe(
           hero => {
             expect(hero.name).toBe('FunkyBob');
@@ -102,11 +102,11 @@ export class HereServiceCoreSpec {
       it('can update existing hero', async(() => {
         const id = 1;
         heroService.getHero(id)
-          .switchMap(hero => {
+          .concatMap(hero => {
             hero.name = 'Thunderstorm';
             return heroService.updateHero(hero);
           })
-          .switchMap(() => {
+          .concatMap(() => {
             return heroService.getHero(id);
           })
           .subscribe(

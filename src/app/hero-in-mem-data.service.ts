@@ -30,7 +30,10 @@ export class HeroInMemDataService implements InMemoryDbService {
 
     const nobodies: any[] = [ ];
 
+    // default returnType
     let returnType  = 'object';
+    // let returnType  = 'observable';
+    // let returnType  = 'promise';
 
     // demonstrate POST commands/resetDb
     // this example clears the collections if the request body tells it to do so

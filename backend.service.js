@@ -3,10 +3,10 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { of } from 'rxjs/observable/of';
 import { fromPromise } from 'rxjs/observable/fromPromise';
 import { isPromise } from 'rxjs/util/isPromise';
+import { concatMap } from 'rxjs/operator/concatMap';
 import { delay } from 'rxjs/operator/delay';
 import { filter } from 'rxjs/operator/filter';
 import { first } from 'rxjs/operator/first';
-import { switchMap } from 'rxjs/operator/switchMap';
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 import { InMemoryBackendConfig, parseUri, removeTrailingSlash } from './interfaces';
 /**
@@ -66,7 +66,7 @@ var BackendService = (function () {
     BackendService.prototype.handleRequest = function (req) {
         var _this = this;
         //  handle the request when there is an in-memory database
-        return switchMap.call(this.dbReady, function () { return _this.handleRequest_(req); });
+        return concatMap.call(this.dbReady, function () { return _this.handleRequest_(req); });
     };
     BackendService.prototype.handleRequest_ = function (req) {
         var _this = this;
@@ -77,9 +77,11 @@ var BackendService = (function () {
         var parsed = (parser && parser(url, this.requestInfoUtils)) ||
             this.parseRequestUrl(url);
         var collectionName = parsed.collectionName;
+        var collection = this.db[collectionName];
         var reqInfo = {
             req: req,
             apiBase: parsed.apiBase,
+            collection: collection,
             collectionName: collectionName,
             headers: this.createHeaders({ 'Content-Type': 'application/json' }),
             id: this.parseId(parsed.id),
@@ -171,16 +173,16 @@ var BackendService = (function () {
         var resOptions;
         switch (reqInfo.method) {
             case 'get':
-                resOptions = this.get(collection, reqInfo);
+                resOptions = this.get(reqInfo);
                 break;
             case 'post':
-                resOptions = this.post(collection, reqInfo);
+                resOptions = this.post(reqInfo);
                 break;
             case 'put':
-                resOptions = this.put(collection, reqInfo);
+                resOptions = this.put(reqInfo);
                 break;
             case 'delete':
-                resOptions = this.delete(collection, reqInfo);
+                resOptions = this.delete(reqInfo);
                 break;
             default:
                 resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
@@ -215,7 +217,7 @@ var BackendService = (function () {
         };
         switch (command) {
             case 'resetdb':
-                return switchMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }, false /* no delay */); });
+                return concatMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }, false /* no delay */); });
             case 'config':
                 if (method === 'get') {
                     resOptions.body = this.clone(this.config);
@@ -274,8 +276,8 @@ var BackendService = (function () {
             return function () { }; // unsubscribe function
         });
     };
-    BackendService.prototype.delete = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
+    BackendService.prototype.delete = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, url = _a.url;
         // tslint:disable-next-line:triple-equals
         if (id == undefined) {
             return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
@@ -323,8 +325,8 @@ var BackendService = (function () {
         }, undefined);
         return maxId + 1;
     };
-    BackendService.prototype.get = function (collection, _a) {
-        var id = _a.id, query = _a.query, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
+    BackendService.prototype.get = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, query = _a.query, url = _a.url;
         var data = collection;
         // tslint:disable-next-line:triple-equals
         if (id != undefined && id !== '') {
@@ -438,8 +440,8 @@ var BackendService = (function () {
     };
     // Create entity
     // Can update an existing entity too if post409 is false.
-    BackendService.prototype.post = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
+    BackendService.prototype.post = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
         var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
@@ -470,8 +472,8 @@ var BackendService = (function () {
     };
     // Update existing entity
     // Can create an entity too if put404 is false.
-    BackendService.prototype.put = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, req = _a.req, url = _a.url;
+    BackendService.prototype.put = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, url = _a.url;
         var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {

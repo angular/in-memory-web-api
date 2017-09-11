@@ -1,8 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/Observable'), require('rxjs/BehaviorSubject'), require('rxjs/observable/of'), require('rxjs/observable/fromPromise'), require('rxjs/util/isPromise'), require('rxjs/operator/delay'), require('rxjs/operator/filter'), require('rxjs/operator/first'), require('rxjs/operator/switchMap'), require('@angular/core'), require('@angular/http'), require('rxjs/operator/map'), require('@angular/common/http')) :
-	typeof define === 'function' && define.amd ? define(['exports', 'rxjs/Observable', 'rxjs/BehaviorSubject', 'rxjs/observable/of', 'rxjs/observable/fromPromise', 'rxjs/util/isPromise', 'rxjs/operator/delay', 'rxjs/operator/filter', 'rxjs/operator/first', 'rxjs/operator/switchMap', '@angular/core', '@angular/http', 'rxjs/operator/map', '@angular/common/http'], factory) :
-	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = {}),global.Rx,global.rxjs_BehaviorSubject,global.rxjs_observable_of,global.rxjs_observable_fromPromise,global.rxjs_util_isPromise,global.rxjs_operator_delay,global.rxjs_operator_filter,global.rxjs_operator_first,global.rxjs_operator_switchMap,global.ng.core,global.ng.http,global.rxjs_operator_map,global._angular_common_http));
-}(this, (function (exports,rxjs_Observable,rxjs_BehaviorSubject,rxjs_observable_of,rxjs_observable_fromPromise,rxjs_util_isPromise,rxjs_operator_delay,rxjs_operator_filter,rxjs_operator_first,rxjs_operator_switchMap,_angular_core,_angular_http,rxjs_operator_map,_angular_common_http) { 'use strict';
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('rxjs/Observable'), require('rxjs/BehaviorSubject'), require('rxjs/observable/of'), require('rxjs/observable/fromPromise'), require('rxjs/util/isPromise'), require('rxjs/operator/concatMap'), require('rxjs/operator/delay'), require('rxjs/operator/filter'), require('rxjs/operator/first'), require('@angular/core'), require('@angular/http'), require('rxjs/operator/map'), require('@angular/common/http')) :
+	typeof define === 'function' && define.amd ? define(['exports', 'rxjs/Observable', 'rxjs/BehaviorSubject', 'rxjs/observable/of', 'rxjs/observable/fromPromise', 'rxjs/util/isPromise', 'rxjs/operator/concatMap', 'rxjs/operator/delay', 'rxjs/operator/filter', 'rxjs/operator/first', '@angular/core', '@angular/http', 'rxjs/operator/map', '@angular/common/http'], factory) :
+	(factory((global.ng = global.ng || {}, global.ng.inMemoryWebApi = {}),global.Rx,global.rxjs_BehaviorSubject,global.rxjs_observable_of,global.rxjs_observable_fromPromise,global.rxjs_util_isPromise,global.rxjs_operator_concatMap,global.rxjs_operator_delay,global.rxjs_operator_filter,global.rxjs_operator_first,global.ng.core,global.ng.http,global.rxjs_operator_map,global._angular_common_http));
+}(this, (function (exports,rxjs_Observable,rxjs_BehaviorSubject,rxjs_observable_of,rxjs_observable_fromPromise,rxjs_util_isPromise,rxjs_operator_concatMap,rxjs_operator_delay,rxjs_operator_filter,rxjs_operator_first,_angular_core,_angular_http,rxjs_operator_map,_angular_common_http) { 'use strict';
 
 var STATUS = {
     CONTINUE: 100,
@@ -618,7 +618,7 @@ var BackendService = (function () {
     BackendService.prototype.handleRequest = function (req) {
         var _this = this;
         //  handle the request when there is an in-memory database
-        return rxjs_operator_switchMap.switchMap.call(this.dbReady, function () { return _this.handleRequest_(req); });
+        return rxjs_operator_concatMap.concatMap.call(this.dbReady, function () { return _this.handleRequest_(req); });
     };
     BackendService.prototype.handleRequest_ = function (req) {
         var _this = this;
@@ -629,9 +629,11 @@ var BackendService = (function () {
         var parsed = (parser && parser(url, this.requestInfoUtils)) ||
             this.parseRequestUrl(url);
         var collectionName = parsed.collectionName;
+        var collection = this.db[collectionName];
         var reqInfo = {
             req: req,
             apiBase: parsed.apiBase,
+            collection: collection,
             collectionName: collectionName,
             headers: this.createHeaders({ 'Content-Type': 'application/json' }),
             id: this.parseId(parsed.id),
@@ -723,16 +725,16 @@ var BackendService = (function () {
         var resOptions;
         switch (reqInfo.method) {
             case 'get':
-                resOptions = this.get(collection, reqInfo);
+                resOptions = this.get(reqInfo);
                 break;
             case 'post':
-                resOptions = this.post(collection, reqInfo);
+                resOptions = this.post(reqInfo);
                 break;
             case 'put':
-                resOptions = this.put(collection, reqInfo);
+                resOptions = this.put(reqInfo);
                 break;
             case 'delete':
-                resOptions = this.delete(collection, reqInfo);
+                resOptions = this.delete(reqInfo);
                 break;
             default:
                 resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
@@ -767,7 +769,7 @@ var BackendService = (function () {
         };
         switch (command) {
             case 'resetdb':
-                return rxjs_operator_switchMap.switchMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }, false /* no delay */); });
+                return rxjs_operator_concatMap.concatMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }, false /* no delay */); });
             case 'config':
                 if (method === 'get') {
                     resOptions.body = this.clone(this.config);
@@ -826,8 +828,8 @@ var BackendService = (function () {
             return function () { }; // unsubscribe function
         });
     };
-    BackendService.prototype.delete = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
+    BackendService.prototype.delete = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, url = _a.url;
         // tslint:disable-next-line:triple-equals
         if (id == undefined) {
             return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Missing \"" + collectionName + "\" id");
@@ -875,8 +877,8 @@ var BackendService = (function () {
         }, undefined);
         return maxId + 1;
     };
-    BackendService.prototype.get = function (collection, _a) {
-        var id = _a.id, query = _a.query, collectionName = _a.collectionName, headers = _a.headers, url = _a.url;
+    BackendService.prototype.get = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, query = _a.query, url = _a.url;
         var data = collection;
         // tslint:disable-next-line:triple-equals
         if (id != undefined && id !== '') {
@@ -990,8 +992,8 @@ var BackendService = (function () {
     };
     // Create entity
     // Can update an existing entity too if post409 is false.
-    BackendService.prototype.post = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
+    BackendService.prototype.post = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
         var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
@@ -1022,8 +1024,8 @@ var BackendService = (function () {
     };
     // Update existing entity
     // Can create an entity too if put404 is false.
-    BackendService.prototype.put = function (collection, _a) {
-        var id = _a.id, collectionName = _a.collectionName, headers = _a.headers, req = _a.req, url = _a.url;
+    BackendService.prototype.put = function (_a) {
+        var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, url = _a.url;
         var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {

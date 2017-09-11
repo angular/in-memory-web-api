@@ -6,10 +6,10 @@ import { of }              from 'rxjs/observable/of';
 import { fromPromise }     from 'rxjs/observable/fromPromise';
 import { isPromise }       from 'rxjs/util/isPromise';
 
+import { concatMap }       from 'rxjs/operator/concatMap';
 import { delay }           from 'rxjs/operator/delay';
 import { filter }          from 'rxjs/operator/filter';
 import { first }           from 'rxjs/operator/first';
-import { switchMap }       from 'rxjs/operator/switchMap';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 
@@ -89,7 +89,7 @@ export abstract class BackendService {
    */
   protected handleRequest(req: RequestCore): Observable<any> {
     //  handle the request when there is an in-memory database
-    return switchMap.call(this.dbReady, () => this.handleRequest_(req));
+    return concatMap.call(this.dbReady, () => this.handleRequest_(req));
   }
 
   protected handleRequest_(req: RequestCore): Observable<any> {
@@ -104,9 +104,12 @@ export abstract class BackendService {
       this.parseRequestUrl(url);
 
     const collectionName = parsed.collectionName;
+    const collection = this.db[collectionName];
+
     const reqInfo: RequestInfo = {
       req: req,
       apiBase: parsed.apiBase,
+      collection: collection,
       collectionName: collectionName,
       headers: this.createHeaders({ 'Content-Type': 'application/json' }),
       id: this.parseId(parsed.id),
@@ -213,16 +216,16 @@ export abstract class BackendService {
       let resOptions: ResponseOptions;
       switch (reqInfo.method) {
         case 'get':
-          resOptions = this.get(collection, reqInfo);
+          resOptions = this.get(reqInfo);
           break;
         case 'post':
-          resOptions = this.post(collection, reqInfo);
+          resOptions = this.post(reqInfo);
           break;
         case 'put':
-          resOptions = this.put(collection, reqInfo);
+          resOptions = this.put(reqInfo);
           break;
         case 'delete':
-          resOptions = this.delete(collection, reqInfo);
+          resOptions = this.delete(reqInfo);
           break;
         default:
           resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
@@ -260,7 +263,7 @@ export abstract class BackendService {
 
     switch (command) {
       case 'resetdb':
-        return switchMap.call(
+        return concatMap.call(
           this.resetDb(reqInfo),
           () => this.createResponse$(() => resOptions, false /* no delay */));
 
@@ -350,7 +353,7 @@ export abstract class BackendService {
     });
   }
 
-  protected delete(collection: any[], {id, collectionName, headers, url}: RequestInfo): ResponseOptions {
+  protected delete({ collection, collectionName, headers, id, url}: RequestInfo): ResponseOptions {
     // tslint:disable-next-line:triple-equals
     if (id == undefined) {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Missing "${collectionName}" id`);
@@ -400,7 +403,7 @@ export abstract class BackendService {
     return maxId + 1;
   }
 
-  protected get(collection: any[], {id,  query, collectionName, headers, url }: RequestInfo): ResponseOptions {
+  protected get({ collection, collectionName, headers, id, query, url }: RequestInfo): ResponseOptions {
     let data = collection;
 
     // tslint:disable-next-line:triple-equals
@@ -532,7 +535,7 @@ export abstract class BackendService {
 
   // Create entity
   // Can update an existing entity too if post409 is false.
-  protected post(collection: any[], {id,  collectionName, headers, req, resourceUrl, url }: RequestInfo): ResponseOptions {
+  protected post({ collection, collectionName, headers, id, req, resourceUrl, url }: RequestInfo): ResponseOptions {
     const item = this.getJsonBody(req);
 
     // tslint:disable-next-line:triple-equals
@@ -564,7 +567,7 @@ export abstract class BackendService {
 
   // Update existing entity
   // Can create an entity too if put404 is false.
-  protected put(collection: any[], {id,  collectionName, headers, req, url }: RequestInfo): ResponseOptions {
+  protected put({ collection, collectionName, headers, id, req, url }: RequestInfo): ResponseOptions {
     const item = this.getJsonBody(req);
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {

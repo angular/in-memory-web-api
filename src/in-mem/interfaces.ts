@@ -122,24 +122,6 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
   }
 }
 
-/** Interface of information about a Uri  */
-export interface UriInfo {
-  source: string;
-  protocol: string;
-  authority: string;
-  userInfo: string;
-  user: string;
-  password: string;
-  host: string;
-  port: string;
-  relative: string;
-  path: string;
-  directory: string;
-  file: string;
-  query: string;
-  anchor: string;
-}
-
 /** Return information (UriInfo) about a URI  */
 export function parseUri(str: string): UriInfo {
   // Adapted from parseuri package - http://blog.stevenlevithan.com/archives/parseuri
@@ -215,6 +197,7 @@ export interface RequestInfo {
   req: RequestCore; // concrete type depends upon the Http library
   apiBase: string;
   collectionName: string;
+  collection: any;
   headers: HeadersCore;
   method: string;
   id: any;
@@ -298,4 +281,22 @@ export interface ResponseOptions {
    * request url
    */
   url?: string;
+}
+
+/** Interface of information about a Uri  */
+export interface UriInfo {
+  source: string;
+  protocol: string;
+  authority: string;
+  userInfo: string;
+  user: string;
+  password: string;
+  host: string;
+  port: string;
+  relative: string;
+  path: string;
+  directory: string;
+  file: string;
+  query: string;
+  anchor: string;
 }
