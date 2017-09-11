@@ -24,7 +24,7 @@ It intercepts Angular `Http` and `HttpClient` requests that would otherwise go t
 >To see how, look for the following line in the 
 >`src/systemjs.config.js` of this project:
 >
->`'angular/common/http': 'npm:@angular/common/bundles/common-http.umd.js'`
+>`'@angular/common/http': 'npm:@angular/common/bundles/common-http.umd.js'`
 >
 >You've already made this change if you are using `HttpClient` today.
 >
