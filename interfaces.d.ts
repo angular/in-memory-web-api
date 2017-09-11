@@ -150,12 +150,10 @@ export interface RequestInfo {
     utils: RequestInfoUtilities;
 }
 /**
- * Interface for methods and current data from this service instance
+ * Interface for utility methods from this service instance.
  * Useful within an HTTP method override
  */
 export interface RequestInfoUtilities {
-    /** The current, active configuration which is a blend of defaults and overrides */
-    config: InMemoryBackendConfigArgs;
     /**
      * Create a cold response Observable from a factory for ResponseOptions
      * the same way that the in-mem backend service does.
@@ -163,6 +161,16 @@ export interface RequestInfoUtilities {
      * @param withDelay - if true (default), add simulated latency delay from configuration
      */
     createResponse$: (resOptionsFactory: () => ResponseOptions) => Observable<any>;
+    /**
+     * Find first instance of item in collection by `item.id`
+     * @param collection
+     * @param id
+     */
+    findById<T extends {
+        id: any;
+    }>(collection: T[], id: any): T;
+    /** return the current, active configuration which is a blend of defaults and overrides */
+    getConfig(): InMemoryBackendConfigArgs;
     /** Get the in-mem service's copy of the "database" */
     getDb(): {};
     /** Get JSON body from the request object */
@@ -170,19 +178,18 @@ export interface RequestInfoUtilities {
     /** Get location info from a url, even on server where `document` is not defined */
     getLocation(url: string): UriInfo;
     /** Get (or create) the "real" backend */
-    getPassThruBackend: PassThruBackend;
+    getPassThruBackend(): PassThruBackend;
+    /**
+     * return true if can determine that the collection's `item.id` is a number
+     * */
+    isCollectionIdNumeric<T extends {
+        id: any;
+    }>(collection: T[], collectionName: string): boolean;
     /**
      * Parses the request URL into a `ParsedRequestUrl` object.
      * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
      */
     parseRequestUrl(url: string): ParsedRequestUrl;
-    /**
-     * Find first instance of item in collection by `item.id`
-     * @param collection
-     * @param id
-     */ findById<T extends {
-        id: any;
-    }>(collection: T[], id: any): T;
 }
 /**
  * Provide a `responseInterceptor` method of this type in your `inMemDbService` to

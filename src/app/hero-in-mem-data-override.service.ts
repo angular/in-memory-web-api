@@ -15,18 +15,33 @@ import { getStatusText, STATUS } from '../in-mem/http-status-codes';
 import { HeroInMemDataService } from './hero-in-mem-data.service';
 
 const villains = [
+  // deliberately using string ids that look numeric
   {id: 100, name: 'Snidley Wipsnatch'},
   {id: 101, name: 'Boris Badenov'},
   {id: 103, name: 'Natasha Fatale'}
 ];
 
+// Pseudo guid generator
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
 @Injectable()
 export class HeroInMemDataOverrideService extends HeroInMemDataService {
 
   // Overrides id generator and delivers next available `id`, starting with 1001.
-  genId<T extends { id: any }>(collection: T[]): any {
-    console.log('genId override');
-    if (collection) {
+  genId<T extends { id: any }>(collection: T[], collectionName: string): any {
+    if (collectionName === 'nobodies') {
+      console.log('genId override for \'nobodies\'');
+      return guid();
+    } else if (collection) {
+      console.log(`genId override for '${collectionName}'`);
       return 1 + collection.reduce((prev, curr) => Math.max(prev, curr.id || 0), 1000);
     }
   }

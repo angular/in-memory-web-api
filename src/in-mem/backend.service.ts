@@ -41,6 +41,7 @@ export abstract class BackendService {
   protected db: Object;
   protected dbReadySubject: BehaviorSubject<boolean>;
   private passThruBackend: PassThruBackend;
+  protected requestInfoUtils = this.getRequestInfoUtils();
 
   constructor(
     protected inMemDbService: InMemoryDbService,
@@ -112,7 +113,7 @@ export abstract class BackendService {
       collection: collection,
       collectionName: collectionName,
       headers: this.createHeaders({ 'Content-Type': 'application/json' }),
-      id: this.parseId(parsed.id),
+      id: this.parseId(collection, collectionName, parsed.id),
       method: this.getRequestMethod(req),
       query: parsed.query,
       resourceUrl: parsed.resourceUrl,
@@ -211,7 +212,6 @@ export abstract class BackendService {
   }
 
   protected collectionHandler(reqInfo: RequestInfo): ResponseOptions {
-    const collection = this.db[reqInfo.collectionName];
     // const req = reqInfo.req;
       let resOptions: ResponseOptions;
       switch (reqInfo.method) {
@@ -338,7 +338,14 @@ export abstract class BackendService {
   protected createResponseOptions$(resOptionsFactory: () => ResponseOptions): Observable<ResponseOptions> {
 
     return new Observable<ResponseOptions>((responseObserver: Observer<ResponseOptions>) => {
-      const resOptions = resOptionsFactory();
+      let resOptions: ResponseOptions;
+      try {
+        resOptions = resOptionsFactory();
+      } catch (error) {
+        const err = error.message || error;
+        resOptions = this.createErrorResponseOptions('', STATUS.INTERNAL_SERVER_ERROR, `${err}`);
+      }
+
       const status = resOptions.status;
       try {
         resOptions.statusText = getStatusText(status);
@@ -376,26 +383,32 @@ export abstract class BackendService {
 
   /**
    * Generate the next available id for item in this collection
-   * @param collection - collection of items with `id` key property
    * Use method from `inMemDbService` if it exists and returns a value,
-   * else delegates to genIdDefault
+   * else delegates to `genIdDefault`.
+   * @param collection - collection of items with `id` key property
    */
-  protected genId<T extends { id: any }>(collection: T[]): any {
+  protected genId<T extends { id: any }>(collection: T[], collectionName: string): any {
     const genId = this.bind('genId');
     if (genId) {
-      const id = genId(collection);
+      const id = genId(collection, collectionName);
       // tslint:disable-next-line:triple-equals
       if (id != undefined) { return id; }
     }
-    return this.genIdDefault(collection);
+    return this.genIdDefault(collection, collectionName);
   }
 
   /**
    * Default generator of the next available id for item in this collection
+   * This default implementation works only for numeric ids.
    * @param collection - collection of items with `id` key property
-   * This default implementation assumes integer ids; returns `1` otherwise
+   * @param collectionName - name of the collection
    */
-  protected genIdDefault<T extends { id: any }>(collection: T[]): any {
+  protected genIdDefault<T extends { id: any }>(collection: T[], collectionName: string): any {
+    if (!this.isCollectionIdNumeric(collection, collectionName)) {
+      throw new Error(
+        `Collection '${collectionName}' id type is non-numeric or unknown. Can only generate numeric ids.`);
+    }
+
     let maxId = 0;
     collection.reduce((prev: any, item: any) => {
       maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
@@ -451,6 +464,24 @@ export abstract class BackendService {
   }
 
   /**
+   * Get utility methods from this service instance.
+   * Useful within an HTTP method override
+   */
+  protected getRequestInfoUtils(): RequestInfoUtilities {
+    return {
+      createResponse$: this.createResponse$.bind(this),
+      findById: this.findById.bind(this),
+      isCollectionIdNumeric: this.isCollectionIdNumeric.bind(this),
+      getConfig: () => this.config,
+      getDb: () => this.db,
+      getJsonBody: this.getJsonBody.bind(this),
+      getLocation: this.getLocation.bind(this),
+      getPassThruBackend: this.getPassThruBackend.bind(this),
+      parseRequestUrl: this.parseRequestUrl.bind(this),
+    };
+  }
+
+  /**
    * return canonical HTTP method name (lowercase) from the request object
    * e.g. (req.method || 'get').toLowerCase();
    * @param req - request object from the http call
@@ -463,9 +494,24 @@ export abstract class BackendService {
   }
 
   /** Parse the id as a number. Return original value if not a number. */
-  protected parseId(id: string): any {
+  protected parseId(collection: any[], collectionName: string, id: string): any {
+    if (!this.isCollectionIdNumeric(collection, collectionName)) {
+      // Can't confirm that `id` is a numeric type; don't parse as a number
+      // or else `'42'` -> `42` and _get by id_ fails.
+      return id;
+    }
     const idNum = parseFloat(id);
     return isNaN(idNum) ? id : idNum;
+  }
+
+  /**
+   * return true if can determine that the collection's `item.id` is a number
+   * This implementation can't tell if the collection is empty so it assumes NO
+   * */
+  protected isCollectionIdNumeric<T extends { id: any }>(collection: T[], collectionName: string): boolean {
+    // collectionName not used now but override might maintain collection type information
+    // so that it could know the type of the `id` even when the collection is empty.
+    return !!(collection && collection[0]) && typeof collection[0].id === 'number';
   }
 
   /**
@@ -540,8 +586,20 @@ export abstract class BackendService {
 
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
-      item.id = id || this.genId(collection);
+      try {
+        item.id = id || this.genId(collection, collectionName);
+      } catch (err) {
+        const emsg: string = err.message || '';
+        if (/id type is non-numeric/.test(emsg)) {
+          return this.createErrorResponseOptions(url, STATUS.UNPROCESSABLE_ENTRY, emsg);
+        } else {
+          console.error(err);
+          return this.createErrorResponseOptions(url, STATUS.INTERNAL_SERVER_ERROR,
+            `Failed to generate new id for '${collectionName}'`);
+        }
+      }
     }
+
     if (id && id !== item.id) {
       return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, `Request id does not match item.id`);
     } else {
@@ -605,19 +663,6 @@ export abstract class BackendService {
       return true;
     }
     return false;
-  }
-
-  protected get requestInfoUtils(): RequestInfoUtilities {
-    return {
-      config: this.config,
-      createResponse$: this.createResponse$.bind(this),
-      findById: this.findById.bind(this),
-      getDb: () => this.db,
-      getJsonBody: this.getJsonBody.bind(this),
-      getLocation: this.getLocation.bind(this),
-      getPassThruBackend: this.getPassThruBackend.bind(this),
-      parseRequestUrl: this.parseRequestUrl.bind(this),
-    };
   }
 
   /**

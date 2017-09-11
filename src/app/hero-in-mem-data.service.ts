@@ -30,6 +30,12 @@ export class HeroInMemDataService implements InMemoryDbService {
 
     const nobodies: any[] = [ ];
 
+    // entities with string ids that look like numbers
+    const stringers = [
+      { id: '10', name: 'Bob String'},
+      { id: '20', name: 'Jill String'}
+    ];
+
     // default returnType
     let returnType  = 'object';
     // let returnType  = 'observable';
@@ -42,12 +48,13 @@ export class HeroInMemDataService implements InMemoryDbService {
       if (body.clear === true) {
         heroes.length = 0;
         nobodies.length = 0;
+        stringers.length = 0;
       }
 
       // 'returnType` can be 'object' | 'observable' | 'promise'
       returnType = body.returnType || 'object';
     }
-    const db = {heroes, nobodies};
+    const db = { heroes, nobodies, stringers };
 
     switch (returnType) {
       case ('observable'):

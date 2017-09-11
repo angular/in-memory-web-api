@@ -8,6 +8,13 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.4.4"></a>
+## 0.4.4 (2017-09-11)
+closes #136
+
+A **breaking change** if you expected `genId` to generate ids for a collection
+with non-numeric `item.id`.
+
 <a id="0.4.3"></a>
 ## 0.4.3 (2017-09-11)
 Refactoring for clarity and to correctly reflect intent.

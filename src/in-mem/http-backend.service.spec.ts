@@ -97,6 +97,29 @@ describe('Http Backend Service', () => {
       );
     }));
 
+    it('should return the hero w/id=1 for GET app/heroes/1', async(() => {
+      http.get('api/heroes/1')
+      .map(res => res.json().data as Hero)
+      .subscribe(
+        hero => {
+          expect(hero).toBeDefined('should find hero with id=1');
+        },
+        failure
+      );
+    }));
+
+    // test where id is string that looks like a number
+    it('should return the stringer w/id="10" for GET app/stringers/10', async(() => {
+      http.get('api/stringers/10')
+      .map(res => res.json().data as { id: string, name: string })
+      .subscribe(
+        hero => {
+          expect(hero).toBeDefined('should find string with id="10"');
+        },
+        failure
+      );
+    }));
+
     it('should return 1-item array for GET app/heroes/?id=1', async(() => {
       http.get('api/heroes/?id=1')
       .map(res => res.json().data as Hero[])
@@ -155,18 +178,34 @@ describe('Http Backend Service', () => {
       );
     }));
 
-    it('can add to nobodies (empty collection)', async(() => {
-      http.post('api/nobodies', { id: 42, name: 'Noman' })
-      .concatMap(() => http.get('api/nobodies'))
-      .map(res => res.json().data)
-      .subscribe(
-        nobodies => {
-          expect(nobodies.length).toBe(1, 'should a nobody');
-          expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
-          expect(nobodies[0].id).toBe(42, 'should preserve the submitted id');
+    it('can add a nobody with an id to empty nobodies collection', async(() => {
+
+      const id = 'g-u-i-d';
+
+      http.post('api/nobodies', { id, name: 'Noman' })
+        .concatMap(() => http.get('api/nobodies'))
+        .map(res => res.json().data)
+        .subscribe(
+          nobodies => {
+            expect(nobodies.length).toBe(1, 'should a nobody');
+            expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
+            expect(nobodies[0].id).toBe(id, 'should preserve the submitted, ' + id);
+          },
+          failure
+        );
+    }));
+
+    it('should fail when add a nobody without an id to empty nobodies collection', async(() => {
+      http.post('api/nobodies', { name: 'Noman' })
+        .subscribe(
+        _ => {
+          console.log(_);
+          fail(`should not have been able to add 'Norman' to 'nobodies'`);
         },
-        failure
-      );
+        err => {
+          expect(err.status).toBe(422, 'should have 422 status');
+          expect(err.body.error).toContain('id type is non-numeric');
+        });
     }));
 
     it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
@@ -180,9 +219,11 @@ describe('Http Backend Service', () => {
       const sizes$ = zip(
         http.get('api/heroes'),
         http.get('api/nobodies'),
-        (h, n) => ({
+        http.get('api/stringers'),
+        (h, n, s) => ({
           heroes:   h.json().data.length as number,
-          nobodies: n.json().data.length as number
+          nobodies: n.json().data.length as number,
+          stringers: n.json().data.length as number
         }));
 
       // Add a nobody so that we have one
@@ -193,8 +234,9 @@ describe('Http Backend Service', () => {
       .concatMap(() => sizes$)
       .subscribe(
         sizes => {
-          expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
           expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
+          expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
+          expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
         },
         failure
       );
@@ -255,6 +297,7 @@ describe('Http Backend Service', () => {
         }
       );
     }));
+
     it('should 404 when GET unknown collection', async(() => {
       const url = 'api/unknown-collection';
       http.get(url)
@@ -269,7 +312,7 @@ describe('Http Backend Service', () => {
       );
     }));
 
-    it('can add new hero, "Maxinius", using genId override', async(() => {
+    it('should use genId override to add new hero, "Maxinius"', async(() => {
       http.post('api/heroes', { name: 'Maxinius' })
       .concatMap(() => http.get('api/heroes?name=Maxi'))
       .map(res => res.json().data)
@@ -283,6 +326,20 @@ describe('Http Backend Service', () => {
       );
     }));
 
+    it('should use genId override guid generator for a new nobody without an id', async(() => {
+      http.post('api/nobodies', { name: 'Noman' })
+        .concatMap(() => http.get('api/nobodies'))
+        .map(res => res.json().data)
+        .subscribe(
+          nobodies => {
+            expect(nobodies.length).toBe(1, 'should a nobody');
+            expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
+            expect(typeof nobodies[0].id).toBe('string', 'should create a string (guid) id');
+          },
+          failure
+        );
+    }));
+
     it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
 
     it('can reset the database to empty (observable db)', async(() => resetDatabaseTest('observable')));
@@ -294,10 +351,12 @@ describe('Http Backend Service', () => {
       const sizes$ = zip(
         http.get('api/heroes'),
         http.get('api/nobodies'),
+        http.get('api/stringers'),
         http.get('api/villains'),
-        (h, n, v) => ({
+        (h, n, s, v) => ({
           heroes:   h.json().data.length as number,
           nobodies: n.json().data.length as number,
+          stringers: s.json().data.length as number,
           villains: v.json().data.length as number
         }));
 
@@ -311,6 +370,7 @@ describe('Http Backend Service', () => {
         sizes => {
           expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
           expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
+          expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
           expect(sizes.villains).toBeGreaterThan(0, 'reset should have NOT clear villains');
         },
         failure
