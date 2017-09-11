@@ -427,4 +427,16 @@ these tests reference the library source files.
 
 The `karma-test-shim.js` add `in-mem` to the list of app folders that SystemJS should resolve.
 
+## Rollup
+
+The gulp "umd" task runs rollup for tree-shaking.
+
+I don't remember it ever working without a lot of warnings.
+In v.0.4.x, updated to v.0.49 ... which required updating of the `rollup.config.js`.
+
+Still weirdly runs an unspecified `cjs` rollup config first that I can’t find (which produces numerous warnings) before doing the right thing and running the `umd` config. 
+
+Also does not work if follow instructions and use the `output` property of `rollup.config.js`; does work when config it “wrong” and put the options in the root.
+
+Ignoring these issues for now.
 

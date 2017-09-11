@@ -21,6 +21,7 @@ var BackendService = (function () {
         if (config === void 0) { config = {}; }
         this.inMemDbService = inMemDbService;
         this.config = new InMemoryBackendConfig();
+        this.requestInfoUtils = this.getRequestInfoUtils();
         var loc = this.getLocation('/');
         this.config.host = loc.host; // default to app web server host
         this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
@@ -84,7 +85,7 @@ var BackendService = (function () {
             collection: collection,
             collectionName: collectionName,
             headers: this.createHeaders({ 'Content-Type': 'application/json' }),
-            id: this.parseId(parsed.id),
+            id: this.parseId(collection, collectionName, parsed.id),
             method: this.getRequestMethod(req),
             query: parsed.query,
             resourceUrl: parsed.resourceUrl,
@@ -168,7 +169,6 @@ var BackendService = (function () {
         return JSON.parse(JSON.stringify(data));
     };
     BackendService.prototype.collectionHandler = function (reqInfo) {
-        var collection = this.db[reqInfo.collectionName];
         // const req = reqInfo.req;
         var resOptions;
         switch (reqInfo.method) {
@@ -259,8 +259,16 @@ var BackendService = (function () {
      * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      */
     BackendService.prototype.createResponseOptions$ = function (resOptionsFactory) {
+        var _this = this;
         return new Observable(function (responseObserver) {
-            var resOptions = resOptionsFactory();
+            var resOptions;
+            try {
+                resOptions = resOptionsFactory();
+            }
+            catch (error) {
+                var err = error.message || error;
+                resOptions = _this.createErrorResponseOptions('', STATUS.INTERNAL_SERVER_ERROR, "" + err);
+            }
             var status = resOptions.status;
             try {
                 resOptions.statusText = getStatusText(status);
@@ -298,27 +306,31 @@ var BackendService = (function () {
     };
     /**
      * Generate the next available id for item in this collection
-     * @param collection - collection of items with `id` key property
      * Use method from `inMemDbService` if it exists and returns a value,
-     * else delegates to genIdDefault
+     * else delegates to `genIdDefault`.
+     * @param collection - collection of items with `id` key property
      */
-    BackendService.prototype.genId = function (collection) {
+    BackendService.prototype.genId = function (collection, collectionName) {
         var genId = this.bind('genId');
         if (genId) {
-            var id = genId(collection);
+            var id = genId(collection, collectionName);
             // tslint:disable-next-line:triple-equals
             if (id != undefined) {
                 return id;
             }
         }
-        return this.genIdDefault(collection);
+        return this.genIdDefault(collection, collectionName);
     };
     /**
      * Default generator of the next available id for item in this collection
+     * This default implementation works only for numeric ids.
      * @param collection - collection of items with `id` key property
-     * This default implementation assumes integer ids; returns `1` otherwise
+     * @param collectionName - name of the collection
      */
-    BackendService.prototype.genIdDefault = function (collection) {
+    BackendService.prototype.genIdDefault = function (collection, collectionName) {
+        if (!this.isCollectionIdNumeric(collection, collectionName)) {
+            throw new Error("Collection '" + collectionName + "' id type is non-numeric or unknown. Can only generate numeric ids.");
+        }
         var maxId = 0;
         collection.reduce(function (prev, item) {
             maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
@@ -367,13 +379,45 @@ var BackendService = (function () {
             this.passThruBackend :
             this.passThruBackend = this.createPassThruBackend();
     };
+    /**
+     * Get utility methods from this service instance.
+     * Useful within an HTTP method override
+     */
+    BackendService.prototype.getRequestInfoUtils = function () {
+        var _this = this;
+        return {
+            createResponse$: this.createResponse$.bind(this),
+            findById: this.findById.bind(this),
+            isCollectionIdNumeric: this.isCollectionIdNumeric.bind(this),
+            getConfig: function () { return _this.config; },
+            getDb: function () { return _this.db; },
+            getJsonBody: this.getJsonBody.bind(this),
+            getLocation: this.getLocation.bind(this),
+            getPassThruBackend: this.getPassThruBackend.bind(this),
+            parseRequestUrl: this.parseRequestUrl.bind(this),
+        };
+    };
     BackendService.prototype.indexOf = function (collection, id) {
         return collection.findIndex(function (item) { return item.id === id; });
     };
     /** Parse the id as a number. Return original value if not a number. */
-    BackendService.prototype.parseId = function (id) {
+    BackendService.prototype.parseId = function (collection, collectionName, id) {
+        if (!this.isCollectionIdNumeric(collection, collectionName)) {
+            // Can't confirm that `id` is a numeric type; don't parse as a number
+            // or else `'42'` -> `42` and _get by id_ fails.
+            return id;
+        }
         var idNum = parseFloat(id);
         return isNaN(idNum) ? id : idNum;
+    };
+    /**
+     * return true if can determine that the collection's `item.id` is a number
+     * This implementation can't tell if the collection is empty so it assumes NO
+     * */
+    BackendService.prototype.isCollectionIdNumeric = function (collection, collectionName) {
+        // collectionName not used now but override might maintain collection type information
+        // so that it could know the type of the `id` even when the collection is empty.
+        return !!(collection && collection[0]) && typeof collection[0].id === 'number';
     };
     /**
      * Parses the request URL into a `ParsedRequestUrl` object.
@@ -445,7 +489,19 @@ var BackendService = (function () {
         var item = this.getJsonBody(req);
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
-            item.id = id || this.genId(collection);
+            try {
+                item.id = id || this.genId(collection, collectionName);
+            }
+            catch (err) {
+                var emsg = err.message || '';
+                if (/id type is non-numeric/.test(emsg)) {
+                    return this.createErrorResponseOptions(url, STATUS.UNPROCESSABLE_ENTRY, emsg);
+                }
+                else {
+                    console.error(err);
+                    return this.createErrorResponseOptions(url, STATUS.INTERNAL_SERVER_ERROR, "Failed to generate new id for '" + collectionName + "'");
+                }
+            }
         }
         if (id && id !== item.id) {
             return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, "Request id does not match item.id");
@@ -511,23 +567,6 @@ var BackendService = (function () {
         }
         return false;
     };
-    Object.defineProperty(BackendService.prototype, "requestInfoUtils", {
-        get: function () {
-            var _this = this;
-            return {
-                config: this.config,
-                createResponse$: this.createResponse$.bind(this),
-                findById: this.findById.bind(this),
-                getDb: function () { return _this.db; },
-                getJsonBody: this.getJsonBody.bind(this),
-                getLocation: this.getLocation.bind(this),
-                getPassThruBackend: this.getPassThruBackend.bind(this),
-                parseRequestUrl: this.parseRequestUrl.bind(this),
-            };
-        },
-        enumerable: true,
-        configurable: true
-    });
     /**
      * Tell your in-mem "database" to reset.
      * returns Observable of the database because resetting it could be async

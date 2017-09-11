@@ -14,6 +14,7 @@ export declare abstract class BackendService {
     protected db: Object;
     protected dbReadySubject: BehaviorSubject<boolean>;
     private passThruBackend;
+    protected requestInfoUtils: RequestInfoUtilities;
     constructor(inMemDbService: InMemoryDbService, config?: InMemoryBackendConfigArgs);
     protected readonly dbReady: Observable<boolean>;
     /**
@@ -117,21 +118,22 @@ export declare abstract class BackendService {
     }>(collection: T[], id: any): T;
     /**
      * Generate the next available id for item in this collection
-     * @param collection - collection of items with `id` key property
      * Use method from `inMemDbService` if it exists and returns a value,
-     * else delegates to genIdDefault
+     * else delegates to `genIdDefault`.
+     * @param collection - collection of items with `id` key property
      */
     protected genId<T extends {
         id: any;
-    }>(collection: T[]): any;
+    }>(collection: T[], collectionName: string): any;
     /**
      * Default generator of the next available id for item in this collection
+     * This default implementation works only for numeric ids.
      * @param collection - collection of items with `id` key property
-     * This default implementation assumes integer ids; returns `1` otherwise
+     * @param collectionName - name of the collection
      */
     protected genIdDefault<T extends {
         id: any;
-    }>(collection: T[]): any;
+    }>(collection: T[], collectionName: string): any;
     protected get({collection, collectionName, headers, id, query, url}: RequestInfo): ResponseOptions;
     /** Get JSON body from the request object */
     protected abstract getJsonBody(req: any): any;
@@ -145,6 +147,11 @@ export declare abstract class BackendService {
      */
     protected getPassThruBackend(): PassThruBackend;
     /**
+     * Get utility methods from this service instance.
+     * Useful within an HTTP method override
+     */
+    protected getRequestInfoUtils(): RequestInfoUtilities;
+    /**
      * return canonical HTTP method name (lowercase) from the request object
      * e.g. (req.method || 'get').toLowerCase();
      * @param req - request object from the http call
@@ -153,7 +160,14 @@ export declare abstract class BackendService {
     protected abstract getRequestMethod(req: any): string;
     protected indexOf(collection: any[], id: number): number;
     /** Parse the id as a number. Return original value if not a number. */
-    protected parseId(id: string): any;
+    protected parseId(collection: any[], collectionName: string, id: string): any;
+    /**
+     * return true if can determine that the collection's `item.id` is a number
+     * This implementation can't tell if the collection is empty so it assumes NO
+     * */
+    protected isCollectionIdNumeric<T extends {
+        id: any;
+    }>(collection: T[], collectionName: string): boolean;
     /**
      * Parses the request URL into a `ParsedRequestUrl` object.
      * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
@@ -175,7 +189,6 @@ export declare abstract class BackendService {
     protected post({collection, collectionName, headers, id, req, resourceUrl, url}: RequestInfo): ResponseOptions;
     protected put({collection, collectionName, headers, id, req, url}: RequestInfo): ResponseOptions;
     protected removeById(collection: any[], id: number): boolean;
-    protected readonly requestInfoUtils: RequestInfoUtilities;
     /**
      * Tell your in-mem "database" to reset.
      * returns Observable of the database because resetting it could be async
