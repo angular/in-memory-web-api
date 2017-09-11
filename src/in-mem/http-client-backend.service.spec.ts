@@ -13,24 +13,24 @@ import {
 } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/concat';
+import { zip } from 'rxjs/observable/zip';
+
+import 'rxjs/add/operator/concatMap';
 import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/switchMap';
 import 'rxjs/add/operator/zip';
 
 import { failure } from '../testing';
 
-import { HttpClientBackendService } from '../in-mem/http-client-backend.service';
+import { HttpClientBackendService } from './http-client-backend.service';
+import { InMemoryWebApiModule } from './in-memory-web-api.module';
 
-import { Hero } from './hero';
-import { HeroService } from './hero.service';
-import { HttpClientHeroService } from './http-client-hero.service';
+import { Hero } from '../app/hero';
+import { HeroService } from '../app/hero.service';
+import { HttpClientHeroService } from '../app/http-client-hero.service';
 
-import { HeroInMemDataService } from './hero-in-mem-data.service';
-import { HeroInMemDataOverrideService } from './hero-in-mem-data-override.service';
-import { HereServiceCoreSpec } from './hero-service-core.spec';
-
-import { InMemoryWebApiModule } from '../in-mem/in-memory-web-api.module';
+import { HeroInMemDataService } from '../app/hero-in-mem-data.service';
+import { HeroInMemDataOverrideService } from '../app/hero-in-mem-data-override.service';
+import { HereServiceCoreSpec } from '../app/hero.service.spec';
 
 /**
  * Test interceptor adds a request header and a response header
@@ -55,7 +55,7 @@ export class TestHeaderInterceptor implements HttpInterceptor {
 
 type Data = { data: any }
 
-describe('HttpClient: in-mem-data.service', () => {
+describe('HttpClient Backend Service', () => {
 
   const delay = 1; // some minimal simulated latency delay
 
@@ -84,6 +84,43 @@ describe('HttpClient: in-mem-data.service', () => {
         },
         failure
       );
+    }));
+
+    it('GET should be a "cold" observable', async(() => {
+      const httpBackend = TestBed.get(HttpBackend);
+
+      const spy = spyOn(httpBackend, 'collectionHandler').and.callThrough();
+
+      const get$ = http.get<Data>('api/heroes');
+
+      // spy on `collectionHandler` should not be called before subscribe
+      expect(spy).not.toHaveBeenCalled();
+
+      get$.map(data => data.data as Hero[])
+      .subscribe(
+        heroes => {
+          expect(spy).toHaveBeenCalled();
+          expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+        },
+        failure
+      );
+    }));
+
+    it('Should only initialize the db once', async(() => {
+      const httpBackend = TestBed.get(HttpBackend);
+
+      const spy = spyOn(httpBackend, 'resetDb').and.callThrough();
+
+      // Simultaneous backend.handler calls
+      // Only the first should initialize by calling `resetDb`
+      // All should wait until the db is "ready"
+      // then they share the same db instance.
+      http.get<Data>('api/heroes').subscribe();
+      http.get<Data>('api/heroes').subscribe();
+      http.get<Data>('api/heroes').subscribe();
+      http.get<Data>('api/heroes').subscribe();
+
+      expect(spy.calls.count()).toBe(1);
     }));
 
     it('can get heroes (w/ a different base path)', async(() => {
@@ -172,7 +209,7 @@ describe('HttpClient: in-mem-data.service', () => {
 
     it('can add to nobodies (empty collection)', async(() => {
       http.post('api/nobodies', { id: 42, name: 'Noman' })
-      .switchMap(() => http.get<Data>('api/nobodies'))
+      .concatMap(() => http.get<Data>('api/nobodies'))
       .map(data => data.data as Hero[])
       .subscribe(
         nobodies => {
@@ -184,22 +221,29 @@ describe('HttpClient: in-mem-data.service', () => {
       );
     }));
 
-    it('can reset the database to empty', async(() => {
+    it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
+
+    it('can reset the database to empty (observable db)', async(() => resetDatabaseTest('observable')));
+
+    it('can reset the database to empty (promise db)', async(() => resetDatabaseTest('promise')));
+
+    function resetDatabaseTest(returnType: string) {
+      // Observable of the number of heroes and nobodies
+      const sizes$ = zip(
+        http.get<Data>('api/heroes'),
+        http.get<Data>('api/nobodies'),
+        (h, n) => ({
+          heroes:   h.data.length as number,
+          nobodies: n.data.length as number
+        }));
+
       // Add a nobody so that we have one
       http.post('api/nobodies', { id: 42, name: 'Noman' })
-      .switchMap(
-        // Reset database with "clear" option
-        () => http.post('commands/resetDb', { clear: true })
-        // then count the collections
-        .switchMap(() => http.get<Data>('api/heroes'))
-        .zip(
-          http.get<Data>('api/nobodies'),
-          (h, n) => ({
-            heroes:   h.data.length,
-            nobodies: n.data.length
-          })
-        )
-      )
+      // Reset database with "clear" option
+      .concatMap(() => http.post('commands/resetDb',
+        { clear: true, returnType }))
+      // get the number of heroes and nobodies
+      .concatMap(() => sizes$)
       .subscribe(
         sizes => {
           expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
@@ -207,7 +251,7 @@ describe('HttpClient: in-mem-data.service', () => {
         },
         failure
       );
-    }));
+    }
   });
 
   ////////////////
@@ -280,7 +324,7 @@ describe('HttpClient: in-mem-data.service', () => {
 
     it('can add new hero, "Maxinius", using genId override', async(() => {
       http.post('api/heroes', { name: 'Maxinius' })
-      .switchMap(() => http.get<Data>('api/heroes?name=Maxi'))
+      .concatMap(() => http.get<Data>('api/heroes?name=Maxi'))
       .map(data => data.data as Hero[])
       .subscribe(
         heroes => {
@@ -292,24 +336,31 @@ describe('HttpClient: in-mem-data.service', () => {
       );
     }));
 
-    it('can reset the database to empty', async(() => {
+    it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
+
+    it('can reset the database to empty (observable db)', async(() => resetDatabaseTest('observable')));
+
+    it('can reset the database to empty (promise db)', async(() => resetDatabaseTest('promise')));
+
+    function resetDatabaseTest(returnType: string) {
+      // Observable of the number of heroes, nobodies and villains
+      const sizes$ = zip(
+        http.get<Data>('api/heroes'),
+        http.get<Data>('api/nobodies'),
+        http.get<Data>('api/villains'),
+        (h, n, v) => ({
+          heroes:   h.data.length as number,
+          nobodies: n.data.length as number,
+          villains: v.data.length as number
+        }));
+
       // Add a nobody so that we have one
       http.post('api/nobodies', { id: 42, name: 'Noman' })
-      .switchMap(
-        // Reset database with "clear" option
-        () => http.post('commands/resetDb', { clear: true })
-        // then count the collections
-        .switchMap(() => http.get<Data>('api/heroes'))
-        .zip(
-          http.get<Data>('api/nobodies'),
-          http.get<Data>('api/villains'),
-          (h, n, v) => ({
-            heroes:   h.data.length,
-            nobodies: n.data.length,
-            villains: v.data.length
-          })
-        )
-      )
+      // Reset database with "clear" option
+      .concatMap(() => http.post('commands/resetDb',
+        { clear: true, returnType }))
+      // count all the collections
+      .concatMap(() => sizes$)
       .subscribe(
         sizes => {
           expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
@@ -318,7 +369,7 @@ describe('HttpClient: in-mem-data.service', () => {
         },
         failure
       );
-    }));
+    }
   });
 
   ////////////////
@@ -419,7 +470,7 @@ describe('HttpClient: in-mem-data.service', () => {
   describe('HttpClient passThru', () => {
     let http: HttpClient;
     let httpBackend: HttpClientBackendService;
-    let setPassThruBackend: jasmine.Spy;
+    let createPassThruBackend: jasmine.Spy;
 
     beforeEach(() => {
       TestBed.configureTestingModule({
@@ -431,7 +482,7 @@ describe('HttpClient: in-mem-data.service', () => {
 
       http = TestBed.get(HttpClient);
       httpBackend = TestBed.get(HttpBackend);
-      setPassThruBackend = spyOn(<any>httpBackend, 'setPassThruBackend').and.callThrough();
+      createPassThruBackend = spyOn(<any>httpBackend, 'createPassThruBackend').and.callThrough();
     });
 
     beforeEach(function() {
@@ -447,7 +498,7 @@ describe('HttpClient: in-mem-data.service', () => {
         .map(data => data.data as Hero[])
         .subscribe(
           heroes => {
-            expect(setPassThruBackend).not.toHaveBeenCalled();
+            expect(createPassThruBackend).not.toHaveBeenCalled();
             expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
           },
           failure

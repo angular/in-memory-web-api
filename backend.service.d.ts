@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/delay';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { HeadersCore, RequestInfoUtilities, InMemoryDbService, InMemoryBackendConfigArgs, ParsedRequestUrl, PassThruBackend, RequestCore, RequestInfo, ResponseOptions, UriInfo } from './interfaces';
 /**
  * Base class for in-memory web api back-ends
@@ -10,10 +10,12 @@ import { HeadersCore, RequestInfoUtilities, InMemoryDbService, InMemoryBackendCo
  */
 export declare abstract class BackendService {
     protected inMemDbService: InMemoryDbService;
-    protected passThruBackend: PassThruBackend;
     protected config: InMemoryBackendConfigArgs;
     protected db: Object;
+    protected dbReadySubject: BehaviorSubject<boolean>;
+    private passThruBackend;
     constructor(inMemDbService: InMemoryDbService, config?: InMemoryBackendConfigArgs);
+    protected readonly dbReady: Observable<boolean>;
     /**
      * Process Request and return an Observable of Http Response object
      * in the manner of a RESTy web api.
@@ -39,6 +41,7 @@ export declare abstract class BackendService {
      *     for this http library or null|undefined (which means "keep processing").
      */
     protected handleRequest(req: RequestCore): Observable<any>;
+    protected handleRequest_(req: RequestCore): Observable<any>;
     /**
      * Add configured delay to response observable unless delay === 0
      */
@@ -81,6 +84,10 @@ export declare abstract class BackendService {
         [index: string]: string;
     }): HeadersCore;
     /**
+     * create the function that passes unhandled requests through to the "real" backend.
+     */
+    protected abstract createPassThruBackend(): PassThruBackend;
+    /**
      * return a search map from a location query/search string
      */
     protected abstract createQueryMap(search: string): Map<string, string[]>;
@@ -99,7 +106,7 @@ export declare abstract class BackendService {
      * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      */
     protected createResponseOptions$(resOptionsFactory: () => ResponseOptions): Observable<ResponseOptions>;
-    protected delete({id, collection, collectionName, headers, url}: RequestInfo): ResponseOptions;
+    protected delete(collection: any[], {id, collectionName, headers, url}: RequestInfo): ResponseOptions;
     /**
      * Find first instance of item in collection by `item.id`
      * @param collection
@@ -125,13 +132,18 @@ export declare abstract class BackendService {
     protected genIdDefault<T extends {
         id: any;
     }>(collection: T[]): any;
-    protected get({id, query, collection, collectionName, headers, url}: RequestInfo): ResponseOptions;
+    protected get(collection: any[], {id, query, collectionName, headers, url}: RequestInfo): ResponseOptions;
     /** Get JSON body from the request object */
     protected abstract getJsonBody(req: any): any;
     /**
      * Get location info from a url, even on server where `document` is not defined
      */
     protected getLocation(url: string): UriInfo;
+    /**
+     * get or create the function that passes unhandled requests
+     * through to the "real" backend.
+     */
+    protected getPassThruBackend(): PassThruBackend;
     /**
      * return canonical HTTP method name (lowercase) from the request object
      * e.g. (req.method || 'get').toLowerCase();
@@ -140,9 +152,8 @@ export declare abstract class BackendService {
      */
     protected abstract getRequestMethod(req: any): string;
     protected indexOf(collection: any[], id: number): number;
-    protected parseId(collection: {
-        id: any;
-    }[], id: string): any;
+    /** Parse the id as a number. Return original value if not a number. */
+    protected parseId(id: string): any;
     /**
      * Parses the request URL into a `ParsedRequestUrl` object.
      * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
@@ -161,18 +172,13 @@ export declare abstract class BackendService {
      * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
      */
     protected parseRequestUrl(url: string): ParsedRequestUrl;
-    protected post({collection, headers, id, req, resourceUrl, url}: RequestInfo): ResponseOptions;
-    protected put({id, collection, collectionName, headers, req, url}: RequestInfo): ResponseOptions;
+    protected post(collection: any[], {id, collectionName, headers, req, resourceUrl, url}: RequestInfo): ResponseOptions;
+    protected put(collection: any[], {id, collectionName, headers, req, url}: RequestInfo): ResponseOptions;
     protected removeById(collection: any[], id: number): boolean;
     protected readonly requestInfoUtils: RequestInfoUtilities;
     /**
-     * Reset the "database" to its original state
+     * Tell your in-mem "database" to reset.
+     * returns Observable of the database because resetting it could be async
      */
-    protected resetDb(reqInfo?: RequestInfo): void;
-    /**
-     * Sets the function that passes unhandled requests
-     * through to the "real" backend if
-     * config.passThruUnknownUrl is true.
-     */
-    protected abstract setPassThruBackend(): void;
+    protected resetDb(reqInfo?: RequestInfo): Observable<boolean>;
 }

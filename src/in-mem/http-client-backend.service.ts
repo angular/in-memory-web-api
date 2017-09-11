@@ -10,7 +10,7 @@ import {
 } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
+import { map } from 'rxjs/operator/map';
 
 import { STATUS } from './http-status-codes';
 
@@ -96,12 +96,13 @@ export class HttpClientBackendService extends BackendService implements HttpBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<HttpResponse<any>> {
-    return resOptions$.map(opts => new HttpResponse<any>(opts as HttpResponseBase));
+    return map.call(resOptions$,
+      (opts: HttpResponseBase) => new HttpResponse<any>(opts));
   }
 
-  protected setPassThruBackend() {
+  protected createPassThruBackend() {
     try {
-      this.passThruBackend = new HttpXhrBackend(this.xhrFactory);
+      return new HttpXhrBackend(this.xhrFactory);
     } catch (ex) {
       ex.message = 'Cannot create passThru404 backend; ' + (ex.message || '');
       throw ex;

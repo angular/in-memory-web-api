@@ -10,7 +10,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { Inject, Injectable, Injector, Optional } from '@angular/core';
 import { BrowserXhr, Headers, ReadyState, RequestMethod, Response, ResponseOptions as HttpResponseOptions, URLSearchParams, XHRBackend, XSRFStrategy } from '@angular/http';
-import 'rxjs/add/operator/map';
+import { map } from 'rxjs/operator/map';
 import { STATUS } from './http-status-codes';
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService } from './interfaces';
 import { BackendService } from './backend.service';
@@ -84,19 +84,18 @@ var HttpBackendService = (function (_super) {
         return search ? new URLSearchParams(search).paramsMap : new Map();
     };
     HttpBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
-        return resOptions$.map(function (opts) {
-            var options = opts;
-            return new Response(new HttpResponseOptions(options));
+        return map.call(resOptions$, function (opts) {
+            return new Response(new HttpResponseOptions(opts));
         });
     };
-    HttpBackendService.prototype.setPassThruBackend = function () {
+    HttpBackendService.prototype.createPassThruBackend = function () {
         try {
             // copied from @angular/http/backends/xhr_backend
             var browserXhr = this.injector.get(BrowserXhr);
             var baseResponseOptions = this.injector.get(HttpResponseOptions);
             var xsrfStrategy = this.injector.get(XSRFStrategy);
             var xhrBackend_1 = new XHRBackend(browserXhr, baseResponseOptions, xsrfStrategy);
-            this.passThruBackend = {
+            return {
                 handle: function (req) { return xhrBackend_1.createConnection(req).response; }
             };
         }

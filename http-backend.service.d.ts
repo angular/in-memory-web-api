@@ -1,7 +1,6 @@
 import { Injector } from '@angular/core';
 import { Connection, ConnectionBackend, Headers, Request, Response } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
 import { InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
 import { BackendService } from './backend.service';
 /**
@@ -42,5 +41,7 @@ export declare class HttpBackendService extends BackendService implements Connec
     }): Headers;
     protected createQueryMap(search: string): Map<string, string[]>;
     protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response>;
-    protected setPassThruBackend(): void;
+    protected createPassThruBackend(): {
+        handle: (req: Request) => Observable<Response>;
+    };
 }

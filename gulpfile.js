@@ -40,10 +40,20 @@ gulp.task('umd', ['ngc'], function(done) {
 
 gulp.task('clean', function() {
   return Promise.all([
-    clean(['aot/**/*.*']),
-    clean(['src/app/**.*js','src/**/*.js.map', 'src/**/*.d.ts','src/**/*.metadata.json']),
-    clean(['src/in-mem/node_modules/**/*.*','src/in-mem/**.*js','src/**/*.ngsummary.json', 'src/**/*.ngfactory.ts']),
     clean([
+      'aot/**/*.*',
+      'src/**/*.d.ts',
+      'src/**/*.js.map',
+      'src/**/*.metadata.json',
+      'src/**/*.ngfactory.ts',
+      'src/**/*.ngsummary.json'
+    ]),
+    clean([
+      'src/app/**.*js',
+      'src/in-mem/**.*js',
+      'src/in-mem/node_modules/**/*.*',
+    ]),
+    clean([ /* root-level copies of in-mem web api files */
       './backend.service.*',
       './http-status-codes.*',
       './http-backend.service.*',
