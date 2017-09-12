@@ -8,7 +8,6 @@ import { isPromise }       from 'rxjs/util/isPromise';
 
 import { concatMap }       from 'rxjs/operator/concatMap';
 import { delay }           from 'rxjs/operator/delay';
-import { filter }          from 'rxjs/operator/filter';
 import { first }           from 'rxjs/operator/first';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
