@@ -1,26 +1,15 @@
+////// For apps with both Http and HttpClient ////
 import { Injector, NgModule } from '@angular/core';
 import { XHRBackend } from '@angular/http';
 import { HttpBackend, XhrFactory } from '@angular/common/http';
 import { InMemoryBackendConfig, InMemoryDbService } from './interfaces';
-import { HttpBackendService } from './http-backend.service';
-import { HttpClientBackendService } from './http-client-backend.service';
-// Internal - Creates the in-mem backend for the Http module
-// AoT requires factory to be exported
-export function httpInMemBackendServiceFactory(injector, dbService, options) {
-    var backend = new HttpBackendService(injector, dbService, options);
-    return backend;
-}
-// Internal - Creates the in-mem backend for the HttpClient module
-// AoT requires factory to be exported
-export function httpClientInMemBackendServiceFactory(dbService, options, xhrFactory) {
-    var backend = new HttpClientBackendService(dbService, options, xhrFactory);
-    return backend;
-}
+import { httpInMemBackendServiceFactory } from './http-in-memory-web-api.module';
+import { httpClientInMemBackendServiceFactory } from './http-client-in-memory-web-api.module';
 var InMemoryWebApiModule = (function () {
     function InMemoryWebApiModule() {
     }
     /**
-    *  Redirect both Angular `Http` and `HttpClient` XHR calls
+    *  Redirect BOTH Angular `Http` and `HttpClient` XHR calls
     *  to in-memory data store that implements `InMemoryDbService`.
     *  with class that implements InMemoryDbService and creates an in-memory database.
     *

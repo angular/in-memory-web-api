@@ -14,14 +14,14 @@ import { BackendService } from './backend.service';
  * Call `config` static method with this service class and optional configuration object:
  * ```
  * // other imports
- * import { HttpClientModule }     from '@angular/http';
- * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+ * import { HttpClientModule } from '@angular/common/http';
+ * import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
  *
  * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
  * @NgModule({
  *  imports: [
  *    HttpModule,
- *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
+ *    HttpClientInMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
  *    ...
  *  ],
  *  ...

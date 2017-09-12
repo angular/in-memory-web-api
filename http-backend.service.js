@@ -26,14 +26,14 @@ import { BackendService } from './backend.service';
  * Call `forRoot` static method with this service class and optional configuration object:
  * ```
  * // other imports
- * import { HttpModule }           from '@angular/http';
- * import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+ * import { HttpModule } from '@angular/http';
+ * import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
  *
  * import { InMemHeroService, inMemConfig } from '../api/in-memory-hero.service';
  * @NgModule({
  *  imports: [
  *    HttpModule,
- *    InMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
+ *    HttpClientInMemoryWebApiModule.forRoot(InMemHeroService, inMemConfig),
  *    ...
  *  ],
  *  ...

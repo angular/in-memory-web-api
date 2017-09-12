@@ -1,6 +1,6 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
