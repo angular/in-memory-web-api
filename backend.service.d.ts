@@ -63,12 +63,9 @@ export declare abstract class BackendService {
     /**
      * When the last segment of the `base` path is "commands", the `collectionName` is the command
      * Example URLs:
-     *   commands/resetdb   // Reset the "database" to its original state
-     *   commands/config (GET) // Return this service's config object
-     *   commands/config (!GET) // Update the config (e.g. delay)
-     *
-     * Commands are "hot", meaning they are always executed immediately
-     * whether or not someone subscribes to the returned observable
+     *   commands/resetdb (POST) // Reset the "database" to its original state
+     *   commands/config (GET)   // Return this service's config object
+     *   commands/config (POST)  // Update the config (e.g. the delay)
      *
      * Usage:
      *   http.post('commands/resetdb', undefined);

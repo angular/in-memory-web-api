@@ -194,12 +194,9 @@ var BackendService = (function () {
     /**
      * When the last segment of the `base` path is "commands", the `collectionName` is the command
      * Example URLs:
-     *   commands/resetdb   // Reset the "database" to its original state
-     *   commands/config (GET) // Return this service's config object
-     *   commands/config (!GET) // Update the config (e.g. delay)
-     *
-     * Commands are "hot", meaning they are always executed immediately
-     * whether or not someone subscribes to the returned observable
+     *   commands/resetdb (POST) // Reset the "database" to its original state
+     *   commands/config (GET)   // Return this service's config object
+     *   commands/config (POST)  // Update the config (e.g. the delay)
      *
      * Usage:
      *   http.post('commands/resetdb', undefined);
@@ -211,28 +208,29 @@ var BackendService = (function () {
         var command = reqInfo.collectionName.toLowerCase();
         var method = reqInfo.method;
         var resOptions = {
-            status: STATUS.OK,
             url: reqInfo.url
         };
         switch (command) {
             case 'resetdb':
-                return concatMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }, false /* no delay */); });
+                resOptions.status = STATUS.NO_CONTENT;
+                return concatMap.call(this.resetDb(reqInfo), function () { return _this.createResponse$(function () { return resOptions; }); });
             case 'config':
                 if (method === 'get') {
+                    resOptions.status = STATUS.OK;
                     resOptions.body = this.clone(this.config);
+                    // any other HTTP method is assumed to be a config update
                 }
                 else {
-                    // any other HTTP method is assumed to be a config update
-                    resOptions.status = STATUS.NO_CONTENT;
                     var body = this.getJsonBody(reqInfo.req);
                     Object.assign(this.config, body);
-                    this.passThruBackend = undefined; // re-create next time
+                    this.passThruBackend = undefined; // re-create when needed
+                    resOptions.status = STATUS.NO_CONTENT;
                 }
                 break;
             default:
                 resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.INTERNAL_SERVER_ERROR, "Unknown command \"" + command + "\"");
         }
-        return this.createResponse$(function () { return resOptions; }, false /* no delay */);
+        return this.createResponse$(function () { return resOptions; });
     };
     BackendService.prototype.createErrorResponseOptions = function (url, status, message) {
         return {

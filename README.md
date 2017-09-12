@@ -94,9 +94,6 @@ Example URLs:
   commands/config    // Get or update this service's config object
 ```
 
-Commands are "hot", meaning they are always executed immediately
-whether or not someone subscribes to the returned observable.
-
 Usage:
 ```
   http.post('commands/resetdb', undefined);
@@ -249,6 +246,7 @@ See the `handleRequest` method implementation for details.
 
 By default this service adds a 500ms delay (see `InMemoryBackendConfig.delay`) 
 to all requests to simulate round-trip latency.
+
 You can eliminate that or extend it by setting a different value:
 ```ts
   InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 0 }),    // no delay

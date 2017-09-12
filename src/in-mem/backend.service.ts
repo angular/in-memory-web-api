@@ -239,12 +239,9 @@ export abstract class BackendService {
   /**
    * When the last segment of the `base` path is "commands", the `collectionName` is the command
    * Example URLs:
-   *   commands/resetdb   // Reset the "database" to its original state
-   *   commands/config (GET) // Return this service's config object
-   *   commands/config (!GET) // Update the config (e.g. delay)
-   *
-   * Commands are "hot", meaning they are always executed immediately
-   * whether or not someone subscribes to the returned observable
+   *   commands/resetdb (POST) // Reset the "database" to its original state
+   *   commands/config (GET)   // Return this service's config object
+   *   commands/config (POST)  // Update the config (e.g. the delay)
    *
    * Usage:
    *   http.post('commands/resetdb', undefined);
@@ -256,25 +253,28 @@ export abstract class BackendService {
     const method = reqInfo.method;
 
     let resOptions: ResponseOptions = {
-      status: STATUS.OK,
       url: reqInfo.url
     };
 
     switch (command) {
       case 'resetdb':
+        resOptions.status = STATUS.NO_CONTENT;
         return concatMap.call(
           this.resetDb(reqInfo),
-          () => this.createResponse$(() => resOptions, false /* no delay */));
+          () => this.createResponse$(() => resOptions));
 
       case 'config':
         if (method === 'get') {
+          resOptions.status = STATUS.OK;
           resOptions.body = this.clone(this.config);
+
+        // any other HTTP method is assumed to be a config update
         } else {
-          // any other HTTP method is assumed to be a config update
-          resOptions.status = STATUS.NO_CONTENT;
           const body = this.getJsonBody(reqInfo.req);
           Object.assign(this.config, body);
-          this.passThruBackend = undefined; // re-create next time
+          this.passThruBackend = undefined; // re-create when needed
+
+          resOptions.status = STATUS.NO_CONTENT;
         }
         break;
 
@@ -286,7 +286,7 @@ export abstract class BackendService {
         );
     }
 
-    return this.createResponse$(() => resOptions, false /* no delay */);
+    return this.createResponse$(() => resOptions);
   }
 
   protected createErrorResponseOptions(url: string, status: number, message: string): ResponseOptions {
