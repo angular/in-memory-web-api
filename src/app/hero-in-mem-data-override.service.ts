@@ -79,12 +79,17 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
     });
   }
 
-  // parseRequestUrl override that logs the result
-  // a more interesting example would give special treatment to some URLs
-  // while leaving the others for the default parser.
+  // parseRequestUrl override
+  // Do this to manipulate the request URL or the parsed result
+  // into something your data store can handle.
+  // This example turns a request for `/foo/heroes` into just `/heroes`.
+  // It leaves other URLs untouched and forwards to the default parser.
+  // It also logs the result of the default parser.
   parseRequestUrl(url: string, utils: RequestInfoUtilities): ParsedRequestUrl {
-    const parsed = utils.parseRequestUrl(url);
-    console.log('parseRequestUrl override:', parsed);
+    const newUrl = url.replace(/\/foo\/heroes/, '/heroes');
+    // console.log('newUrl', newUrl);
+    const parsed = utils.parseRequestUrl(newUrl);
+    console.log(`parseRequestUrl override of '${url}':`, parsed);
     return parsed;
   }
 

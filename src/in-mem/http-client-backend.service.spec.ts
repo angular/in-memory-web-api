@@ -325,6 +325,18 @@ describe('HttpClient Backend Service', () => {
       );
     }));
 
+    it('can translate `foo/heroes` to `heroes` via `parsedRequestUrl` override', async(() => {
+      http.get<Data>('api/foo/heroes')
+      .map(data => data.data as Hero[])
+      .subscribe(
+        heroes => {
+          // console.log(heroes);
+          expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+        },
+        failure
+      );
+    }));
+
     it('can get villains', async(() => {
       http.get<Data>('api/villains')
       .map(data => data.data as Hero[])
