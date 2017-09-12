@@ -52,7 +52,7 @@ Avoid the hassle of intercepting multiple http calls and manufacturing sequences
 The in-memory data store resets for each test so there is no cross-test data pollution.
 
 * End-to-end tests. If you can toggle the app into test mode
-using the in-mem web api, you won't disturb the real database.
+using the in-memory web api, you won't disturb the real database.
 This can be especially useful for CI (continuous integration) builds.
 
 
@@ -152,15 +152,15 @@ export class AppModule { ... }
 
 **_Notes_**
 
-* Always import the `InMemoryWebApiModule` _after_ the `HttpClientModule` to ensure that 
-the in-memory backed provider supersedes the Angular version.
+* Always import the `HttpClientInMemoryWebApiModule` _after_ the `HttpClientModule` 
+to ensure that the in-memory backend provider supersedes the Angular version.
 
 * You can setup the in-memory web api within a lazy loaded feature module by calling the `.forFeature` method as you would `.forRoot`.
 
 * The `createDb` method can be synchronous or asynchronous.
 so you can initialize your in-memory database service from a JSON file.
 Return the database object, an observable of that object, or a promise of that object.
-The in-mem web api service calls `createDb` (a) when it handles the _first_ `HttpClient` (or `Http`) request and (b) when it receives a `POST resetdb` request.
+The in-memory web api service calls `createDb` (a) when it handles the _first_ `HttpClient` (or `Http`) request and (b) when it receives a `POST resetdb` request.
 
 ### Using with the older Angular _Http_ module
 
