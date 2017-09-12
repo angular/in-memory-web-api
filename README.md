@@ -8,15 +8,16 @@ It intercepts Angular `Http` and `HttpClient` requests that would otherwise go t
 
 ---
 ## **v0.4 supports `HttpClient`!**
->Release v0.4.0  (8 Sept 2017) is a major overhaul of this library.
+>Release v0.4.0  (8 Sept 2017) was a major overhaul of this library.
 >
 >You don't have to change your existing application _code_ if your app uses this library without customizations. 
 >
 >
->This v0.4.0 release has *breaking changes* that affect developers who used the customization features.
+>The v0.4.0 release introduced *breaking changes* that affect developers who used the customization features.
 >We're pretty sure you'll think these changes are worthwhile.
 >
->**Read this README** and the CHANGELOG to learn what's new.
+>**Read this README** and the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md)
+to learn what's new.
 >The new unit tests are worth a look as well.
 >
 ---
@@ -28,7 +29,7 @@ It intercepts Angular `Http` and `HttpClient` requests that would otherwise go t
 >
 >You've already made this change if you are using `HttpClient` today.
 >
->If you’re sticking with the original Angular `Http` module, you _must make this change anyway!_ Your app will break as soon as you run `npm install` and it installs v0.4.0.
+>If you’re sticking with the original Angular `Http` module, you _must make this change anyway!_ Your app will break as soon as you run `npm install` and it installs >=v0.4.0.
 >
 >If you're using webpack (as CLI devs do), you don't have to worry about this stuff because webpack bundles the dependencies for you.
 
