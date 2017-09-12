@@ -83,26 +83,10 @@ Examples:
   GET api/heroes?name=^j  // 'j' is a regex; returns heroes whose name starting with 'j' or 'J'
   GET api/heroes.json/42  // ignores the ".json"
 ```
-<a id="commands"></a>
-## Commands
 
-The service also accepts "commands" that can, for example, reconfigure the service and reset the database.
+The in-memory web api service processes these requests against a "database" - a set of named collections - that you define during setup.
 
-When the last segment of the _api base path_ is "commands", the `collectionName` is treated as the _command_.
-Example URLs:
-```
-  commands/resetdb   // Reset the "database" to its original state
-  commands/config    // Get or update this service's config object
-```
-
-Usage:
-```
-  http.post('commands/resetdb', undefined);
-  http.get('commands/config');
-  http.post('commands/config', '{"delay":1000}');
-```
-
-## Basic usage
+## Basic setup
 
 Create an `InMemoryDataService` class that implements `InMemoryDbService`.
 
@@ -126,7 +110,17 @@ export class InMemHeroService implements InMemoryDbService {
 }
 ```
 
->This library _currently_ assumes that every collection has a primary key called `id`.
+**Notes**
+
+* The in-memory web api library _currently_ assumes that every collection has a primary key called `id`.
+
+* The `createDb` method can be synchronous or asynchronous.
+It would have to be asynchronous if you initialized your in-memory database service from a JSON file.
+Return the database _object_, an _observable_ of that object, or a _promise_ of that object. The tests include an example of all three.
+
+* The client can send a [`resetDb` command](#commands) request which calls your `createDb` again, passing in the command request information.
+
+### Import the in-memory web api module
 
 Register your data store service implementation with the `HttpClientInMemoryWebApiModule`
 in your root `AppModule.imports`
@@ -155,12 +149,7 @@ to ensure that the in-memory backend provider supersedes the Angular version.
 
 * You can setup the in-memory web api within a lazy loaded feature module by calling the `.forFeature` method as you would `.forRoot`.
 
-* The `createDb` method can be synchronous or asynchronous.
-so you can initialize your in-memory database service from a JSON file.
-Return the database object, an observable of that object, or a promise of that object.
-The in-memory web api service calls `createDb` (a) when it handles the _first_ `HttpClient` (or `Http`) request and (b) when it receives a `POST resetdb` request.
-
-### Using with the older Angular _Http_ module
+### Setup for the older Angular _Http_ module
 
 You can still use the in-memory web api with the older `Http` module.
 
@@ -180,10 +169,10 @@ imports: [
 })
 export class AppModule { ... }
 ```
-### Using both Angular HTTP modules
+### Setup for both Angular HTTP modules
 
 Perhaps you have a hybrid app with BOTH Angular modules 
-because you're migrating to `HttpClient` from 'Http`.
+because you're migrating to `HttpClient` from `Http`.
 Or perhaps you've used this library before and you don't have time 
 at this moment to re-do your module setup.
 
@@ -223,6 +212,8 @@ See also the example source code in the official Angular.io documentation such a
 
 # Advanced Features
 Some features are not readily apparent in the basic usage described above.
+
+## Configuration arguments
 
 The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
 ```ts
@@ -274,6 +265,34 @@ If an existing, running remote server should handle requests for collections
 that are not in the in-memory database, set `Config.passThruUnknownUrl: true`.
 Then this service will forward unrecognized requests to the remote server
 via the Angular default `XHR` backend (it depends on whether your using `Http` or `HttpClient`).
+
+<a id="commands"></a>
+## Commands
+
+The in-memory web api service accepts "commands" that can, for example, reconfigure the service and reset the database.
+
+When the last segment of the _api base path_ is "commands", the `collectionName` is treated as the _command_.
+
+Example URLs:
+```
+  commands/resetdb   // Reset the "database" to its original state
+  commands/config    // Get or update this service's config object
+```
+
+Usage:
+```
+  http.post('commands/resetdb', undefined);
+  http.get('commands/config');
+  http.post('commands/config', '{"delay":1000}');
+```
+
+The in-memory web api calls your `InMemoryDbService` data service class's  `createDb` method on two occasions.
+
+1. when it handles the _first_ HTTP request 
+1. when it receives a `resetdb` command.
+
+In the command case, the service passes in a `RequestInfo` object,
+enabling the `createDb` logic to adjust its behavior per the client request. See the tests for examples.
 
 ## _parseRequestUrl_ and your override
 
