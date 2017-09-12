@@ -294,7 +294,7 @@ The in-memory web api calls your `InMemoryDbService` data service class's  `crea
 In the command case, the service passes in a `RequestInfo` object,
 enabling the `createDb` logic to adjust its behavior per the client request. See the tests for examples.
 
-## _parseRequestUrl_ and your override
+## _parseRequestUrl_
 
 The `parseRequestUrl` parses the request URL into a `ParsedRequestUrl` object.
 `ParsedRequestUrl` is a public interface whose properties guide the in-memory web api
@@ -336,24 +336,27 @@ The service calls your method with two arguments.
 1. `requestInfoUtils` - utility methods in a `RequestInfoUtilities` object, including the default parser.
 Note that some values have not yet been set as they depend on the outcome of parsing.
 
-Your method must either return a `ParsedRequestUrl` object or null|undefined,
+Your method must either return a `ParsedRequestUrl` object or `null`|`undefined`,
 in which case the service uses the default parser.
 In this way you can intercept and parse some URLs and leave the others to the default parser.
 
-### Custom _genId_
+## Custom _genId_
 
 Collection items are presumed to have a primary key property called `id`.
-When you can specify the id when you add a new item; 
-the service does not check for uniqueness.
+
+You can specify the `id` while adding a new item. 
+The service will blindly use that `id`; it does not check for uniqueness.
 
 If you do not specify the `id`, the service generates one via the `genId` method.
-You can override the default generator with a `genId` method in your `InMemoryDbService`.
-Your method receives the new item's collection and should return the generated id.
-If your generator returns null|undefined, the service uses the default generator. 
+
+You can override the default id generator with a method called `genId` in your `InMemoryDbService`.
+Your method receives the new item's collection and collection name. 
+It should return the generated id.
+If your generator returns `null`|`undefined`, the service uses the default generator. 
 
 ## _responseInterceptor_
 
-You can morph the response returned by the services default HTTP methods.
+You can change the response returned by the service's default HTTP methods.
 A typical reason to intercept is to add a header that your application is expecting.
 
 To intercept responses, add a `responseInterceptor` method to your `InMemoryDbService` class. 
@@ -365,39 +368,39 @@ responseOptions = this.responseInterceptor(responseOptions, requestInfo);
 <a id="method-override"></a>
 ## HTTP method interceptors
 
-If you make requests this service can't handle but still want an in-memory database to hold values,
-override the way this service handles any HTTP method by implementing a method in
-your `InMemoryDbService` that does the job.
+You may have HTTP requests that the in-memory web api can't handle properly.
 
-The `InMemoryDbService` method name must be the same as the HTTP method name but **all lowercase**.
-This service calls it with an `HttpMethodInterceptorArgs` object.
-For example, your HTTP GET interceptor would be called like this:
-e.g., `yourInMemDbService["get"](interceptorArgs)`.
+You can override any HTTP method by implementing a method 
+of that name in your `InMemoryDbService`.
 
-Your method must return either:
+Your method's name must be the same as the HTTP method name but **all lowercase**.
+The in-memory web api calls it with a `RequestInfo` object that contains request data and utility methods.
 
-* `Observable<Response>` - your code has handled the request and the response is available from this
+For example, if you implemented a `get` method, the web api would be called like this:
+`yourInMemDbService["get"](requestInfo)`.
+
+Your custom HTTP method must return either:
+
+* `Observable<Response>` - you handled the request and the response is available from this
 observable.  It _should be "cold"_.
 
-* `null`/`undefined` - your code decided not to intervene, 
+* `null`/`undefined` - you decided not to intervene, 
 perhaps because you wish to intercept only certain paths for the given HTTP method.
 The service continues with its default processing of the HTTP request.
 
-The `HttpMethodInterceptorArgs` (as of this writing) are:
+The `RequestInfo` is an interface defined in `src/in-mem/interfaces.ts`. 
+Its members include:
 ```ts
-requestInfo: RequestInfo;           // parsed request
-db: Object;                         // the current in-mem database collections
-config: InMemoryBackendConfigArgs;  // the current config
-passThruBackend: ConnectionBackend; // pass through backend, if it exists
-
-/**
-  * Create a cold response Observable from a factory for ResponseOptions
-  * the same way that the in-mem backend service does.
-  * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
-  * @param withDelay - if true (default), add simulated latency delay from configuration
-  */
-createResponse$: (resOptionsFactory: () => ResponseOptions) => Observable<any>;
+req: Request;           // the request object from the client
+collectionName: string; // calculated from the request url
+collection: any[];      // the corresponding collection (if found)
+id: any;                // the item `id` (if specified)
+url: string;            // the url in the request
+utils: RequestInfoUtilities; // helper functions
 ```
+The functions in `utils` can help you analyze the request
+and compose a response.
+
 ## In-memory Web Api Examples
 
 The [github repository](https://github.com/angular/in-memory-web-api/tree/master/src/app)
