@@ -60,8 +60,7 @@ export abstract class BackendService {
       this.dbReadySubject = new BehaviorSubject(false);
       this.resetDb();
     }
-    return first.call(
-          filter.call(this.dbReadySubject.asObservable(), (r: boolean) => r));
+    return first.call(this.dbReadySubject.asObservable(), (r: boolean) => r);
   }
 
   /**
