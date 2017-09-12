@@ -10,7 +10,7 @@ import 'rxjs/add/operator/zip';
 import { failure } from '../testing';
 
 import { HttpBackendService } from './http-backend.service';
-import { InMemoryWebApiModule } from './in-memory-web-api.module';
+import { HttpInMemoryWebApiModule } from './http-in-memory-web-api.module';
 
 import { Hero } from '../app/hero';
 import { HeroService } from '../app/hero.service';
@@ -32,7 +32,7 @@ describe('Http Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
         ]
       });
 
@@ -253,7 +253,7 @@ describe('Http Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataOverrideService, { delay })
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataOverrideService, { delay })
         ]
       });
 
@@ -398,7 +398,7 @@ describe('Http Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
         ],
         providers: [
           { provide: HeroService, useClass: HttpHeroService }
@@ -411,7 +411,6 @@ describe('Http Backend Service', () => {
   });
 
   ////////////////
-  ////////////////
   describe('Http passThru', () => {
     let http: Http;
     let httpBackend: HttpBackendService;
@@ -421,7 +420,7 @@ describe('Http Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
         ]
       });
 

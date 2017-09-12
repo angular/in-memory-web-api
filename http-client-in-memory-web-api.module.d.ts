@@ -1,8 +1,10 @@
 import { ModuleWithProviders, Type } from '@angular/core';
-import { InMemoryBackendConfigArgs, InMemoryDbService } from './interfaces';
-export declare class InMemoryWebApiModule {
+import { HttpBackend, XhrFactory } from '@angular/common/http';
+import { InMemoryBackendConfigArgs, InMemoryBackendConfig, InMemoryDbService } from './interfaces';
+export declare function httpClientInMemBackendServiceFactory(dbService: InMemoryDbService, options: InMemoryBackendConfig, xhrFactory: XhrFactory): HttpBackend;
+export declare class HttpClientInMemoryWebApiModule {
     /**
-    *  Redirect BOTH Angular `Http` and `HttpClient` XHR calls
+    *  Redirect the Angular `HttpClient` XHR calls
     *  to in-memory data store that implements `InMemoryDbService`.
     *  with class that implements InMemoryDbService and creates an in-memory database.
     *
@@ -13,15 +15,15 @@ export declare class InMemoryWebApiModule {
     * @param {InMemoryBackendConfigArgs} [options]
     *
     * @example
-    * InMemoryWebApiModule.forRoot(dbCreator);
-    * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
+    * HttpInMemoryWebApiModule.forRoot(dbCreator);
+    * HttpInMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
     */
     static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
     /**
-     *
-     * Enable and configure the in-memory web api in a lazy-loaded feature module.
-     * Same as `forRoot`.
-     * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
-     */
+   *
+   * Enable and configure the in-memory web api in a lazy-loaded feature module.
+   * Same as `forRoot`.
+   * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
+   */
     static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
 }

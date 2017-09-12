@@ -22,7 +22,7 @@ import 'rxjs/add/operator/zip';
 import { failure } from '../testing';
 
 import { HttpClientBackendService } from './http-client-backend.service';
-import { InMemoryWebApiModule } from './in-memory-web-api.module';
+import { HttpClientInMemoryWebApiModule } from './http-client-in-memory-web-api.module';
 
 import { Hero } from '../app/hero';
 import { HeroService } from '../app/hero.service';
@@ -67,7 +67,7 @@ describe('HttpClient Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpClientModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
+          HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
         ]
       });
 
@@ -306,7 +306,7 @@ describe('HttpClient Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpClientModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataOverrideService, { delay })
+          HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataOverrideService, { delay })
         ]
       });
 
@@ -451,7 +451,7 @@ describe('HttpClient Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpClientModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
+          HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
         ],
         providers: [
           { provide: HeroService, useClass: HttpClientHeroService }
@@ -475,7 +475,7 @@ describe('HttpClient Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpClientModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
+          HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay })
         ],
         providers: [
           // Add test interceptor just for this test suite
@@ -547,7 +547,7 @@ describe('HttpClient Backend Service', () => {
       TestBed.configureTestingModule({
         imports: [
           HttpClientModule,
-          InMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
+          HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, passThruUnknownUrl: true })
         ]
       });
 

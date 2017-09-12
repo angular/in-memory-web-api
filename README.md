@@ -7,7 +7,7 @@ that emulates CRUD operations over a RESTy API.
 It intercepts Angular `Http` and `HttpClient` requests that would otherwise go to the remote server and redirects them to an in-memory data store that you control.
 
 ---
-## **v0.4.0 supports `HttpClient`!**
+## **v0.4 supports `HttpClient`!**
 >Release v0.4.0  (8 Sept 2017) is a major overhaul of this library.
 >
 >You don't have to change your existing application _code_ if your app uses this library without customizations. 
@@ -105,6 +105,7 @@ Usage:
 ```
 
 ## Basic usage
+
 Create an `InMemoryDataService` class that implements `InMemoryDbService`.
 
 At minimum it must implement `createDb` which 
@@ -129,17 +130,19 @@ export class InMemHeroService implements InMemoryDbService {
 
 >This library _currently_ assumes that every collection has a primary key called `id`.
 
-Register this module and your data store service implementation in `AppModule.imports`
-calling the `forRoot` static method with this service class and optional configuration object:
+Register your data store service implementation with the `HttpClientInMemoryWebApiModule`
+in your root `AppModule.imports`
+calling the `forRoot` static method with this service class and an optional configuration object:
 ```ts
-import { HttpClientModule }     from '@angular/common/http';
-import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+import { HttpClientModule } from '@angular/common/http';
+import { HttpClientInMemoryWebApiModule } from 'http-angular-in-memory-web-api';
 
-import { InMemHeroService }     from '../app/hero.service';
+import { InMemHeroService } from '../app/hero.service';
+
 @NgModule({
  imports: [
    HttpClientModule,
-   InMemoryWebApiModule.forRoot(InMemHeroService),
+   HttpClientInMemoryWebApiModule.forRoot(InMemHeroService),
    ...
  ],
  ...
@@ -154,38 +157,74 @@ the in-memory backed provider supersedes the Angular version.
 
 * You can setup the in-memory web api within a lazy loaded feature module by calling the `.forFeature` method as you would `.forRoot`.
 
-* You can still use the in-memory web api with the older `Http` module.
-
-  ```ts
-  import { HttpModule }           from '@angular/http';
-  import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
-
-  import { InMemHeroService }     from '../app/hero.service';
-  @NgModule({
-  imports: [
-    HttpModule,
-    InMemoryWebApiModule.forRoot(InMemHeroService),
-    ...
-  ],
-  ...
-  })
-  export class AppModule { ... }
-  ```
-
 * The `createDb` method can be synchronous or asynchronous.
 so you can initialize your in-memory database service from a JSON file.
 Return the database object, an observable of that object, or a promise of that object.
 The in-mem web api service calls `createDb` (a) when it handles the _first_ `HttpClient` (or `Http`) request and (b) when it receives a `POST resetdb` request.
 
-## In-memory web api examples
-The tests (`src/app/*.spec.ts` files) in the [github repo](https://github.com/angular/in-memory-web-api/tree/master/src/app) are a good place to learn how to setup and use this in-memory web api library.
+### Using with the older Angular _Http_ module
+
+You can still use the in-memory web api with the older `Http` module.
+
+```ts
+import { HttpModule } from '@angular/http';
+import { HttpInMemoryWebApiModule } from 'http-angular-in-memory-web-api';
+
+import { InMemHeroService } from '../app/hero.service';
+
+@NgModule({
+imports: [
+  HttpModule,
+  HttpInMemoryWebApiModule.forRoot(InMemHeroService),
+  ...
+],
+...
+})
+export class AppModule { ... }
+```
+### Using both Angular HTTP modules
+
+Perhaps you have a hybrid app with BOTH Angular modules 
+because you're migrating to `HttpClient` from 'Http`.
+Or perhaps you've used this library before and you don't have time 
+at this moment to re-do your module setup.
+
+There's a combo-module 
+(`InMemoryWebApiModule`) that prepares for both of them.
+It has the same syntax from pre-`v0.4.0` days and it should "_just work_"
+as long as you aren't using the [advanced features described below](#advanced-features).
+  
+```ts
+import { HttpModule } from '@angular/http';
+import { HttpClientModule } from '@angular/common/http';
+
+import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
+
+import { InMemHeroService } from '../app/hero.service';
+
+@NgModule({
+imports: [
+  HttpModule,
+  HttpClientModule,
+  InMemoryWebApiModule.forRoot(InMemHeroService),
+  ...
+],
+...
+})
+export class AppModule { ... }
+```
+
+# Examples
+The tests (`src/app/*.spec.ts` files) in the 
+[github repository](https://github.com/angular/in-memory-web-api/tree/master/src/app) 
+are a good place to learn how to setup and use this in-memory web api library.
 
 See also the example source code in the official Angular.io documentation such as the
 [HttpClient](https://angular.io/guide/http) guide and the
 [Tour of Heroes](https://angular.io/tutorial/toh-pt6). 
 
 # Advanced Features
-Some features are not readily apparent in the basic usage example.
+Some features are not readily apparent in the basic usage described above.
 
 The `InMemoryBackendConfigArgs` defines a set of options. Add them as the second `forRoot` argument:
 ```ts
@@ -343,23 +382,16 @@ createResponse$: (resOptionsFactory: () => ResponseOptions) => Observable<any>;
 ```
 ## In-memory Web Api Examples
 
-The file `src/app/hero-in-mem-data.service.ts` is an example of a Hero-oriented `InMemoryDbService`,
+The [github repository](https://github.com/angular/in-memory-web-api/tree/master/src/app)
+demonstrates library usage with tested examples.
+
+The `HeroInMemDataService` class (in `src/app/hero-in-mem-data.service.ts`) is a Hero-oriented `InMemoryDbService`
 such as you might see in an HTTP sample in the Angular documentation.
 
-To try it, add the following line to `AppModule.imports`
-```ts
-InMemoryWebApiModule.forRoot(HeroInMemDataService)
-```
-  
-For examples of overriding service methods,
-see the `src/app/hero-in-mem-data-override.service.ts` class.
+The `HeroInMemDataOverrideService` class (in `src/app/hero-in-mem-data-override.service.ts`)
+demonstrates a few ways to override methods of the base `HeroInMemDataService`.
 
-Add the following line to `AppModule.imports` to see this version of the data service in action:
-```ts
-InMemoryWebApiModule.forRoot(HeroInMemDataOverrideService)
-```
-
-The tests (see below) exercise these examples.
+The tests ([see below](#testing)) exercise these examples.
 
 # Build Instructions
 
@@ -425,18 +457,18 @@ The `src/` folder is divided into
 >A real app would reference the in-memory web api node module;
 these tests reference the library source files.
 
-The `karma-test-shim.js` add `in-mem` to the list of app folders that SystemJS should resolve.
+The `karma-test-shim.js` adds the `in-mem` folder to the list of folders that SystemJS should resolve.
 
 ## Rollup
 
 The gulp "umd" task runs rollup for tree-shaking.
 
-I don't remember it ever working without a lot of warnings.
-In v.0.4.x, updated to v.0.49 ... which required updating of the `rollup.config.js`.
+I don't remember if it ever worked without a lot of warnings.
+The `v0.4.x` release updated to `rollup@0.49` which required updates to the `rollup.config.js`.
 
-Still weirdly runs an unspecified `cjs` rollup config first that I can’t find (which produces numerous warnings) before doing the right thing and running the `umd` config. 
+Still weirdly runs  `cjs` rollup config first that I can’t find (which produces numerous warnings) before doing the right thing and running the `umd` config. 
 
-Also does not work if follow instructions and use the `output` property of `rollup.config.js`; does work when config it “wrong” and put the options in the root.
+Also does not work if you follow instructions and use the `output` property of `rollup.config.js`; does work when configure it “wrong” and put the options in the root.
 
 Ignoring these issues for now.
 

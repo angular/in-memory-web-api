@@ -8,6 +8,12 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.4.5"></a>
+## 0.4.5 (2017-09-11)
+Feature - offer separate `HttpClientInMemoryWebApiModule` and `HttpInMemoryWebApiModule`.
+
+closes #140
+
 <a id="0.4.4"></a>
 ## 0.4.4 (2017-09-11)
 closes #136
