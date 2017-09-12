@@ -416,43 +416,33 @@ The tests ([see below](#testing)) exercise these examples.
 
 # Build Instructions
 
-Mostly gulp driven.
+Follow these steps for updating the library.
 
-The following describes steps for updating from one Angular version to the next
+- `gulp bump` - up the package version number.
 
->This is essential even when there are no changes of real consequence.
-Neglecting to synchronize Angular 2 versions
-triggers typescript definition duplication error messages when
-compiling your application project.
+- update `CHANGELOG.md` to record the change. Call out _breaking changes_.
 
-- `gulp bump` - up the package version number
+- update `READM.md` if usage or interfaces change.
 
-- update `CHANGELOG.MD` to record the change
+- consider updating the dependency versions in `package.json`.
 
-- update the dependent version(s) in `package.json`
+- `npm install` the new package(s) if you did.
 
-- `npm install` the new package(s) (make sure they really do install!)<br>
-   `npm list --depth=0`
+- `npm list --depth=0` to make sure they really did install!
 
-- consider updating typings, install individually/several:
-```
-  npm install @types/jasmine @types/node --save-dev
-```
+- `gulp clean` to delete all generated files.
 
-- `gulp clean` - clear out all generated `text`
+- `npm test` to dev-build and run tests (see ["Testing"](#testing) below).
 
-- `npm run build` to confirm the project compiles w/o error (sanity check)
+- `gulp build` to build for distribution.
 
-- `npm test`  to build and run tests (see ["Testing"](#testing) below)
-
-- `gulp build`
-- commit and push
+- git add, commit, and push.
 
 - `npm publish`
 
-- Fix and validate angular.io docs samples
+- Confirm that angular.io docs samples still work
 
-- Add two tags to the release commit with for unpkg
+- Add two tags to the release commit in github
   - the version number
   - 'latest'
 
