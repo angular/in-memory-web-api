@@ -304,7 +304,26 @@ They ignore the latency delay and respond as quickly as possible.
 
 The `resetDb` command
 calls your `InMemoryDbService` data service's  [`createDb` method](#createDb) with the `RequestInfo` object,
-enabling the `createDb` logic to adjust its behavior per the client request. See the tests for examples.
+enabling the `createDb` logic to adjust its behavior per the client request.
+
+In the following example, the client includes a reset option in the command request body:
+```
+http
+  // Reset the database collections with the `clear` option
+  .post('commands/resetDb', { clear: true }))
+
+  // when command finishes, get heroes
+  .concatMap(
+    ()=> http.get<Data>('api/heroes')
+        .map(data => data.data as Hero[])
+  )
+
+  // execute the request sequence and 
+  // do something with the heroes
+  .subscribe(...)
+```
+
+See the tests for other examples.
 
 ## _parseRequestUrl_
 
