@@ -236,7 +236,12 @@ export abstract class BackendService {
   }
 
   /**
-   * When the last segment of the `base` path is "commands", the `collectionName` is the command
+   * Commands reconfigure the in-memory web api service or extract information from it.
+   * Commands ignore the latency delay and respond ASAP.
+   *
+   * When the last segment of the `apiBase` path is "commands",
+   * the `collectionName` is the command.
+   *
    * Example URLs:
    *   commands/resetdb (POST) // Reset the "database" to its original state
    *   commands/config (GET)   // Return this service's config object
@@ -260,7 +265,7 @@ export abstract class BackendService {
         resOptions.status = STATUS.NO_CONTENT;
         return concatMap.call(
           this.resetDb(reqInfo),
-          () => this.createResponse$(() => resOptions));
+          () => this.createResponse$(() => resOptions, false /* no latency delay */));
 
       case 'config':
         if (method === 'get') {
@@ -285,7 +290,7 @@ export abstract class BackendService {
         );
     }
 
-    return this.createResponse$(() => resOptions);
+    return this.createResponse$(() => resOptions, false /* no latency delay */);
   }
 
   protected createErrorResponseOptions(url: string, status: number, message: string): ResponseOptions {

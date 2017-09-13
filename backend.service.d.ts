@@ -61,7 +61,12 @@ export declare abstract class BackendService {
     protected clone(data: any): any;
     protected collectionHandler(reqInfo: RequestInfo): ResponseOptions;
     /**
-     * When the last segment of the `base` path is "commands", the `collectionName` is the command
+     * Commands reconfigure the in-memory web api service or extract information from it.
+     * Commands ignore the latency delay and respond ASAP.
+     *
+     * When the last segment of the `apiBase` path is "commands",
+     * the `collectionName` is the command.
+     *
      * Example URLs:
      *   commands/resetdb (POST) // Reset the "database" to its original state
      *   commands/config (GET)   // Return this service's config object

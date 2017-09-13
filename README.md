@@ -88,6 +88,8 @@ The in-memory web api service processes these requests against a "database" - a 
 
 ## Basic setup
 
+<a id="createDb"></a>
+
 Create an `InMemoryDataService` class that implements `InMemoryDbService`.
 
 At minimum it must implement `createDb` which 
@@ -118,7 +120,13 @@ export class InMemHeroService implements InMemoryDbService {
 It would have to be asynchronous if you initialized your in-memory database service from a JSON file.
 Return the database _object_, an _observable_ of that object, or a _promise_ of that object. The tests include an example of all three.
 
-* The client can send a [`resetDb` command](#commands) request which calls your `createDb` again, passing in the command request information.
+* The in-memory web api calls your `InMemoryDbService` data service class's  `createDb` method on two occasions.
+
+  1. when it handles the _first_ HTTP request 
+  1. when it receives a `resetdb` [command](#commands).
+
+  In the command case, the service passes in a `RequestInfo` object,
+  enabling the `createDb` logic to adjust its behavior per the client request. See the tests for examples.
 
 ### Import the in-memory web api module
 
@@ -236,10 +244,13 @@ See the `handleRequest` method implementation for details.
 
 ## Default delayed response
 
-By default this service adds a 500ms delay (see `InMemoryBackendConfig.delay`) 
-to all requests to simulate round-trip latency.
+By default this service adds a 500ms delay 
+to all data requests to simulate round-trip latency.
 
-You can eliminate that or extend it by setting a different value:
+>[Command requests](#commands) have zero added delay as they concern 
+in-memory service configuration and do not emulate real data requests.
+
+You can change or eliminate the latency by setting a different `delay` value:
 ```ts
   InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 0 }),    // no delay
   InMemoryWebApiModule.forRoot(InMemHeroService, { delay: 1500 }), // 1.5 second delay
@@ -269,7 +280,9 @@ via the Angular default `XHR` backend (it depends on whether your using `Http` o
 <a id="commands"></a>
 ## Commands
 
-The in-memory web api service accepts "commands" that can, for example, reconfigure the service and reset the database.
+The client may issue a command request to get configuration state
+from the in-memory web api service, reconfigure it, 
+or reset the in-memory database.
 
 When the last segment of the _api base path_ is "commands", the `collectionName` is treated as the _command_.
 
@@ -286,12 +299,11 @@ Usage:
   http.post('commands/config', '{"delay":1000}');
 ```
 
-The in-memory web api calls your `InMemoryDbService` data service class's  `createDb` method on two occasions.
+Command requests do not simulate real remote data access.
+They ignore the latency delay and respond as quickly as possible.
 
-1. when it handles the _first_ HTTP request 
-1. when it receives a `resetdb` command.
-
-In the command case, the service passes in a `RequestInfo` object,
+The `resetDb` command
+calls your `InMemoryDbService` data service's  [`createDb` method](#createDb) with the `RequestInfo` object,
 enabling the `createDb` logic to adjust its behavior per the client request. See the tests for examples.
 
 ## _parseRequestUrl_
