@@ -8,6 +8,12 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.4.6"></a>
+## 0.4.6 (2017-09-13)
+- improves README
+- updates v0.4.0 entry in the CHANGELOG to describe essential additions to SystemJS configuration.
+- no important functional changes.
+
 <a id="0.4.5"></a>
 ## 0.4.5 (2017-09-11)
 Feature - offer separate `HttpClientInMemoryWebApiModule` and `HttpInMemoryWebApiModule`.
@@ -61,6 +67,8 @@ See PR #130.
 Many low-level and customization options have changed.
 Apps that stuck with defaults should be (mostly) OK.
 
+If you're loading application files with **SystemJS** (as you would in a plunker), see the [instructions below](#v-0-4-systemjs).
+
 * added support for `HttpClient` -> renaming of backend service classes
 * added tests
 * refactor existing code to support tests
@@ -78,6 +86,31 @@ to arbitrary initial states (issue #128)
 * utility methods exposed in `RequestInfo.utils`
 * reorganize files into src/app and src/in-mem
 * adjust gulp tasks accordingly
+
+---
+
+<a id="v-0-4-systemjs"></a>
+### Plunkers and SystemJS
+
+If you’re loading application files with **SystemJS** (as you would in a plunker), you’ll have to configure it to load Angular’s `umd.js` for `HttpModule` and the `tslib` package.
+
+To see how, look in the `map` section of the 
+[`src/systemjs.config.js` for this project](https://github.com/angular/in-memory-web-api/blob/master/src/systemjs.config.js) for the following two _additional_ lines :
+
+```
+'@angular/common/http': 'npm:@angular/common/bundles/common-http.umd.js',
+...
+'tslib': 'npm:tslib/tslib.js',
+
+```
+
+You've already made these changes if you are using `HttpClient` today.
+
+If you’re sticking with the original Angular `Http` module, you _must make this change anyway!_ Your app will break as soon as you run `npm install` and it installs >=v0.4.0.
+
+If you're using webpack (as CLI devs do), you don't have to worry about this stuff because webpack bundles the dependencies for you.
+
+---
 
 <a id="0.3.2"></a>
 ## 0.3.2 (2017-05-02)
