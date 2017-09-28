@@ -120,7 +120,7 @@ in your root `AppModule.imports`
 calling the `forRoot` static method with this service class and an optional configuration object:
 ```ts
 import { HttpClientModule } from '@angular/common/http';
-import { HttpClientInMemoryWebApiModule } from 'http-angular-in-memory-web-api';
+import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 
 import { InMemHeroService } from '../app/hero.service';
 
