@@ -27,10 +27,18 @@ HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { dataEncapsulation
 ```
 
 We made this change because
-* the [security flaw](http://stackoverflow.com/questions/3503102/what-are-top-level-json-arrays-and-why-are-they-a-security-risk)
-that data encapsulation tried to overcome has been fixed in most (if not all) browsers supported by Angular v2+.
-* data encapsulation is uncommon in modern web APIs.
-* removing the `.map` step simplifies usage of `HttpClient` in most scenarios.
+
+1. Almost everyone seems to hate the encapsulation
+
+2. Encapsulation requires mapping to get the desired data out. With old `Http` that isn't _too_ bad because you needed to map to get data anyway (`res => res.json()`). But it is really ugly for `HttpClient` because you can't use the type HTTP method type parameter (e.g., `get<entity-type>`) and you have to map out of the data property (`.map(data => data.data as Hero[]`). That extra step requires explanations that distract from learning `HttpClient` itself.
+Now you just write `http.get<Hero[]>()` and you’ve got data (please add error handling).
+
+3. While you could have turned off encapsulation with configuration as of v.0.4, to do so took yet another step that you’d have to discover and explain.  A big reason for the in-mem web api is to make it easy to introduce and demonstrate HTTP operations in Angular. The _out-of-box_ experience is more important than avoiding a breaking change.
+
+4. The [security flaw](http://stackoverflow.com/questions/3503102/what-are-top-level-json-arrays-and-why-are-they-a-security-risk) 
+that prompted encapsulation seems to have been mitigated by all (almost all?) the browsers that can run an Angular (v2+) app. We don’t think it’s needed anymore.
+
+5. A most real world APIs today will not encapsulate; they’ll return the data in the body without extra ceremony.
 
 <a id="0.4.6"></a>
 ## 0.4.6 (2017-09-13)
