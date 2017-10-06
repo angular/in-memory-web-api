@@ -22,8 +22,8 @@ export class HttpHeroService extends HeroService {
 
   getHeroes (): Observable<Hero[]> {
     return this.http.get(this.heroesUrl)
-      .map(this.extractData)
    // .do(data => console.log(data)) // eyeball results in the console
+      .map(res => res.json())
       .catch(this.handleError);
   }
 
@@ -31,16 +31,16 @@ export class HttpHeroService extends HeroService {
   getHero(id: number): Observable<Hero> {
     const url = `${this.heroesUrl}/${id}`;
     return this.http.get(url)
-      .map((r: Response) => r.json().data as Hero)
+      .map((r: Response) => r.json() as Hero)
       .catch(this.handleError);
   }
 
-  // This get-by-id does not 404; returns undefined when id not found
+  // This get-by-id does not 404; returns empty array when id not found
   // getHero(id: number) {
   //   const url = `${this._heroesUrl}/?id=${id}`;
   //   return this.http
   //     .get(url)
-  //     .map((r: Response) => r.json().data[0] as Hero);
+  //     .map((r: Response) => r.json()[0] as Hero);
   //     .catch(this.handleError);
   // }
 
@@ -48,7 +48,7 @@ export class HttpHeroService extends HeroService {
     const hero = { name };
 
     return this.http.post(this.heroesUrl, hero, cudOptions)
-      .map(this.extractData)
+      .map(res => res.json())
       .catch(this.handleError);
   }
 
@@ -62,13 +62,8 @@ export class HttpHeroService extends HeroService {
 
   updateHero (hero: Hero): Observable<Hero> {
     return this.http.put(this.heroesUrl, hero, cudOptions)
-      .map(this.extractData)
+      .map(res => res.json())
       .catch(this.handleError);
-  }
-
-  private extractData(res: Response) {
-    const body = res.json();
-    return (body && body.data) || { };
   }
 
   private handleError (error: any) {

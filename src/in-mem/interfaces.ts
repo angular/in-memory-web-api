@@ -51,7 +51,8 @@ export abstract class InMemoryBackendConfigArgs {
    */
   caseSensitiveSearch?: boolean;
   /**
-   * true (default) encapsulate content in a `data` property inside the response body. false: put content directly inside the response body
+   * false (default) put content directly inside the response body.
+   * true: encapsulate content in a `data` property inside the response body, `{ data: ... }`.
    */
   dataEncapsulation?: boolean;
   /**
@@ -107,7 +108,7 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
     Object.assign(this, {
       // default config:
       caseSensitiveSearch: false,
-      dataEncapsulation: true, // wrap content within a `data` property of the response body
+      dataEncapsulation: false, // do NOT wrap content within an object with a `data` property
       delay: 500, // simulate latency by delaying response
       delete404: false, // don't complain if can't find entity to delete
       passThruUnknownUrl: false, // 404 if can't process URL

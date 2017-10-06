@@ -8,6 +8,30 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.5.0"></a>
+## 0.5.0 (2017-10-05)
+**BREAKING CHANGE**: HTTP response data no longer wrapped in object w/ `data` property by default.
+
+In this release, the `dataEncapsulation` configuration default changed from `false` to `true`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
+
+Changing the default to `false` is a **breaking change**. Pre-existing apps that did not set this property explicitly will be broken because they expect encapsulation and are probably mapping
+the HTTP response results from the `data` property like this:
+```
+  .map(data => data.data as Hero[])
+```
+**To migrate, simply remove that line everywhere.**
+
+If you would rather keep the web api's encapsulation, `{data: ...}`, set `dataEncapsulation` to `true` during configuration as in the following example:
+```
+HttpClientInMemoryWebApiModule.forRoot(HeroInMemDataService, { dataEncapsulation: true })
+```
+
+We made this change because
+* the [security flaw](http://stackoverflow.com/questions/3503102/what-are-top-level-json-arrays-and-why-are-they-a-security-risk)
+that data encapsulation tried to overcome has been fixed in most (if not all) browsers supported by Angular v2+.
+* data encapsulation is uncommon in modern web APIs.
+* removing the `.map` step simplifies usage of `HttpClient` in most scenarios.
+
 <a id="0.4.6"></a>
 ## 0.4.6 (2017-09-13)
 - improves README
@@ -62,6 +86,12 @@ to intercept Angular's attempt to call browser's XHR
 ## 0.4.0 (2017-09-07)
 **Theme: Support `HttpClient` and add tests**.
 See PR #130.
+
+The 0.4.0 release was a major overhaul of this library.
+
+You don't have to change your existing application _code_ if your app uses this library without customizations. 
+
+But this release's **breaking changes** affect developers who used the customization features or loaded application files with SystemJS.
 
 **BREAKING CHANGES**: Massive refactoring.
 Many low-level and customization options have changed.

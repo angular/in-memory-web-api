@@ -59,6 +59,8 @@ gulp.task('clean', function() {
       './http-backend.service.*',
       './http-client-backend.service.*',
       './interfaces.*',
+      './http-in-memory-web-api.module.*',
+      './http-client-in-memory-web-api.module.*',
       './in-memory-web-api.module.*',
       './index.*',
       './bundles/in-memory-web-api.umd.js'

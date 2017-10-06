@@ -39,7 +39,7 @@ var InMemoryBackendConfig = (function () {
         Object.assign(this, {
             // default config:
             caseSensitiveSearch: false,
-            dataEncapsulation: true,
+            dataEncapsulation: false,
             delay: 500,
             delete404: false,
             passThruUnknownUrl: false,

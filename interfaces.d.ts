@@ -47,7 +47,8 @@ export declare abstract class InMemoryBackendConfigArgs {
      */
     caseSensitiveSearch?: boolean;
     /**
-     * true (default) encapsulate content in a `data` property inside the response body. false: put content directly inside the response body
+     * false (default) put content directly inside the response body.
+     * true: encapsulate content in a `data` property inside the response body, `{ data: ... }`.
      */
     dataEncapsulation?: boolean;
     /**

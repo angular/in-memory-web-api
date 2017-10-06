@@ -18,7 +18,9 @@ import { HttpHeroService } from '../app/http-hero.service';
 
 import { HeroInMemDataService } from '../app/hero-in-mem-data.service';
 import { HeroInMemDataOverrideService } from '../app/hero-in-mem-data-override.service';
-import { HereServiceCoreSpec } from '../app/hero.service.spec';
+import { HeroServiceCoreSpec } from '../app/hero.service.spec';
+
+class Nobody { id: string; name: string; }
 
 describe('Http Backend Service', () => {
 
@@ -41,7 +43,7 @@ describe('Http Backend Service', () => {
 
     it('can get heroes', async(() => {
       http.get('api/heroes')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           // console.log(heroes);
@@ -61,7 +63,7 @@ describe('Http Backend Service', () => {
       // spy on `collectionHandler` should not be called before subscribe
       expect(spy).not.toHaveBeenCalled();
 
-      get$.map(res => res.json().data as Hero[])
+      get$.map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           expect(spy).toHaveBeenCalled();
@@ -73,7 +75,7 @@ describe('Http Backend Service', () => {
 
     it('can get heroes (w/ a different base path)', async(() => {
       http.get('some-base-path/heroes')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           // console.log(heroes);
@@ -99,7 +101,7 @@ describe('Http Backend Service', () => {
 
     it('should return the hero w/id=1 for GET app/heroes/1', async(() => {
       http.get('api/heroes/1')
-      .map(res => res.json().data as Hero)
+      .map(res => res.json() as Hero)
       .subscribe(
         hero => {
           expect(hero).toBeDefined('should find hero with id=1');
@@ -111,7 +113,7 @@ describe('Http Backend Service', () => {
     // test where id is string that looks like a number
     it('should return the stringer w/id="10" for GET app/stringers/10', async(() => {
       http.get('api/stringers/10')
-      .map(res => res.json().data as { id: string, name: string })
+      .map(res => res.json() as { id: string, name: string })
       .subscribe(
         hero => {
           expect(hero).toBeDefined('should find string with id="10"');
@@ -122,7 +124,7 @@ describe('Http Backend Service', () => {
 
     it('should return 1-item array for GET app/heroes/?id=1', async(() => {
       http.get('api/heroes/?id=1')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           expect(heroes.length).toBe(1, 'should find one hero w/id=1');
@@ -133,7 +135,7 @@ describe('Http Backend Service', () => {
 
     it('should return 1-item array for GET app/heroes?id=1', async(() => {
       http.get('api/heroes?id=1')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           expect(heroes.length).toBe(1, 'should find one hero w/id=1');
@@ -144,10 +146,10 @@ describe('Http Backend Service', () => {
 
     it('should return undefined for GET app/heroes?id=not-found-id', async(() => {
       http.get('api/heroes?id=123456')
-      .map(res => res.json().data[0] as Hero)
+      .map(res => res.json() as Hero[])
       .subscribe(
-        hero => {
-          expect(hero).toBeUndefined();
+        heroes => {
+          expect(heroes.length).toBe(0);
         },
         failure
       );
@@ -169,7 +171,7 @@ describe('Http Backend Service', () => {
 
     it('can get nobodies (empty collection)', async(() => {
       http.get('api/nobodies')
-      .map(res => res.json().data)
+      .map(res => res.json())
       .subscribe(
         nobodies => {
           expect(nobodies.length).toBe(0, 'should have no nobodies');
@@ -184,7 +186,7 @@ describe('Http Backend Service', () => {
 
       http.post('api/nobodies', { id, name: 'Noman' })
         .concatMap(() => http.get('api/nobodies'))
-        .map(res => res.json().data)
+        .map(res => res.json())
         .subscribe(
           nobodies => {
             expect(nobodies.length).toBe(1, 'should a nobody');
@@ -221,9 +223,9 @@ describe('Http Backend Service', () => {
         http.get('api/nobodies'),
         http.get('api/stringers'),
         (h, n, s) => ({
-          heroes:   h.json().data.length as number,
-          nobodies: n.json().data.length as number,
-          stringers: n.json().data.length as number
+          heroes:    h.json().length as number,
+          nobodies:  n.json().length as number,
+          stringers: n.json().length as number
         }));
 
       // Add a nobody so that we have one
@@ -262,7 +264,7 @@ describe('Http Backend Service', () => {
 
     it('can get heroes', async(() => {
       http.get('api/heroes')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           // console.log(heroes);
@@ -274,7 +276,7 @@ describe('Http Backend Service', () => {
 
     it('can translate `foo/heroes` to `heroes` via `parsedRequestUrl` override', async(() => {
       http.get('api/foo/heroes')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
           // console.log(heroes);
@@ -286,7 +288,7 @@ describe('Http Backend Service', () => {
 
     it('can get villains', async(() => {
       http.get('api/villains')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         villains => {
           // console.log(villains);
@@ -327,7 +329,7 @@ describe('Http Backend Service', () => {
     it('should use genId override to add new hero, "Maxinius"', async(() => {
       http.post('api/heroes', { name: 'Maxinius' })
       .concatMap(() => http.get('api/heroes?name=Maxi'))
-      .map(res => res.json().data)
+      .map(res => res.json())
       .subscribe(
         heroes => {
           expect(heroes.length).toBe(1, 'should have found "Maxinius"');
@@ -341,7 +343,7 @@ describe('Http Backend Service', () => {
     it('should use genId override guid generator for a new nobody without an id', async(() => {
       http.post('api/nobodies', { name: 'Noman' })
         .concatMap(() => http.get('api/nobodies'))
-        .map(res => res.json().data)
+        .map(res => res.json())
         .subscribe(
           nobodies => {
             expect(nobodies.length).toBe(1, 'should a nobody');
@@ -366,10 +368,10 @@ describe('Http Backend Service', () => {
         http.get('api/stringers'),
         http.get('api/villains'),
         (h, n, s, v) => ({
-          heroes:   h.json().data.length as number,
-          nobodies: n.json().data.length as number,
-          stringers: s.json().data.length as number,
-          villains: v.json().data.length as number
+          heroes:    h.json().length as number,
+          nobodies:  n.json().length as number,
+          stringers: s.json().length as number,
+          villains:  v.json().length as number
         }));
 
       // Add a nobody so that we have one
@@ -383,7 +385,7 @@ describe('Http Backend Service', () => {
           expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
           expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
           expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
-          expect(sizes.villains).toBeGreaterThan(0, 'reset should have NOT clear villains');
+          expect(sizes.villains).toBeGreaterThan(0, 'reset should NOT clear villains');
         },
         failure
       );
@@ -407,7 +409,7 @@ describe('Http Backend Service', () => {
 
     });
 
-    new HereServiceCoreSpec().run();
+    new HeroServiceCoreSpec().run();
   });
 
   ////////////////
@@ -439,7 +441,7 @@ describe('Http Backend Service', () => {
 
     it('can get heroes (no passthru)', async(() => {
       http.get('api/heroes')
-      .map(res => res.json().data as Hero[])
+      .map(res => res.json() as Hero[])
       .subscribe(
         heroes => {
             expect(createPassThruBackend).not.toHaveBeenCalled();
@@ -457,14 +459,14 @@ describe('Http Backend Service', () => {
       jasmine.Ajax.stubRequest('api/passthru').andReturn({
         'status': 200,
         'contentType': 'application/json',
-        'response': JSON.stringify({ data: [ {id: 42, name: 'Dude' }] })
+        'response': JSON.stringify([ {id: 42, name: 'Dude' }])
       });
 
       http.get('api/passthru')
-        .map(res => res.json().data as any[])
+        .map(res => res.json() as any[])
         .subscribe(
           passthru => {
-            console.log('passthru data', passthru);
+            console.log('GET passthru data', passthru);
             expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
           },
           failure
@@ -475,18 +477,47 @@ describe('Http Backend Service', () => {
       jasmine.Ajax.stubRequest('api/passthru').andReturn({
         'status': 200,
         'contentType': 'application/json',
-        'response': JSON.stringify({ data: [{ id: 42, name: 'Dude' }] })
+        'response': JSON.stringify({ id: 42, name: 'Dude' })
       });
 
       http.post('api/passthru', { name: 'Dude' })
-        .map(res => res.json().data as any[])
+        .map(res => res.json() as any)
         .subscribe(
           passthru => {
-            console.log('passthru data', passthru);
-            expect(passthru.length).toBeGreaterThan(0, 'should have passthru data');
+            console.log('POST passthru data', passthru);
+            expect(passthru).toBeDefined('should have passthru data');
+            expect(passthru.id).toBe(42, 'passthru object should have id 42');
           },
           failure
         );
     }));
+  });
+
+  ////////////////
+  describe('Http dataEncapsulation = true', () => {
+    let http: Http;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          HttpModule,
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, { delay, dataEncapsulation: true })
+        ]
+      });
+
+      http = TestBed.get(Http);
+    });
+
+    it('can get heroes (encapsulated)', async(() => {
+      http.get('api/heroes')
+      .map(res => res.json().data as Hero[])  // unwrap data object
+      .subscribe(
+        heroes => {
+          expect(heroes.length).toBeGreaterThan(0, 'should have data.heroes');
+        },
+        failure
+      );
+    }));
+
   });
 });

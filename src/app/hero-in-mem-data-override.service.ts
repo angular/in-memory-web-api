@@ -61,6 +61,7 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
       console.log('HTTP GET override');
 
       const collection = villains.slice();
+      const dataEncapsulation = reqInfo.utils.getConfig().dataEncapsulation;
       const id = reqInfo.id;
 
       // tslint:disable-next-line:triple-equals
@@ -68,7 +69,7 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
 
       const options: ResponseOptions = data ?
         {
-          body: { data },
+          body: dataEncapsulation ? { data } : data,
           status: STATUS.OK
         } :
         {
