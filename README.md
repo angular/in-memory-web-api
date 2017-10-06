@@ -7,18 +7,24 @@ that emulates CRUD operations over a RESTy API.
 It intercepts Angular `Http` and `HttpClient` requests that would otherwise go to the remote server and redirects them to an in-memory data store that you control.
 
 ---
-## **v0.4 supports `HttpClient`!**
->Release v0.4.0  (8 Sept 2017) was a major overhaul of this library.
->
->You don't have to change your existing application _code_ if your app uses this library without customizations. 
->
->
->The v0.4.0 release introduced **breaking changes** that affect developers who used the customization features or loaded application files with SystemJS.
->
->**Read this README and the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.4.0)**
-to learn what's new and about **breaking changes**
->
->The new **unit tests** are a good way to see the in-memory web api in action.
+
+## Important recent changes
+
+### HTTP response data no longer wrapped in object w/ `data` property
+
+As of v0.5.0 (5 October 2017), the `dataEncapsulation` configuration default changed from `false` to `true`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
+
+See the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.5.0) for the reason behind this change and how to quickly fix your code or revert to encapsulation.
+
+### v0.4 supports `HttpClient`
+Release v0.4.0  (8 Sept 2017) was a major overhaul of this library.
+
+The v0.4.0 release introduced **breaking changes** that affect developers who used the customization features or loaded application files with SystemJS.
+
+**Read this README and the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.4.0)**
+to learn what's new and about other **breaking changes**.
+
+---
 
 ## Use cases
 
@@ -120,7 +126,7 @@ in your root `AppModule.imports`
 calling the `forRoot` static method with this service class and an optional configuration object:
 ```ts
 import { HttpClientModule } from '@angular/common/http';
-import { HttpClientInMemoryWebApiModule } from 'http-angular-in-memory-web-api';
+import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 
 import { InMemHeroService } from '../app/hero.service';
 
@@ -148,7 +154,7 @@ You can still use the in-memory web api with the older `Http` module.
 
 ```ts
 import { HttpModule } from '@angular/http';
-import { HttpInMemoryWebApiModule } from 'http-angular-in-memory-web-api';
+import { HttpInMemoryWebApiModule } from 'angular-in-memory-web-api';
 
 import { InMemHeroService } from '../app/hero.service';
 
@@ -438,7 +444,7 @@ Follow these steps for updating the library.
 
 - update `CHANGELOG.md` to record the change. Call out _breaking changes_.
 
-- update `READM.md` if usage or interfaces change.
+- update `README.md` if usage or interfaces change.
 
 - consider updating the dependency versions in `package.json`.
 

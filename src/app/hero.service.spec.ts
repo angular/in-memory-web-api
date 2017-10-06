@@ -16,7 +16,7 @@ import { HeroService } from './hero.service';
  * Tests with extended test expirations accommodate the default (simulated) latency delay.
  * Ideally configured for short or no delay.
  */
-export class HereServiceCoreSpec {
+export class HeroServiceCoreSpec {
 
   run() {
 
