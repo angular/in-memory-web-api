@@ -1,6 +1,6 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
@@ -28,8 +28,9 @@
   },
   "homepage": "https://github.com/angular/in-memory-web-api#readme",
   "peerDependencies": {
-    "@angular/core": ">=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0",
-    "@angular/http": ">=2.0.0 <5.0.0 || >=4.0.0-beta <5.0.0",
+    "@angular/common": ">=2.0.0 <6.0.0",
+    "@angular/core": ">=2.0.0 <6.0.0",
+    "@angular/http": ">=2.0.0 <6.0.0",
     "rxjs": "^5.1.0"
   },
   "devDependencies": {

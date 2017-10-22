@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.5.1"></a>
+## 0.5.1 (2017-10-21)
+Support Angular v5.
+
 <a id="0.5.0"></a>
 ## 0.5.0 (2017-10-05)
 **BREAKING CHANGE**: HTTP response data no longer wrapped in object w/ `data` property by default.
