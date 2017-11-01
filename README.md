@@ -284,7 +284,7 @@ Example URLs:
 ```
 
 Usage:
-```
+```ts
   http.post('commands/resetdb', undefined);
   http.get('commands/config');
   http.post('commands/config', '{"delay":1000}');
@@ -298,7 +298,7 @@ calls your `InMemoryDbService` data service's  [`createDb` method](#createDb) wi
 enabling the `createDb` logic to adjust its behavior per the client request.
 
 In the following example, the client includes a reset option in the command request body:
-```
+```ts
 http
   // Reset the database collections with the `clear` option
   .post('commands/resetDb', { clear: true }))
