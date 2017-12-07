@@ -215,7 +215,7 @@ export abstract class BackendService {
   }
 
   protected collectionHandler(reqInfo: RequestInfo): ResponseOptions {
-      // const req = reqInfo.req;
+    // const req = reqInfo.req;
       let resOptions: ResponseOptions;
       switch (reqInfo.method) {
         case 'get':
@@ -692,8 +692,8 @@ export abstract class BackendService {
     if (existingIx > -1) {
       collection[existingIx] = item;
       return this.config.put204 ?
-      { headers, status: STATUS.NO_CONTENT } : // successful; no content
-      { headers, body, status: STATUS.OK }; // successful; return entity
+          { headers, status: STATUS.NO_CONTENT } : // successful; no content
+          { headers, body, status: STATUS.OK }; // successful; return entity
     } else if (this.config.put404) {
       // item to update not found; use POST to create new item for this id.
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND,
