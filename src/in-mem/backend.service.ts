@@ -402,14 +402,30 @@ export abstract class BackendService {
     return 'id';
   }
 
+  /**
+   * return the key (by id property name) of item for a collection name 
+   * @param item 
+   * @param collectionName 
+   */
   protected getItemId<T extends { id: any }>(item: T, collectionName = 'default_id'): any {
     return item[this.fieldIds[collectionName]];
   }
 
+  /**
+   * set the key (by id property name) of a item for a collection
+   * @param item 
+   * @param id 
+   * @param collectionName 
+   */
   protected setItemId<T extends { id: any }>(item: T, id: any, collectionName = 'default_id'): any {
     return item[this.fieldIds[collectionName]] = id;
   }
 
+  /**
+   * set the property name of the key of a collection
+   * @param id 
+   * @param collectionName 
+   */
   protected setFieldId(id: any, collectionName = 'default_id') {
     this.fieldIds[collectionName] = this.defineId(collectionName);
   }
