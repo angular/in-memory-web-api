@@ -215,29 +215,29 @@ export abstract class BackendService {
   }
 
   protected collectionHandler(reqInfo: RequestInfo): ResponseOptions {
-    // const req = reqInfo.req;
-    let resOptions: ResponseOptions;
-    switch (reqInfo.method) {
-      case 'get':
-        resOptions = this.get(reqInfo);
-        break;
-      case 'post':
-        resOptions = this.post(reqInfo);
-        break;
-      case 'put':
-        resOptions = this.put(reqInfo);
-        break;
-      case 'delete':
-        resOptions = this.delete(reqInfo);
-        break;
-      default:
-        resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
-        break;
-    }
+      // const req = reqInfo.req;
+      let resOptions: ResponseOptions;
+      switch (reqInfo.method) {
+        case 'get':
+          resOptions = this.get(reqInfo);
+          break;
+        case 'post':
+          resOptions = this.post(reqInfo);
+          break;
+        case 'put':
+          resOptions = this.put(reqInfo);
+          break;
+        case 'delete':
+          resOptions = this.delete(reqInfo);
+          break;
+        default:
+          resOptions = this.createErrorResponseOptions(reqInfo.url, STATUS.METHOD_NOT_ALLOWED, 'Method not allowed');
+          break;
+      }
 
-    // If `inMemDbService.responseInterceptor` exists, let it morph the response options
-    const interceptor = this.bind('responseInterceptor');
-    return interceptor ? interceptor(resOptions, reqInfo) : resOptions;
+      // If `inMemDbService.responseInterceptor` exists, let it morph the response options
+      const interceptor = this.bind('responseInterceptor');
+      return interceptor ? interceptor(resOptions, reqInfo) : resOptions;
   }
 
   /**
@@ -277,7 +277,7 @@ export abstract class BackendService {
           resOptions.status = STATUS.OK;
           resOptions.body = this.clone(this.config);
 
-          // any other HTTP method is assumed to be a config update
+        // any other HTTP method is assumed to be a config update
         } else {
           const body = this.getJsonBody(reqInfo.req);
           Object.assign(this.config, body);
@@ -692,8 +692,8 @@ export abstract class BackendService {
     if (existingIx > -1) {
       collection[existingIx] = item;
       return this.config.put204 ?
-        { headers, status: STATUS.NO_CONTENT } : // successful; no content
-        { headers, body, status: STATUS.OK }; // successful; return entity
+      { headers, status: STATUS.NO_CONTENT } : // successful; no content
+      { headers, body, status: STATUS.OK }; // successful; return entity
     } else if (this.config.put404) {
       // item to update not found; use POST to create new item for this id.
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND,
@@ -722,8 +722,8 @@ export abstract class BackendService {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
     const db$ = db instanceof Observable ? db :
-      isPromise(db) ? fromPromise(db) :
-        of(db);
+           isPromise(db) ? fromPromise(db) :
+           of(db);
     first.call(db$).subscribe((d: {}) => {
       this.db = d;
       this.dbReadySubject.next(true);
