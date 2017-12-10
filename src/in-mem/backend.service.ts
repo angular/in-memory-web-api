@@ -201,8 +201,7 @@ export abstract class BackendService {
   }
 
   protected bodify(data: any) {
-    const body = this.clone(data);
-    return this.config.dataEncapsulation ? { data: body } : body;
+    return this.config.dataEncapsulation ? { data } : data;
   }
 
   protected clone(data: any) {
@@ -433,7 +432,7 @@ export abstract class BackendService {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `'${collectionName}' with id='${id}' not found`);
     }
     return {
-      body: this.bodify(data),
+      body: this.bodify(this.clone(data)),
       headers: headers,
       status: STATUS.OK
     };
@@ -585,7 +584,7 @@ export abstract class BackendService {
   // Create entity
   // Can update an existing entity too if post409 is false.
   protected post({ collection, collectionName, headers, id, req, resourceUrl, url }: RequestInfo): ResponseOptions {
-    const item = this.getJsonBody(req);
+    const item = this.clone(this.getJsonBody(req));
 
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
@@ -629,7 +628,7 @@ export abstract class BackendService {
   // Update existing entity
   // Can create an entity too if put404 is false.
   protected put({ collection, collectionName, headers, id, req, url }: RequestInfo): ResponseOptions {
-    const item = this.getJsonBody(req);
+    const item = this.clone(this.getJsonBody(req));
     // tslint:disable-next-line:triple-equals
     if (item.id == undefined) {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
