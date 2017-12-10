@@ -169,6 +169,20 @@ describe('Http Backend Service', () => {
       );
     }));
 
+    it('can generate the id when add a hero with no id', async(() => {
+      const hero = new Hero(null, 'SuperDooper');
+      http.post('api/heroes', hero)
+        .map(res => res.json())
+        .subscribe(
+          replyHero => {
+            expect(replyHero.id).toBeTruthy('added hero should have an id');
+            expect(replyHero).not.toBe(hero,
+              'reply hero should not be the request hero');
+          },
+          failure
+        );
+    }));
+
     it('can get nobodies (empty collection)', async(() => {
       http.get('api/nobodies')
       .map(res => res.json())

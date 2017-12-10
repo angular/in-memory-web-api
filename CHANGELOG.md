@@ -8,6 +8,10 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.5.2"></a>
+## 0.5.2 (2017-12-10)
+No longer modify the request data coming from client. Fixes #164 
+
 <a id="0.5.1"></a>
 ## 0.5.1 (2017-10-21)
 Support Angular v5.

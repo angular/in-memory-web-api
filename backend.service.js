@@ -161,8 +161,7 @@ var BackendService = (function () {
         return fn ? fn.bind(this.inMemDbService) : undefined;
     };
     BackendService.prototype.bodify = function (data) {
-        var body = this.clone(data);
-        return this.config.dataEncapsulation ? { data: body } : body;
+        return this.config.dataEncapsulation ? { data: data } : data;
     };
     BackendService.prototype.clone = function (data) {
         return JSON.parse(JSON.stringify(data));
@@ -353,7 +352,7 @@ var BackendService = (function () {
             return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "'" + collectionName + "' with id='" + id + "' not found");
         }
         return {
-            body: this.bodify(data),
+            body: this.bodify(this.clone(data)),
             headers: headers,
             status: STATUS.OK
         };
@@ -488,7 +487,7 @@ var BackendService = (function () {
     // Can update an existing entity too if post409 is false.
     BackendService.prototype.post = function (_a) {
         var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
-        var item = this.getJsonBody(req);
+        var item = this.clone(this.getJsonBody(req));
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
             try {
@@ -532,7 +531,7 @@ var BackendService = (function () {
     // Can create an entity too if put404 is false.
     BackendService.prototype.put = function (_a) {
         var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, url = _a.url;
-        var item = this.getJsonBody(req);
+        var item = this.clone(this.getJsonBody(req));
         // tslint:disable-next-line:triple-equals
         if (item.id == undefined) {
             return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, "Missing '" + collectionName + "' id");
