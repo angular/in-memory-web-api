@@ -19,6 +19,7 @@ import { HttpHeroService } from '../app/http-hero.service';
 import { HeroInMemDataService } from '../app/hero-in-mem-data.service';
 import { HeroInMemDataOverrideService } from '../app/hero-in-mem-data-override.service';
 import { HeroServiceCoreSpec } from '../app/hero.service.spec';
+import {mergeMap} from 'rxjs/operators';
 
 class Nobody { id: string; name: string; }
 
@@ -533,5 +534,99 @@ describe('Http Backend Service', () => {
       );
     }));
 
+  });
+
+  ////////////////
+  describe('Persistence', () => {
+    let http: Http;
+
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        imports: [
+          HttpModule,
+          HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, {
+            delay, persistence: true
+          })
+        ]
+      });
+
+      http = TestBed.get(Http);
+    });
+
+    it('Should store posted items persistent', (done) => {
+      http
+        .post('/api/heroes', { id: 5, name: 'Wolverine' })
+        .subscribe(() => {
+          TestBed.resetTestingModule();
+          TestBed.configureTestingModule({
+            imports: [
+              HttpModule,
+              HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, {
+                delay, persistence: true
+              })
+            ]
+          });
+
+          http = TestBed.get(Http);
+
+          http.get('/api/heroes/5').subscribe((response) => {
+            expect(response.json()).toEqual({ id: 5, name: 'Wolverine' });
+            done();
+          });
+        });
+    });
+
+    it('Should not use persisted data, when persistence is false', (done) => {
+      http
+        .post('/api/heroes', { id: 5, name: 'Wolverine' })
+        .subscribe(() => {
+          TestBed.resetTestingModule();
+          TestBed.configureTestingModule({
+            imports: [
+              HttpModule,
+              HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, {
+                delay, persistence: false
+              })
+            ]
+          });
+
+          http = TestBed.get(Http);
+
+          // Should not find previously persisted item
+          http.get('/api/heroes/5').subscribe(() => null, (error) => {
+            expect(error).toBeDefined();
+            done();
+          });
+        });
+    });
+
+    it('Should reset persistent data using command', (done) => {
+      http
+        .post('/api/heroes', { id: 5, name: 'Wolverine' })
+        .subscribe(() => {
+          TestBed.resetTestingModule();
+          TestBed.configureTestingModule({
+            imports: [
+              HttpModule,
+              HttpInMemoryWebApiModule.forRoot(HeroInMemDataService, {
+                delay, persistence: true
+              })
+            ]
+          });
+
+          http = TestBed.get(Http);
+
+          http
+            .get('/commands/resetDb')
+            .pipe(
+              mergeMap(() => http.get('/api/heroes/5'))
+            )
+            // Should not contain hero 5 anymore, even if we are in persistence mode
+            .subscribe(() => null, (error) => {
+              expect(error).toBeDefined();
+              done();
+            });
+        });
+    });
   });
 });

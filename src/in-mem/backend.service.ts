@@ -6,9 +6,7 @@ import { of }              from 'rxjs/observable/of';
 import { fromPromise }     from 'rxjs/observable/fromPromise';
 import { isPromise }       from 'rxjs/util/isPromise';
 
-import { concatMap }       from 'rxjs/operator/concatMap';
-import { delay }           from 'rxjs/operator/delay';
-import { first }           from 'rxjs/operator/first';
+import {concatMap, delay, first, switchMap, map} from 'rxjs/operators';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 
@@ -27,6 +25,7 @@ import {
   ResponseOptions,
   UriInfo
 } from './interfaces';
+import {IndexedDB} from './indexed-db';
 
 /**
  * Base class for in-memory web api back-ends
@@ -38,6 +37,7 @@ import {
 export abstract class BackendService {
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
+  private indexedDB: IndexedDB;
   protected dbReadySubject: BehaviorSubject<boolean>;
   private passThruBackend: PassThruBackend;
   protected requestInfoUtils = this.getRequestInfoUtils();
@@ -50,6 +50,10 @@ export abstract class BackendService {
     this.config.host = loc.host;     // default to app web server host
     this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
     Object.assign(this.config, config);
+
+    if (this.config.persistence) {
+      this.indexedDB = new IndexedDB(this.config.persistenceDatabase);
+    }
   }
 
   ////  protected /////
@@ -59,7 +63,9 @@ export abstract class BackendService {
       this.dbReadySubject = new BehaviorSubject(false);
       this.resetDb();
     }
-    return first.call(this.dbReadySubject.asObservable(), (r: boolean) => r);
+    return this.dbReadySubject.asObservable().pipe(
+      first((r: boolean) => r)
+    );
   }
 
   /**
@@ -88,7 +94,9 @@ export abstract class BackendService {
    */
   protected handleRequest(req: RequestCore): Observable<any> {
     //  handle the request when there is an in-memory database
-    return concatMap.call(this.dbReady, () => this.handleRequest_(req));
+    return this.dbReady.pipe(
+      concatMap(() => this.handleRequest_(req))
+    );
   }
 
   protected handleRequest_(req: RequestCore): Observable<any> {
@@ -160,7 +168,7 @@ export abstract class BackendService {
    */
   protected addDelay(response: Observable<any>): Observable<any> {
     const d = this.config.delay;
-    return d === 0 ? response : delay.call(response, d || 500);
+    return d === 0 ? response : response.pipe(delay(d || 500));
   }
 
   /**
@@ -262,9 +270,14 @@ export abstract class BackendService {
     switch (command) {
       case 'resetdb':
         resOptions.status = STATUS.NO_CONTENT;
-        return concatMap.call(
-          this.resetDb(reqInfo),
-          () => this.createResponse$(() => resOptions, false /* no latency delay */));
+        return this.resetDb(reqInfo).pipe(
+          concatMap(
+            () => this.createResponse$(
+              () => resOptions,
+              false /* no latency delay */
+            )
+          )
+        );
 
       case 'config':
         if (method === 'get') {
@@ -325,6 +338,18 @@ export abstract class BackendService {
   protected createResponse$(resOptionsFactory: () => ResponseOptions, withDelay = true): Observable<any> {
     const resOptions$ = this.createResponseOptions$(resOptionsFactory);
     let resp$ = this.createResponse$fromResponseOptions$(resOptions$);
+
+    // If we persist to IndexedDB, we'll switch map to wait for the collection
+    // to be stored, and map back to the initial response
+    if (this.config.persistence) {
+      resp$ = resp$.pipe(
+        switchMap((response) => this.indexedDB
+          .storeCollections(this.db)
+          .pipe(map(() => response))
+        )
+      );
+    }
+
     return withDelay ? this.addDelay(resp$) : resp$;
   }
 
@@ -667,6 +692,46 @@ export abstract class BackendService {
     return false;
   }
 
+  protected obtainOrStorePersistenceCollection(db$: Observable<any>, resetPersistence: boolean) {
+    return db$.pipe(
+      first(),
+      switchMap((db) => {
+        if (this.config.persistence && resetPersistence) {
+          // Switch map for persistence collection by resetting and storing
+          // the in-memory database
+          return this.indexedDB
+            .clearCollections()
+            .pipe(
+              switchMap(() => this.indexedDB
+                .storeCollections(db)
+              ),
+              map(() => db)
+            );
+        } else if (this.config.persistence) {
+          // We should use persistence but don't reset if data is present
+          return this.indexedDB
+            .getCollections()
+            .pipe(
+              // Switch map for either persistence collection if it's not empty
+              // or persist the in-memory collection and return it
+              switchMap((persistenceDb) => {
+                if (persistenceDb) {
+                  return of(persistenceDb);
+                } else {
+                  return this.indexedDB
+                    .storeCollections(db)
+                    .pipe(map(() => db));
+                }
+              })
+            );
+        } else {
+          // We should not use persistence, instead just return in-memory db
+          return of(db);
+        }
+      })
+    );
+  }
+
   /**
    * Tell your in-mem "database" to reset.
    * returns Observable of the database because resetting it could be async
@@ -677,10 +742,12 @@ export abstract class BackendService {
     const db$ = db instanceof Observable ? db :
            isPromise(db) ? fromPromise(db) :
            of(db);
-    first.call(db$).subscribe((d: {}) => {
-      this.db = d;
-      this.dbReadySubject.next(true);
-    });
+
+    this.obtainOrStorePersistenceCollection(db$, reqInfo !== undefined)
+      .subscribe((d: {}) => {
+        this.db = d;
+        this.dbReadySubject.next(true);
+      });
     return this.dbReady;
   }
 

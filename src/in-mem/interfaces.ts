@@ -60,6 +60,15 @@ export abstract class InMemoryBackendConfigArgs {
    */
   delay?: number;
   /**
+   * false (default) will not persist any data and a browser reload will re-run the `createDb` function in your database services.
+   * true: Data will be persisted to a indexedDB database in your browser.
+   */
+  persistence?: boolean;
+  /**
+   * the indexedDB database name when using the persistence feature.
+   */
+  persistenceDatabase?: string;
+  /**
    * false (default) should 204 when object-to-delete not found; true: 404
    */
   delete404?: boolean;
@@ -110,6 +119,8 @@ export class InMemoryBackendConfig implements InMemoryBackendConfigArgs {
       caseSensitiveSearch: false,
       dataEncapsulation: false, // do NOT wrap content within an object with a `data` property
       delay: 500, // simulate latency by delaying response
+      persistence: false, // use indexedDB to persist data
+      persistenceDatabase: 'ngInMemoryWebApi', // database name when using persistence
       delete404: false, // don't complain if can't find entity to delete
       passThruUnknownUrl: false, // 404 if can't process URL
       post204: true, // don't return the item after a POST
