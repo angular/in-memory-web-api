@@ -10,15 +10,17 @@ import {
 } from './interfaces';
 
 import { HttpClientBackendService } from './http-client-backend.service';
+import {InMemoryIndexedDb, InMemoryIndexedDbImpl} from './indexed-db';
 
 // Internal - Creates the in-mem backend for the HttpClient module
 // AoT requires factory to be exported
 export function httpClientInMemBackendServiceFactory(
   dbService: InMemoryDbService,
+  indexedDb: InMemoryIndexedDb,
   options: InMemoryBackendConfig,
   xhrFactory: XhrFactory,
 ): HttpBackend {
-  const backend: any = new HttpClientBackendService(dbService, options, xhrFactory);
+  const backend: any = new HttpClientBackendService(dbService, indexedDb, options, xhrFactory);
   return backend;
 }
 
@@ -45,10 +47,10 @@ export class HttpClientInMemoryWebApiModule {
       providers: [
         { provide: InMemoryDbService,  useClass: dbCreator },
         { provide: InMemoryBackendConfig, useValue: options },
-
+        { provide: InMemoryIndexedDb, useClass: InMemoryIndexedDbImpl },
         { provide: HttpBackend,
           useFactory: httpClientInMemBackendServiceFactory,
-          deps: [InMemoryDbService, InMemoryBackendConfig, XhrFactory]}
+          deps: [InMemoryDbService, InMemoryIndexedDb, InMemoryBackendConfig, XhrFactory]}
       ]
     };
   }

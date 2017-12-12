@@ -25,7 +25,7 @@ import {
   ResponseOptions,
   UriInfo
 } from './interfaces';
-import {IndexedDB} from './indexed-db';
+import {InMemoryIndexedDb} from './indexed-db';
 
 /**
  * Base class for in-memory web api back-ends
@@ -37,23 +37,19 @@ import {IndexedDB} from './indexed-db';
 export abstract class BackendService {
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
-  private indexedDB: IndexedDB;
   protected dbReadySubject: BehaviorSubject<boolean>;
   private passThruBackend: PassThruBackend;
   protected requestInfoUtils = this.getRequestInfoUtils();
 
   constructor(
     protected inMemDbService: InMemoryDbService,
+    protected indexedDb: InMemoryIndexedDb,
     config: InMemoryBackendConfigArgs = {}
   ) {
     const loc = this.getLocation('/');
     this.config.host = loc.host;     // default to app web server host
     this.config.rootPath = loc.path; // default to path when app is served (e.g.'/')
     Object.assign(this.config, config);
-
-    if (this.config.persistence) {
-      this.indexedDB = new IndexedDB(this.config.persistenceDatabase);
-    }
   }
 
   ////  protected /////
@@ -343,7 +339,7 @@ export abstract class BackendService {
     // to be stored, and map back to the initial response
     if (this.config.persistence) {
       resp$ = resp$.pipe(
-        switchMap((response) => this.indexedDB
+        switchMap((response) => this.indexedDb
           .storeCollections(this.db)
           .pipe(map(() => response))
         )
@@ -699,17 +695,17 @@ export abstract class BackendService {
         if (this.config.persistence && resetPersistence) {
           // Switch map for persistence collection by resetting and storing
           // the in-memory database
-          return this.indexedDB
+          return this.indexedDb
             .clearCollections()
             .pipe(
-              switchMap(() => this.indexedDB
+              switchMap(() => this.indexedDb
                 .storeCollections(db)
               ),
               map(() => db)
             );
         } else if (this.config.persistence) {
           // We should use persistence but don't reset if data is present
-          return this.indexedDB
+          return this.indexedDb
             .getCollections()
             .pipe(
               // Switch map for either persistence collection if it's not empty
@@ -718,7 +714,7 @@ export abstract class BackendService {
                 if (persistenceDb) {
                   return of(persistenceDb);
                 } else {
-                  return this.indexedDB
+                  return this.indexedDb
                     .storeCollections(db)
                     .pipe(map(() => db));
                 }

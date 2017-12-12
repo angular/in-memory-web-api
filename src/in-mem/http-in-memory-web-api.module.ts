@@ -10,15 +10,17 @@ import {
 } from './interfaces';
 
 import { HttpBackendService }       from './http-backend.service';
+import {InMemoryIndexedDb, InMemoryIndexedDbImpl} from './indexed-db';
 
 // Internal - Creates the in-mem backend for the Http module
 // AoT requires factory to be exported
 export function httpInMemBackendServiceFactory(
   injector: Injector,
   dbService: InMemoryDbService,
+  indexedDb: InMemoryIndexedDb,
   options: InMemoryBackendConfig
 ): XHRBackend {
-  const backend: any = new HttpBackendService(injector, dbService, options);
+  const backend: any = new HttpBackendService(injector, dbService, indexedDb, options);
   return backend as XHRBackend;
 }
 
@@ -45,10 +47,10 @@ export class HttpInMemoryWebApiModule {
       providers: [
         { provide: InMemoryDbService,  useClass: dbCreator },
         { provide: InMemoryBackendConfig, useValue: options },
-
+        { provide: InMemoryIndexedDb, useClass: InMemoryIndexedDbImpl },
         { provide: XHRBackend,
           useFactory: httpInMemBackendServiceFactory,
-          deps: [Injector, InMemoryDbService, InMemoryBackendConfig]}
+          deps: [Injector, InMemoryDbService, InMemoryIndexedDb, InMemoryBackendConfig]}
       ]
     };
   }

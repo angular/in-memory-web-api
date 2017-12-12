@@ -21,6 +21,7 @@ import {
 } from './interfaces';
 
 import { BackendService } from './backend.service';
+import {InMemoryIndexedDb} from './indexed-db';
 
 /**
  * For Angular `Http` simulate the behavior of a RESTy web api
@@ -55,9 +56,10 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   constructor(
     private injector: Injector,
     inMemDbService: InMemoryDbService,
+    inMemIndexedDb: InMemoryIndexedDb,
     @Inject(InMemoryBackendConfig) @Optional() config: InMemoryBackendConfigArgs
     ) {
-    super(inMemDbService, config);
+    super(inMemDbService, inMemIndexedDb, config);
   }
 
   createConnection(req: Request): Connection {

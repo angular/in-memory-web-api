@@ -1,34 +1,37 @@
-import {IndexedDB} from './indexed-db';
-import {switchMap} from 'rxjs/operators';
+import { InMemoryIndexedDb, InMemoryIndexedDbImpl } from './indexed-db';
+import { switchMap } from 'rxjs/operators';
 
-describe('IndexedDB', () => {
-  let indexedDB: IndexedDB;
+describe('InMemoryIndexedDb', () => {
+  let indexedDb: InMemoryIndexedDb;
   beforeEach(() => {
-    indexedDB = new IndexedDB('testDatabase');
+    indexedDb = new InMemoryIndexedDbImpl({
+      persistence: true,
+      persistenceDatabase: 'testDatabase'
+    });
   });
 
   afterEach((done) => {
-    indexedDB
+    indexedDb
       .closeDatabase()
       .pipe(
-        switchMap((databaseName: string) => IndexedDB.deleteDatabase(databaseName))
+        switchMap((databaseName: string) => InMemoryIndexedDb.deleteDatabase(databaseName))
       )
       .subscribe(() => done(), () => done());
   });
 
   it('should create new database', (done) => {
-    indexedDB.getDatabase()
+    indexedDb.getDatabase()
       .subscribe(
         (data) => done()
       );
-    expect(indexedDB).toBeDefined();
+    expect(indexedDb).toBeDefined();
   });
 
   it('should store and retrieve simple collections', (done) => {
-    indexedDB
+    indexedDb
       .storeCollections({items: [1, 2, 3, 4, 5]})
       .pipe(
-        switchMap(() => indexedDB.getCollections())
+        switchMap(() => indexedDb.getCollections())
       )
       .subscribe((data) => {
         expect(data).toEqual({items: [1, 2, 3, 4, 5]});
@@ -59,10 +62,10 @@ describe('IndexedDB', () => {
 
     const collections = {users, projects, tasks};
 
-    indexedDB
+    indexedDb
       .storeCollections(collections)
       .pipe(
-        switchMap(() => indexedDB.getCollections())
+        switchMap(() => indexedDb.getCollections())
       )
       .subscribe((data) => {
         expect(data).toEqual(collections);
@@ -71,10 +74,10 @@ describe('IndexedDB', () => {
   });
 
   it('should clear collection', (done) => {
-    indexedDB
+    indexedDb
       .storeCollections({data: 'Test'})
       .pipe(
-        switchMap(() => indexedDB.clearCollections())
+        switchMap(() => indexedDb.clearCollections())
       )
       .subscribe((data) => {
         expect(data).toBeUndefined();

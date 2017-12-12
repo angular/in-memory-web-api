@@ -22,6 +22,7 @@ import {
 } from './interfaces';
 
 import { BackendService } from './backend.service';
+import {InMemoryIndexedDb} from './indexed-db';
 
 /**
  * For Angular `HttpClient` simulate the behavior of a RESTy web api
@@ -55,10 +56,11 @@ export class HttpClientBackendService extends BackendService implements HttpBack
 
   constructor(
     inMemDbService: InMemoryDbService,
+    inMemIndexedDb: InMemoryIndexedDb,
     @Inject(InMemoryBackendConfig) @Optional() config: InMemoryBackendConfigArgs,
     private xhrFactory: XhrFactory
     ) {
-    super(inMemDbService, config);
+    super(inMemDbService, inMemIndexedDb, config);
   }
 
   handle(req: HttpRequest<any>): Observable<HttpResponse<any>> {

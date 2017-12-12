@@ -1,7 +1,10 @@
-import {ReplaySubject} from 'rxjs/ReplaySubject';
-import {Observable} from 'rxjs/Observable';
-import {map, switchMap, take, tap} from 'rxjs/operators';
-import {Observer} from 'rxjs/Observer';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
+import { Observable } from 'rxjs/Observable';
+import { map, switchMap, take } from 'rxjs/operators';
+import { Observer } from 'rxjs/Observer';
+import { _throw } from 'rxjs/observable/throw';
+import { Injectable } from '@angular/core';
+import { InMemoryBackendConfig } from './interfaces';
 
 const COLLECTIONS_KEY = 1;
 const COLLECTIONS_OBJECT_STORE = 'collections';
@@ -11,29 +14,51 @@ const emitError = (observable: Observer<any>, event: any) =>
 const emitResult = (observable: Observer<any>, event: any) =>
   observable.next(event.target.result);
 
-export class IndexedDB {
-  static indexedDB: IDBFactory = window.indexedDB || window['mozIndexedDB'] || window['webkitIndexedDB'] || window['msIndexedDB'];
+export abstract class InMemoryIndexedDb {
+  static indexedDB: IDBFactory = typeof window !== 'undefined' ?
+    window.indexedDB || window['mozIndexedDB'] ||
+    window['webkitIndexedDB'] || window['msIndexedDB'] : null;
 
-  private database$ = new ReplaySubject<IDBDatabase>(1);
+  protected database$ = new ReplaySubject<IDBDatabase>(1);
 
   static deleteDatabase(databaseName: string) {
+    if (!InMemoryIndexedDb.indexedDB) {
+      return _throw('No InMemoryIndexedDb API found!');
+    }
+
     return new Observable<any>((observer: Observer<any>) => {
-      const request = IndexedDB.indexedDB
+      const request = InMemoryIndexedDb.indexedDB
         .deleteDatabase(databaseName);
       request.addEventListener('success', (event) => emitResult(observer, event));
       request.addEventListener('error', (event) => emitError(observer, event));
     });
   }
 
-  constructor(private databaseName: string) {
+  abstract createOrOpenDatabase(): void;
+  abstract closeDatabase(): Observable<string>;
+  abstract getDatabase(): Observable<IDBDatabase>;
+  abstract getCollections(): Observable<any>;
+  abstract storeCollections(collections: any): Observable<any>;
+  abstract clearCollections(): Observable<any>;
+}
+
+@Injectable()
+export class InMemoryIndexedDbImpl extends InMemoryIndexedDb {
+  private databaseName: string;
+  constructor(private config: InMemoryBackendConfig) {
+    super();
+    this.databaseName = config['persistenceDatabase'];
     this.createOrOpenDatabase();
   }
 
   createOrOpenDatabase() {
-    const request = IndexedDB.indexedDB.open(this.databaseName, 1);
-    request.addEventListener('success',
-      (event) => this.database$.next((<any>event.target).result)
-    );
+    if (!InMemoryIndexedDb.indexedDB) {
+      emitError(this.database$, 'No InMemoryIndexedDb API found!');
+      return;
+    }
+
+    const request = InMemoryIndexedDb.indexedDB.open(this.databaseName, 1);
+    request.addEventListener('success', (event) => emitResult(this.database$, event));
     request.addEventListener('error', (event) => emitError(this.database$, event));
     request.addEventListener('upgradeneeded',
       (event) => {
