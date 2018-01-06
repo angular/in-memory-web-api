@@ -186,7 +186,8 @@ export function removeTrailingSlash(path: string) {
  *  Minimum definition needed by base class
  */
 export interface RequestCore {
-  url: string;
+  url: string; // request URL
+  urlWithParams?: string; // request URL with query parameters added by `HttpParams`
 }
 
 /**

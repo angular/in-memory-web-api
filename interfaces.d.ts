@@ -131,6 +131,7 @@ export declare function removeTrailingSlash(path: string): string;
  */
 export interface RequestCore {
     url: string;
+    urlWithParams?: string;
 }
 /**
 * Interface for object w/ info about the current request url

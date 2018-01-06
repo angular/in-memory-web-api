@@ -93,7 +93,7 @@ export abstract class BackendService {
 
   protected handleRequest_(req: RequestCore): Observable<any> {
 
-    const url = req.url;
+    const url = req.urlWithParams ? req.urlWithParams : req.url;
 
     // Try override parser
     // If no override parser or it returns nothing, use default parser
