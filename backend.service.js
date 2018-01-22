@@ -70,7 +70,7 @@ var BackendService = (function () {
     };
     BackendService.prototype.handleRequest_ = function (req) {
         var _this = this;
-        var url = req.url;
+        var url = req.urlWithParams ? req.urlWithParams : req.url;
         // Try override parser
         // If no override parser or it returns nothing, use default parser
         var parser = this.bind('parseRequestUrl');
