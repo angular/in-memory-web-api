@@ -12,7 +12,7 @@ It intercepts Angular `Http` and `HttpClient` requests that would otherwise go t
 
 ### HTTP response data no longer wrapped in object w/ `data` property
 
-As of v0.5.0 (5 October 2017), the `dataEncapsulation` configuration default changed from `false` to `true`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
+As of v0.5.0 (5 October 2017), the `dataEncapsulation` configuration default changed from `true` to `false`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
 
 See the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.5.0) for the reason behind this change and how to quickly fix your code or revert to encapsulation.
 
