@@ -29,7 +29,7 @@ export class HttpClientHeroService extends HeroService {
   // This get-by-id will 404 when id not found
   getHero(id: number): Observable<Hero> {
     const url = `${this.heroesUrl}/${id}`;
-    return this.http.get<Hero[]>(url)
+    return this.http.get<Hero>(url)
       .catch(this.handleError);
   }
 
