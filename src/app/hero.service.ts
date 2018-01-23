@@ -8,5 +8,6 @@ export abstract class HeroService {
   abstract getHero(id: number): Observable<Hero>;
   abstract addHero (name: string): Observable<Hero>;
   abstract deleteHero (hero: Hero | number): Observable<Hero>;
+  abstract searchHeroes(term: string): Observable<Hero[]>;
   abstract updateHero (hero: Hero): Observable<Hero>;
 }

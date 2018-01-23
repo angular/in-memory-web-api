@@ -99,6 +99,16 @@ export class HeroServiceCoreSpec {
           );
       }));
 
+      it('can search for heroes by name containing "a"', async(() => {
+        heroService.searchHeroes('a')
+          .subscribe(
+          (heroes: Hero[]) => {
+            expect(heroes.length).toBe(3, 'should find 3 heroes with letter "a"');
+          },
+          failure
+        );
+      }));
+
       it('can update existing hero', async(() => {
         const id = 1;
         heroService.getHero(id)

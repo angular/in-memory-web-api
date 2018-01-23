@@ -1,5 +1,5 @@
 import { Injectable }from '@angular/core';
-import { HttpClient, HttpHeaders }from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams }from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/throw';
@@ -53,6 +53,16 @@ export class HttpClientHeroService extends HeroService {
     const url = `${this.heroesUrl}/${id}`;
 
     return this.http.delete<Hero>(url, cudOptions)
+      .catch(this.handleError);
+  }
+
+  searchHeroes(term: string): Observable<Hero[]> {
+    term = term.trim();
+    // add safe, encoded search parameter if term is present
+    const options = term ?
+      { params: new HttpParams().set('name', term) } : {};
+
+    return this.http.get<Hero[]>(this.heroesUrl, options)
       .catch(this.handleError);
   }
 

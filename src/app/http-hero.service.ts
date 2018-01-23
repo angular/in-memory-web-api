@@ -60,6 +60,16 @@ export class HttpHeroService extends HeroService {
       .catch(this.handleError);
   }
 
+
+  searchHeroes(term: string): Observable<Hero[]> {
+    term = term.trim();
+    // NB: not a safe encoded search parameter
+    const search = term ? '/?name=' + term : '';
+    return this.http.get(this.heroesUrl + search)
+      .map(res => res.json())
+      .catch(this.handleError);
+  }
+
   updateHero (hero: Hero): Observable<Hero> {
     return this.http.put(this.heroesUrl, hero, cudOptions)
       .map(res => res.json())
