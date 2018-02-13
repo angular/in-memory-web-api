@@ -6,25 +6,18 @@ that emulates CRUD operations over a RESTy API.
 
 It intercepts Angular `Http` and `HttpClient` requests that would otherwise go to the remote server and redirects them to an in-memory data store that you control.
 
----
+See [Austin McDaniel's article](https://medium.com/@amcdnl/mocking-with-angular-more-than-just-unit-testing-cbb7908c9fcc) 
+for a quick introduction.
 
-## Important recent changes
+### _It used to work and now it doesn't :-(_
 
-### HTTP response data no longer wrapped in object w/ `data` property
+Perhaps you installed a new version of this library? Check the 
+[CHANGELOG.md](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md) 
+for breaking changes that may have affected your app.
 
-As of v0.5.0 (5 October 2017), the `dataEncapsulation` configuration default changed from `true` to `false`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
-
-See the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.5.0) for the reason behind this change and how to quickly fix your code or revert to encapsulation.
-
-### v0.4 supports `HttpClient`
-Release v0.4.0  (8 Sept 2017) was a major overhaul of this library.
-
-The v0.4.0 release introduced **breaking changes** that affect developers who used the customization features or loaded application files with SystemJS.
-
-**Read this README and the [CHANGELOG](https://github.com/angular/in-memory-web-api/blob/master/CHANGELOG.md/#0.4.0)**
-to learn what's new and about other **breaking changes**.
-
----
+If that doesn't explain it, create an 
+[issue on github](https://github.com/angular/in-memory-web-api/issues),
+preferably with a small repro.
 
 ## Use cases
 
@@ -147,6 +140,17 @@ export class AppModule { ... }
 to ensure that the in-memory backend provider supersedes the Angular version.
 
 * You can setup the in-memory web api within a lazy loaded feature module by calling the `.forFeature` method as you would `.forRoot`.
+
+* In production, you want HTTP requests to go to the real server and probably have no need for the _in-memory_ provider.
+CLI-based apps can exclude the provider in production builds like this:
+  ```javascript
+  imports: [
+    HttpClientModule,
+    environment.production ?
+      HttpClientInMemoryWebApiModule.forRoot(InMemHeroService) : []
+    ...
+  ]
+  ```
 
 ### Setup for the older Angular _Http_ module
 
