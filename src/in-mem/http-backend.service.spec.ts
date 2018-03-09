@@ -73,6 +73,23 @@ describe('Http Backend Service', () => {
       );
     }));
 
+    it('GET should wait until after delay to respond', async(() => {
+      // to make test fail, set `delay=0` above
+      let gotResponse = false;
+
+      http.get('api/heroes')
+      .map(res => res.json() as Hero[])
+      .subscribe(
+        heroes => {
+          gotResponse = true;
+          expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+        },
+        failure
+      );
+
+      expect(gotResponse).toBe(false, 'should delay before response');
+    }));
+
     it('can get heroes (w/ a different base path)', async(() => {
       http.get('some-base-path/heroes')
       .map(res => res.json() as Hero[])
@@ -85,7 +102,8 @@ describe('Http Backend Service', () => {
       );
     }));
 
-    it('should 404 when GET unknown collection', async(() => {
+    it('should 404 when GET unknown collection (after delay)', async(() => {
+      let gotError = false;
       const url = 'api/unknown-collection';
       http.get(url)
       .subscribe(
@@ -94,9 +112,12 @@ describe('Http Backend Service', () => {
           fail(`should not have found data for '${url}'`);
         },
         err => {
+          gotError = true;
           expect(err.status).toBe(404, 'should have 404 status');
         }
       );
+
+      expect(gotError).toBe(false, 'should not get error until after delay');
     }));
 
     it('should return the hero w/id=1 for GET app/heroes/1', async(() => {

@@ -8,7 +8,20 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
-<a id="0.5.2"></a>
+<a id="0.5.4"></a>
+## 0.5.4 (2018-03-09)
+
+Simulated HTTP error responses were not delaying the prescribed time when using RxJS `delay()`
+because it was short-circuited by the ErrorResponse.
+New `delayResponse` function does it right.
+Should not break you unless you incorrectly expected no delay for errors.
+
+Also, this library no longer calls RxJS `delay()` which may make testing with it easier
+(Angular TestBed does not handle RxJS `delay()` well because that operator uses `interval()`).
+
+Also fixes type error (issue #180).
+
+<a id="0.5.3"></a>
 ## 0.5.3 (2018-01-06)
 Can make use of `HttpParams` which yields a `request.urlWithParams`.
 Added supporting `HeroService.searchHeroes(term: string)` and test.
