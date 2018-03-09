@@ -4,9 +4,9 @@ import { of } from 'rxjs/observable/of';
 import { fromPromise } from 'rxjs/observable/fromPromise';
 import { isPromise } from 'rxjs/util/isPromise';
 import { concatMap } from 'rxjs/operator/concatMap';
-import { delay } from 'rxjs/operator/delay';
 import { first } from 'rxjs/operator/first';
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
+import { delayResponse } from './delay-response';
 import { InMemoryBackendConfig, parseUri, removeTrailingSlash } from './interfaces';
 /**
  * Base class for in-memory web api back-ends
@@ -123,7 +123,7 @@ var BackendService = (function () {
      */
     BackendService.prototype.addDelay = function (response) {
         var d = this.config.delay;
-        return d === 0 ? response : delay.call(response, d || 500);
+        return d === 0 ? response : delayResponse(response, d || 500);
     };
     /**
      * Apply query/search parameters as a filter over the collection

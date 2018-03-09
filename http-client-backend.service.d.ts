@@ -1,4 +1,4 @@
-import { HttpBackend, HttpHeaders, HttpRequest, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
+import { HttpBackend, HttpEvent, HttpHeaders, HttpRequest, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
 import { BackendService } from './backend.service';
@@ -32,7 +32,7 @@ import { BackendService } from './backend.service';
 export declare class HttpClientBackendService extends BackendService implements HttpBackend {
     private xhrFactory;
     constructor(inMemDbService: InMemoryDbService, config: InMemoryBackendConfigArgs, xhrFactory: XhrFactory);
-    handle(req: HttpRequest<any>): Observable<HttpResponse<any>>;
+    handle(req: HttpRequest<any>): Observable<HttpEvent<any>>;
     protected getJsonBody(req: HttpRequest<any>): any;
     protected getRequestMethod(req: HttpRequest<any>): string;
     protected createHeaders(headers: {

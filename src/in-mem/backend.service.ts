@@ -7,10 +7,10 @@ import { fromPromise }     from 'rxjs/observable/fromPromise';
 import { isPromise }       from 'rxjs/util/isPromise';
 
 import { concatMap }       from 'rxjs/operator/concatMap';
-import { delay }           from 'rxjs/operator/delay';
 import { first }           from 'rxjs/operator/first';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
+import { delayResponse } from './delay-response';
 
 import {
   HeadersCore,
@@ -160,7 +160,7 @@ export abstract class BackendService {
    */
   protected addDelay(response: Observable<any>): Observable<any> {
     const d = this.config.delay;
-    return d === 0 ? response : delay.call(response, d || 500);
+    return d === 0 ? response : delayResponse(response, d || 500);
   }
 
   /**

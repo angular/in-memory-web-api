@@ -106,6 +106,21 @@ describe('HttpClient Backend Service', () => {
       );
     }));
 
+    it('GET should wait until after delay to respond', async(() => {
+      // to make test fail, set `delay=0` above
+      let gotResponse = false;
+
+      http.get<Hero[]>('api/heroes').subscribe(
+        heroes => {
+          gotResponse = true;
+          expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+        },
+        failure
+      );
+
+      expect(gotResponse).toBe(false, 'should delay before response');
+    }));
+
     it('Should only initialize the db once', async(() => {
       const httpBackend = TestBed.get(HttpBackend);
 
@@ -134,18 +149,21 @@ describe('HttpClient Backend Service', () => {
       );
     }));
 
-    it('should 404 when GET unknown collection', async(() => {
+    it('should 404 when GET unknown collection (after delay)', async(() => {
+      let gotError = false;
       const url = 'api/unknown-collection';
-      http.get<Hero[]>(url)
-      .subscribe(
+      http.get<Hero[]>(url).subscribe(
         _ => {
           console.log(_);
           fail(`should not have found data for '${url}'`);
         },
         err => {
+          gotError = true;
           expect(err.status).toBe(404, 'should have 404 status');
         }
       );
+
+      expect(gotError).toBe(false, 'should not get error until after delay');
     }));
 
     it('should return the hero w/id=1 for GET app/heroes/1', async(() => {
@@ -364,6 +382,7 @@ describe('HttpClient Backend Service', () => {
         }
       );
     }));
+
     it('should 404 when GET unknown collection', async(() => {
       const url = 'api/unknown-collection';
       http.get<Hero[]>(url)

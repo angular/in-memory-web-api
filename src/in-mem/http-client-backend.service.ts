@@ -1,6 +1,7 @@
 import { Inject, Injectable, Optional } from '@angular/core';
 import {
   HttpBackend,
+  HttpEvent,
   HttpHeaders,
   HttpParams,
   HttpRequest,
@@ -61,7 +62,7 @@ export class HttpClientBackendService extends BackendService implements HttpBack
     super(inMemDbService, config);
   }
 
-  handle(req: HttpRequest<any>): Observable<HttpResponse<any>> {
+  handle(req: HttpRequest<any>): Observable<HttpEvent<any>> {
     try {
       return this.handleRequest(req);
 
