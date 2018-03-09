@@ -147,7 +147,7 @@ CLI-based apps can exclude the provider in production builds like this:
   imports: [
     HttpClientModule,
     environment.production ?
-      HttpClientInMemoryWebApiModule.forRoot(InMemHeroService) : []
+      [] : HttpClientInMemoryWebApiModule.forRoot(InMemHeroService)
     ...
   ]
   ```
