@@ -270,12 +270,25 @@ describe('HttpClient Backend Service', () => {
         );
     }));
 
-    it('should fail when add a nobody without an id to empty nobodies collection', async(() => {
-      http.post('api/nobodies', { name: 'Noman' })
+    it('can add a nobody without an id to an empty nobodies collection', async(() => {
+      http.post('api/nobodies', { name: 'Noman'})
+        .concatMap(() => http.get<Nobody[]>('api/nobodies'))
         .subscribe(
+          nobodies => {
+            expect(nobodies.length).toBe(1, 'should a nobody');
+            expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
+            expect(nobodies[0].id).toBeDefined();
+          },
+          failure
+        );
+    }));
+
+    it('should fail when we add a hero with no id to stringers', async(() => {
+      http.post('api/stringers', { name: 'Stringer'})
+      .subscribe(
         _ => {
           console.log(_);
-          fail(`should not have been able to add 'Norman' to 'nobodies'`);
+          fail(`should not have been able to add 'Stringer' to 'stringers'`);
         },
         err => {
           expect(err.status).toBe(422, 'should have 422 status');
@@ -660,4 +673,3 @@ describe('HttpClient Backend Service', () => {
 
   });
 });
-

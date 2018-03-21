@@ -406,7 +406,7 @@ export abstract class BackendService {
    * @param collectionName - name of the collection
    */
   protected genIdDefault<T extends { id: any }>(collection: T[], collectionName: string): any {
-    if (!this.isCollectionIdNumeric(collection, collectionName)) {
+    if (this.isNotEmpty(collection) && !this.isCollectionIdNumeric(collection, collectionName)) {
       throw new Error(
         `Collection '${collectionName}' id type is non-numeric or unknown. Can only generate numeric ids.`);
     }
@@ -513,7 +513,11 @@ export abstract class BackendService {
   protected isCollectionIdNumeric<T extends { id: any }>(collection: T[], collectionName: string): boolean {
     // collectionName not used now but override might maintain collection type information
     // so that it could know the type of the `id` even when the collection is empty.
-    return !!(collection && collection[0]) && typeof collection[0].id === 'number';
+    return this.isNotEmpty(collection) && typeof collection[0].id === 'number';
+  }
+
+  protected isNotEmpty<T extends { id: any }>(collection: T[]): boolean {
+    return !!(collection && collection[0]);
   }
 
   /**
