@@ -5,9 +5,7 @@
 // https://www.npmjs.com/package/karma-jasmine-ajax
 
 describe('Jasmine ajax mocking proof-of-life', () => {
-
   describe('suite wide usage', () => {
-
     beforeEach(function() {
       jasmine.Ajax.install();
     });
@@ -33,9 +31,9 @@ describe('Jasmine ajax mocking proof-of-life', () => {
       expect(doneFn).not.toHaveBeenCalled();
 
       jasmine.Ajax.requests.mostRecent().respondWith({
-        'status': 200,
-        'contentType': 'text/plain',
-        'responseText': 'awesome response'
+        status: 200,
+        contentType: 'text/plain',
+        responseText: 'awesome response'
       });
 
       expect(doneFn).toHaveBeenCalledWith('awesome response');
@@ -45,7 +43,7 @@ describe('Jasmine ajax mocking proof-of-life', () => {
       const doneFn = jasmine.createSpy('success');
 
       jasmine.Ajax.stubRequest('/another/url').andReturn({
-        'responseText': 'immediate response'
+        responseText: 'immediate response'
       });
       const xhr = new XMLHttpRequest();
       xhr.onreadystatechange = function(args) {
@@ -59,7 +57,6 @@ describe('Jasmine ajax mocking proof-of-life', () => {
 
       expect(doneFn).toHaveBeenCalledWith('immediate response');
     });
-
   });
 
   it('allows use in a single spec', () => {
@@ -78,8 +75,8 @@ describe('Jasmine ajax mocking proof-of-life', () => {
       expect(doneFn).not.toHaveBeenCalled();
 
       jasmine.Ajax.requests.mostRecent().respondWith({
-        'status': 200,
-        'responseText': 'in spec response'
+        status: 200,
+        responseText: 'in spec response'
       });
 
       expect(doneFn).toHaveBeenCalledWith('in spec response');
@@ -102,16 +99,15 @@ describe('Jasmine ajax mocking proof-of-life', () => {
       expect(doneFn).not.toHaveBeenCalled();
 
       const data = { data: [{ id: 42, name: 'Dude' }] };
-      const expectedResponse =  JSON.stringify(data);
+      const expectedResponse = JSON.stringify(data);
 
       jasmine.Ajax.requests.mostRecent().respondWith({
-        'status': 200,
-        'contentType': 'application/json',
-        'response': expectedResponse
+        status: 200,
+        contentType: 'application/json',
+        response: expectedResponse
       });
 
       expect(doneFn).toHaveBeenCalledWith(expectedResponse);
     });
   });
-
 });

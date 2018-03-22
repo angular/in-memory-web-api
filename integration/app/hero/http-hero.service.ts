@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Headers, Http, Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/throw';
@@ -12,20 +12,21 @@ import { Hero } from './hero';
 import { HeroService } from './hero.service';
 
 const cudOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' })
+  headers: new Headers({ 'Content-Type': 'application/json' })
 };
 
 @Injectable()
-export class HttpClientHeroService extends HeroService {
-  constructor(private http: HttpClient) {
+export class HttpHeroService extends HeroService {
+  constructor(private http: Http) {
     super();
   }
 
   getHeroes(): Observable<Hero[]> {
     return (
       this.http
-        .get<Hero[]>(this.heroesUrl)
+        .get(this.heroesUrl)
         // .do(data => console.log(data)) // eyeball results in the console
+        .map(res => res.json())
         .catch(this.handleError)
     );
   }
@@ -33,40 +34,52 @@ export class HttpClientHeroService extends HeroService {
   // This get-by-id will 404 when id not found
   getHero(id: number): Observable<Hero> {
     const url = `${this.heroesUrl}/${id}`;
-    return this.http.get<Hero>(url).catch(this.handleError);
+    return this.http
+      .get(url)
+      .map((r: Response) => r.json() as Hero)
+      .catch(this.handleError);
   }
 
-  // This get-by-id does not 404; returns undefined when id not found
-  // getHero<Data>(id: number): Observable<Hero> {
+  // This get-by-id does not 404; returns empty array when id not found
+  // getHero(id: number) {
   //   const url = `${this._heroesUrl}/?id=${id}`;
-  //   return this.http.get<Hero[]>(url)
-  //     .map(heroes => heroes[0] as Hero)
+  //   return this.http
+  //     .get(url)
+  //     .map((r: Response) => r.json()[0] as Hero);
   //     .catch(this.handleError);
   // }
 
   addHero(name: string): Observable<Hero> {
     const hero = { name };
 
-    return this.http.post<Hero>(this.heroesUrl, hero, cudOptions).catch(this.handleError);
+    return this.http
+      .post(this.heroesUrl, hero, cudOptions)
+      .map(res => res.json())
+      .catch(this.handleError);
   }
 
   deleteHero(hero: Hero | number): Observable<Hero> {
     const id = typeof hero === 'number' ? hero : hero.id;
     const url = `${this.heroesUrl}/${id}`;
 
-    return this.http.delete<Hero>(url, cudOptions).catch(this.handleError);
+    return this.http.delete(url, cudOptions).catch(this.handleError);
   }
 
   searchHeroes(term: string): Observable<Hero[]> {
     term = term.trim();
-    // add safe, encoded search parameter if term is present
-    const options = term ? { params: new HttpParams().set('name', term) } : {};
-
-    return this.http.get<Hero[]>(this.heroesUrl, options).catch(this.handleError);
+    // NB: not a safe encoded search parameter
+    const search = term ? '/?name=' + term : '';
+    return this.http
+      .get(this.heroesUrl + search)
+      .map(res => res.json())
+      .catch(this.handleError);
   }
 
-  updateHero(hero: Hero): Observable<null> {
-    return this.http.put(this.heroesUrl, hero, cudOptions).catch(this.handleError);
+  updateHero(hero: Hero): Observable<Hero> {
+    return this.http
+      .put(this.heroesUrl, hero, cudOptions)
+      .map(res => res.json())
+      .catch(this.handleError);
   }
 
   private handleError(error: any) {

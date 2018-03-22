@@ -11,9 +11,9 @@ import { HeroInMemDataService } from './hero-in-mem-data.service';
 
 const villains = [
   // deliberately using string ids that look numeric
-  {id: 100, name: 'Snidley Wipsnatch'},
-  {id: 101, name: 'Boris Badenov'},
-  {id: 103, name: 'Natasha Fatale'}
+  { id: 100, name: 'Snidley Wipsnatch' },
+  { id: 101, name: 'Boris Badenov' },
+  { id: 103, name: 'Natasha Fatale' }
 ];
 
 // Pseudo guid generator
@@ -23,17 +23,15 @@ function guid() {
       .toString(16)
       .substring(1);
   }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4();
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 
 @Injectable()
 export class HeroInMemDataOverrideService extends HeroInMemDataService {
-
   // Overrides id generator and delivers next available `id`, starting with 1001.
   genId<T extends { id: any }>(collection: T[], collectionName: string): any {
     if (collectionName === 'nobodies') {
-      console.log('genId override for \'nobodies\'');
+      console.log("genId override for 'nobodies'");
       return guid();
     } else if (collection) {
       console.log(`genId override for '${collectionName}'`);
@@ -62,15 +60,15 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
       // tslint:disable-next-line:triple-equals
       const data = id == undefined ? collection : reqInfo.utils.findById(collection, id);
 
-      const options: ResponseOptions = data ?
-        {
-          body: dataEncapsulation ? { data } : data,
-          status: STATUS.OK
-        } :
-        {
-          body: { error: `'Villains' with id='${id}' not found` },
-          status: STATUS.NOT_FOUND
-        };
+      const options: ResponseOptions = data
+        ? {
+            body: dataEncapsulation ? { data } : data,
+            status: STATUS.OK
+          }
+        : {
+            body: { error: `'Villains' with id='${id}' not found` },
+            status: STATUS.NOT_FOUND
+          };
       return this.finishOptions(options, reqInfo);
     });
   }
@@ -92,7 +90,6 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
   // intercept ResponseOptions from default HTTP method handlers
   // add a response header and report interception to console.log
   responseInterceptor(resOptions: ResponseOptions, reqInfo: RequestInfo) {
-
     resOptions.headers.set('x-test', 'test-header');
     const method = reqInfo.method.toUpperCase();
     const body = JSON.stringify(resOptions);
@@ -103,7 +100,7 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
 
   /////////// helpers ///////////////
 
-  private finishOptions(options: ResponseOptions, {headers, url}: RequestInfo) {
+  private finishOptions(options: ResponseOptions, { headers, url }: RequestInfo) {
     options.statusText = getStatusText(options.status);
     options.headers = headers;
     options.url = url;

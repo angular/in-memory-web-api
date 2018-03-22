@@ -1,15 +1,49 @@
-aot
-in-memory-web-api
-node_modules
-typings
-npm-debug.log
-src/**/*.d.ts
-src/**/*.js
-src/**/*.js.map
-src/**/*.metadata.json
-yarn.lock
+# See http://help.github.com/ignore-files/ for more about ignoring files.
 
-.idea/
-dist
+# compiled output
+/dist
+/tmp
+/out-tsc
+/src/environments/version.ts
+
+# dependencies
+/node_modules
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.bak
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+testem.log
+/typings
+.test-results.json
 /dist-lib
 /dist-integration
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+# System Files
+.DS_Store
+Thumbs.db
+/storybook-static
+/yarn-error.log

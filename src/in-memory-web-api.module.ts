@@ -1,27 +1,18 @@
-////// HttpClient-Only version ////
+////// For apps with both Http and HttpClient ////
 
-import { NgModule, ModuleWithProviders, Type } from '@angular/core';
+import { Injector, NgModule, ModuleWithProviders, Type } from '@angular/core';
+import { XHRBackend } from '@angular/http';
 import { HttpBackend, XhrFactory } from '@angular/common/http';
 
 import { InMemoryBackendConfigArgs, InMemoryBackendConfig, InMemoryDbService } from './interfaces';
 
-import { HttpClientBackendService } from './http-client-backend.service';
-
-// Internal - Creates the in-mem backend for the HttpClient module
-// AoT requires factory to be exported
-export function httpClientInMemBackendServiceFactory(
-  dbService: InMemoryDbService,
-  options: InMemoryBackendConfig,
-  xhrFactory: XhrFactory
-): HttpBackend {
-  const backend: any = new HttpClientBackendService(dbService, options, xhrFactory);
-  return backend;
-}
+import { httpInMemBackendServiceFactory } from './http-in-memory-web-api.module';
+import { httpClientInMemBackendServiceFactory } from './http-client-in-memory-web-api.module';
 
 @NgModule({})
-export class HttpClientInMemoryWebApiModule {
+export class InMemoryWebApiModule {
   /**
-   *  Redirect the Angular `HttpClient` XHR calls
+   *  Redirect BOTH Angular `Http` and `HttpClient` XHR calls
    *  to in-memory data store that implements `InMemoryDbService`.
    *  with class that implements InMemoryDbService and creates an in-memory database.
    *
@@ -32,15 +23,21 @@ export class HttpClientInMemoryWebApiModule {
    * @param [options]
    *
    * @example
-   * HttpInMemoryWebApiModule.forRoot(dbCreator);
-   * HttpInMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
+   * InMemoryWebApiModule.forRoot(dbCreator);
+   * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
    */
   static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
     return {
-      ngModule: HttpClientInMemoryWebApiModule,
+      ngModule: InMemoryWebApiModule,
       providers: [
         { provide: InMemoryDbService, useClass: dbCreator },
         { provide: InMemoryBackendConfig, useValue: options },
+
+        {
+          provide: XHRBackend,
+          useFactory: httpInMemBackendServiceFactory,
+          deps: [Injector, InMemoryDbService, InMemoryBackendConfig]
+        },
 
         {
           provide: HttpBackend,
@@ -50,6 +47,7 @@ export class HttpClientInMemoryWebApiModule {
       ]
     };
   }
+
   /**
    *
    * Enable and configure the in-memory web api in a lazy-loaded feature module.
@@ -57,6 +55,6 @@ export class HttpClientInMemoryWebApiModule {
    * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
    */
   static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
-    return HttpClientInMemoryWebApiModule.forRoot(dbCreator, options);
+    return InMemoryWebApiModule.forRoot(dbCreator, options);
   }
 }

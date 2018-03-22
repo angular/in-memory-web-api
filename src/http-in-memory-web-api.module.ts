@@ -1,27 +1,27 @@
-////// HttpClient-Only version ////
+////// Http-Only version ////
 
-import { NgModule, ModuleWithProviders, Type } from '@angular/core';
-import { HttpBackend, XhrFactory } from '@angular/common/http';
+import { Injector, NgModule, ModuleWithProviders, Type } from '@angular/core';
+import { XHRBackend } from '@angular/http';
 
 import { InMemoryBackendConfigArgs, InMemoryBackendConfig, InMemoryDbService } from './interfaces';
 
-import { HttpClientBackendService } from './http-client-backend.service';
+import { HttpBackendService } from './http-backend.service';
 
-// Internal - Creates the in-mem backend for the HttpClient module
+// Internal - Creates the in-mem backend for the Http module
 // AoT requires factory to be exported
-export function httpClientInMemBackendServiceFactory(
+export function httpInMemBackendServiceFactory(
+  injector: Injector,
   dbService: InMemoryDbService,
-  options: InMemoryBackendConfig,
-  xhrFactory: XhrFactory
-): HttpBackend {
-  const backend: any = new HttpClientBackendService(dbService, options, xhrFactory);
-  return backend;
+  options: InMemoryBackendConfig
+): XHRBackend {
+  const backend: any = new HttpBackendService(injector, dbService, options);
+  return backend as XHRBackend;
 }
 
 @NgModule({})
-export class HttpClientInMemoryWebApiModule {
+export class HttpInMemoryWebApiModule {
   /**
-   *  Redirect the Angular `HttpClient` XHR calls
+   *  Redirect the Angular `Http` XHR calls
    *  to in-memory data store that implements `InMemoryDbService`.
    *  with class that implements InMemoryDbService and creates an in-memory database.
    *
@@ -37,15 +37,15 @@ export class HttpClientInMemoryWebApiModule {
    */
   static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
     return {
-      ngModule: HttpClientInMemoryWebApiModule,
+      ngModule: HttpInMemoryWebApiModule,
       providers: [
         { provide: InMemoryDbService, useClass: dbCreator },
         { provide: InMemoryBackendConfig, useValue: options },
 
         {
-          provide: HttpBackend,
-          useFactory: httpClientInMemBackendServiceFactory,
-          deps: [InMemoryDbService, InMemoryBackendConfig, XhrFactory]
+          provide: XHRBackend,
+          useFactory: httpInMemBackendServiceFactory,
+          deps: [Injector, InMemoryDbService, InMemoryBackendConfig]
         }
       ]
     };
@@ -57,6 +57,6 @@ export class HttpClientInMemoryWebApiModule {
    * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
    */
   static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
-    return HttpClientInMemoryWebApiModule.forRoot(dbCreator, options);
+    return HttpInMemoryWebApiModule.forRoot(dbCreator, options);
   }
 }

@@ -1,27 +1,23 @@
 import { Component, ViewEncapsulation } from '@angular/core';
-import {HeroService} from './hero/hero.service';
+import { HeroService } from './hero/hero.service';
+import { Hero } from './hero/hero';
 
 @Component({
   selector: 'app-root',
-  template: `
-    <div>
-      <h1>Test</h1>
-    </div>
-  `,
+  templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
+  heroes: Hero[];
 
-  constructor(private heroService: HeroService) {
-   this.heroService.getHeroes().subscribe( (heros) => {
-     console.log(heros);
-    });
+  constructor(private heroService: HeroService) {}
+
+  ngOnInit() {
+    this.getHeroes();
   }
 
-  addTodo(todo: string) {
-  }
-
-  removeTodo(index: number) {
+  getHeroes(): void {
+    this.heroService.getHeroes().subscribe(heroes => (this.heroes = heroes));
   }
 }

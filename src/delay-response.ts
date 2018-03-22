@@ -8,8 +8,8 @@ export function delayResponse<T>(response$: Observable<T>, delayMs: number): Obs
     let nextPending = false;
     const subscription = response$.subscribe(
       value => {
-          nextPending = true;
-          setTimeout(() => {
+        nextPending = true;
+        setTimeout(() => {
           observer.next(value);
           if (completePending) {
             observer.complete();
