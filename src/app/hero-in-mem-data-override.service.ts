@@ -3,8 +3,6 @@
  */
 import { Injectable } from '@angular/core';
 
-import { URLSearchParams } from '@angular/http';
-
 // tslint:disable-next-line:no-unused-variable
 import { Observable } from 'rxjs/Observable';
 

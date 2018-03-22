@@ -5,9 +5,12 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { of }              from 'rxjs/observable/of';
 import { fromPromise }     from 'rxjs/observable/fromPromise';
 import { isPromise }       from 'rxjs/util/isPromise';
+// import { isPromise } from 'rxjs/internal/util/isPromise';
 
-import { concatMap }       from 'rxjs/operator/concatMap';
-import { first }           from 'rxjs/operator/first';
+// import { concatMap }       from 'rxjs/operator/concatMap';
+// import { first }           from 'rxjs/operator/first';
+import { concatMap }       from 'rxjs/operators/concatMap';
+import { first }           from 'rxjs/operators/first';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 import { delayResponse } from './delay-response';
@@ -27,6 +30,7 @@ import {
   ResponseOptions,
   UriInfo
 } from './interfaces';
+
 
 /**
  * Base class for in-memory web api back-ends
@@ -675,13 +679,17 @@ export abstract class BackendService {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
     const db$ = db instanceof Observable ? db :
-           isPromise(db) ? fromPromise(db) :
+           this.isPromise(db) ? fromPromise(db) :
            of(db);
     first.call(db$).subscribe((d: {}) => {
       this.db = d;
       this.dbReadySubject.next(true);
     });
     return this.dbReady;
+  }
+
+  private isPromise(value: any): value is PromiseLike<any> {
+    return value && typeof (<any>value).subscribe !== 'function' && typeof (value as any).then === 'function';
   }
 
 }

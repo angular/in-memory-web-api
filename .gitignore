@@ -8,3 +8,6 @@ src/**/*.js
 src/**/*.js.map
 src/**/*.metadata.json
 yarn.lock
+
+.idea/
+dist

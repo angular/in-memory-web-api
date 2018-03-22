@@ -464,7 +464,7 @@ Follow these steps for updating the library.
 
 - git add, commit, and push.
 
-- `npm publish`
+- `npm publish dist --access public`
 
 - Confirm that angular.io docs samples still work
 

@@ -13,3 +13,5 @@ tsconfig.json
 tsconfig-ngc.json
 tslint.json
 yarn.lock
+
+.idea/
