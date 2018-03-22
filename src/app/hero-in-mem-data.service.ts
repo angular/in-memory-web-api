@@ -12,9 +12,8 @@ import { Injectable } from '@angular/core';
 import { InMemoryDbService, RequestInfo } from '../in-mem/interfaces';
 
 // tslint:disable:no-unused-variable
-import { Observable }  from 'rxjs/Observable';
-import { of }          from 'rxjs/observable/of';
-import 'rxjs/add/operator/delay';
+import { Observable, of }  from 'rxjs';
+import { delay } from 'rxjs/operators';
 // tslint:enable:no-unused-variable
 
 @Injectable()
@@ -58,7 +57,7 @@ export class HeroInMemDataService implements InMemoryDbService {
 
     switch (returnType) {
       case ('observable'):
-        return of(db).delay(10);
+        return of(db).pipe(delay(10));
       case ('promise'):
         return new Promise(resolve => {
           setTimeout(() => resolve(db), 10);

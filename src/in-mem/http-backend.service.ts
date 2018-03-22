@@ -8,8 +8,8 @@ import { BrowserXhr, Connection, ConnectionBackend,
          URLSearchParams,
          XHRBackend, XSRFStrategy } from '@angular/http';
 
-import { Observable } from 'rxjs/Observable';
-import { map } from 'rxjs/operator/map';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { STATUS } from './http-status-codes';
 
@@ -102,9 +102,9 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
-    return map.call(resOptions$, (opts: ResponseOptionsArgs) => {
+    return resOptions$.pipe(map((opts: ResponseOptionsArgs) => {
       return new Response(new HttpResponseOptions(opts));
-    });
+    }));
   }
 
   protected createPassThruBackend() {
