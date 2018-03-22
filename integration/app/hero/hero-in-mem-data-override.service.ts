@@ -3,12 +3,9 @@
  */
 import { Injectable } from '@angular/core';
 
-// tslint:disable-next-line:no-unused-variable
-import { Observable } from 'rxjs/Observable';
+import { ParsedRequestUrl, RequestInfo, RequestInfoUtilities, ResponseOptions } from '../../../src/interfaces';
 
-import { ParsedRequestUrl, RequestInfo, RequestInfoUtilities, ResponseOptions } from '../in-mem/interfaces';
-
-import { getStatusText, STATUS } from '../in-mem/http-status-codes';
+import { getStatusText, STATUS } from '../../../src/http-status-codes';
 
 import { HeroInMemDataService } from './hero-in-mem-data.service';
 

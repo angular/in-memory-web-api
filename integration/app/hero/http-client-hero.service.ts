@@ -1,5 +1,5 @@
-import { Injectable }from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams }from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/observable/throw';
@@ -8,7 +8,7 @@ import 'rxjs/add/operator/do';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/operator/map';
 
-import { Hero }        from './hero';
+import { Hero } from './hero';
 import { HeroService } from './hero.service';
 
 const cudOptions = { headers: new HttpHeaders({ 'Content-Type': 'application/json' })};
@@ -22,7 +22,7 @@ export class HttpClientHeroService extends HeroService {
 
   getHeroes (): Observable<Hero[]> {
     return this.http.get<Hero[]>(this.heroesUrl)
-   // .do(data => console.log(data)) // eyeball results in the console
+    // .do(data => console.log(data)) // eyeball results in the console
       .catch(this.handleError);
   }
 

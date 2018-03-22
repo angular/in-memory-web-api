@@ -11,3 +11,5 @@ yarn.lock
 
 .idea/
 dist
+/dist-lib
+/dist-integration

@@ -1,24 +1,23 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "baseUrl": "./",
+    "paths": {
+      "@xmlking/angular-in-memory-web-api": ["src/index.ts"],
+      "@angular/*": ["node_modules/@angular/*"]
+    },
     "module": "commonjs",
-    "moduleResolution": "node",
+    "noEmitHelpers": false,
+    "noEmitOnError": false,
+    "skipDefaultLibCheck": true,
+    "skipLibCheck": true,
+    "noImplicitAny": false,
+    "noUnusedLocals": true,
     "sourceMap": true,
-    "inlineSources": true,
-    "declaration": true,
+    "declaration": false,
+    "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": [ "es2015", "dom" ],
-    "noImplicitAny": true,
-    "suppressImplicitAnyIndexErrors": true
-  },
-  "exclude": [
-    "node_modules",
-    "typings/main",
-    "typings/main.d.ts"
-  ],
-  "angularCompilerOptions": {
-    "genDir": "aot",
-    "skipMetadataEmit" : false
+    "target": "es5",
+    "lib": ["es2017", "dom"]
   }
 }

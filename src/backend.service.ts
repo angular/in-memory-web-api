@@ -1,10 +1,10 @@
-import { Observable }      from 'rxjs/Observable';
-import { Observer }        from 'rxjs/Observer';
+import { Observable } from 'rxjs/Observable';
+import { Observer } from 'rxjs/Observer';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
-import { of }              from 'rxjs/observable/of';
-import { fromPromise }     from 'rxjs/observable/fromPromise';
-import { isPromise }       from 'rxjs/util/isPromise';
+import { of } from 'rxjs/observable/of';
+import { fromPromise } from 'rxjs/observable/fromPromise';
+import { isPromise } from 'rxjs/util/isPromise';
 // import { isPromise } from 'rxjs/internal/util/isPromise';
 
 // import { concatMap }       from 'rxjs/operator/concatMap';
@@ -679,7 +679,7 @@ export abstract class BackendService {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
     const db$ = db instanceof Observable ? db :
-           this.isPromise(db) ? fromPromise(db) :
+           isPromise(db) ? fromPromise(db) :
            of(db);
     first.call(db$).subscribe((d: {}) => {
       this.db = d;
@@ -688,8 +688,8 @@ export abstract class BackendService {
     return this.dbReady;
   }
 
-  private isPromise(value: any): value is PromiseLike<any> {
-    return value && typeof (<any>value).subscribe !== 'function' && typeof (value as any).then === 'function';
-  }
+  // private isPromise(value: any): value is PromiseLike<any> {
+  //   return value && typeof (<any>value).subscribe !== 'function' && typeof (value as any).then === 'function';
+  // }
 
 }

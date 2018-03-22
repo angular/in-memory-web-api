@@ -9,11 +9,9 @@
  *   InMemoryWebApiModule.forRoot(HeroInMemDataService) // or HeroInMemDataOverrideService
  */
 import { Injectable } from '@angular/core';
-import { InMemoryDbService, RequestInfo } from '../in-mem/interfaces';
+import { InMemoryDbService, RequestInfo } from '../../../src/interfaces';
 
-// tslint:disable:no-unused-variable
-import { Observable }  from 'rxjs/Observable';
-import { of }          from 'rxjs/observable/of';
+import { of } from 'rxjs/observable/of';
 import 'rxjs/add/operator/delay';
 // tslint:enable:no-unused-variable
 

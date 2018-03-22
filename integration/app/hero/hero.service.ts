@@ -1,4 +1,4 @@
-import { Hero }       from './hero';
+import { Hero } from './hero';
 import { Observable } from 'rxjs/Observable';
 
 export abstract class HeroService {
