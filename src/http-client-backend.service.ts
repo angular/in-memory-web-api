@@ -13,6 +13,7 @@ import {
 
 import { Observable } from 'rxjs/Observable';
 import { map } from 'rxjs/operator/map';
+// import { map } from 'rxjs/operators';
 
 import { STATUS } from './http-status-codes';
 

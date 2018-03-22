@@ -8,8 +8,11 @@ import { isPromise } from 'rxjs/util/isPromise';
 
 import { concatMap } from 'rxjs/operator/concatMap';
 import { first } from 'rxjs/operator/first';
+// import { concatMap } from 'rxjs/operators';
+// import { first } from 'rxjs/operators';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
+import { delay } from 'rxjs/operators';
 import { delayResponse } from './delay-response';
 
 import {
@@ -151,6 +154,10 @@ export abstract class BackendService {
   protected addDelay(response: Observable<any>): Observable<any> {
     const d = this.config.delay;
     return d === 0 ? response : delayResponse(response, d || 500);
+  }
+  protected addDelay0(response: Observable<any>): Observable<any> {
+    const d = this.config.delay;
+    return d === 0 ? response : delay.call(response, d || 500);
   }
 
   /**

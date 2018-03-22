@@ -1,15 +1,21 @@
 {
   "name": "@xmlking/angular-in-memory-web-api",
-  "version": "0.5.9",
+  "version": "0.5.10",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "index.js",
   "scripts": {
-    "//": "Dev Tools",
+    "//": "Start the applications",
     "start": "ng serve --aot",
     "start:integration": "ng serve --aot --app 1",
+
+    "//": "Testing",
     "test": "ng test",
     "test:integration": "yarn build && yarn link --frozen-lockfile --silent && ng test --progress=false --preserve-symlinks --app 1 -sr --browsers ChromeHeadless",
+
+    "//": "Building",
     "build": "ng-packagr -p package.json",
+
+    "//": "Dev Tools",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "prettier": "prettier --write \"**/*.ts\""
   },
