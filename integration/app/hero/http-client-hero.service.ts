@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { tap, catchError } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import 'rxjs/add/observable/throw';
 
 import 'rxjs/add/operator/do';
@@ -22,9 +22,9 @@ export class HttpClientHeroService extends HeroService {
     super();
   }
 
-  getHeroes (): Observable<Hero[]> {
+  getHeroes(): Observable<Hero[]> {
     return this.http.get<Hero[]>(this.heroesUrl).pipe(
-      tap(data => console.log(data)), // eyeball results in the console
+      // tap(data => console.log(data)), // eyeball results in the console
       catchError(this.handleError)
     );
   }
@@ -64,10 +64,8 @@ export class HttpClientHeroService extends HeroService {
     return this.http.get<Hero[]>(this.heroesUrl, options).catch(this.handleError);
   }
 
-  updateHero (hero: Hero): Observable<any> {
-    return this.http.put(this.heroesUrl, hero, cudOptions).pipe(
-      catchError(this.handleError)
-  );
+  updateHero(hero: Hero): Observable<any> {
+    return this.http.put(this.heroesUrl, hero, cudOptions).pipe(catchError(this.handleError));
   }
 
   private handleError(error: any) {

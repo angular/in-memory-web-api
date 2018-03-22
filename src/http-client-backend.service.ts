@@ -12,9 +12,7 @@ import {
 } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
-import { map } from 'rxjs/operator/map';
-// import { map } from 'rxjs/operators';
-
+import 'rxjs/add/operator/map';
 import { STATUS } from './http-status-codes';
 
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
@@ -85,18 +83,18 @@ export class HttpClientBackendService extends BackendService implements HttpBack
   }
 
   protected createQueryMap(search: string): Map<string, string[]> {
-    const map = new Map<string, string[]>();
+    const myMap = new Map<string, string[]>();
     if (search) {
       const params = new HttpParams({ fromString: search });
-      params.keys().forEach(p => map.set(p, params.getAll(p)));
+      params.keys().forEach(p => myMap.set(p, params.getAll(p)));
     }
-    return map;
+    return myMap;
   }
 
   protected createResponse$fromResponseOptions$(
     resOptions$: Observable<ResponseOptions>
   ): Observable<HttpResponse<any>> {
-    return map.call(resOptions$, (opts: HttpResponseBase) => new HttpResponse<any>(opts));
+    return resOptions$.map((opts: HttpResponseBase) => new HttpResponse<any>(opts));
   }
 
   protected createPassThruBackend() {

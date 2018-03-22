@@ -18,9 +18,6 @@ export class AppComponent {
   }
 
   getHeroes(): void {
-    this.heroService.getHeroes().subscribe(
-      heroes => (this.heroes = heroes),
-      error => console.log(error)
-    );
+    this.heroService.getHeroes().subscribe(heroes => (this.heroes = heroes), error => console.log(error));
   }
 }

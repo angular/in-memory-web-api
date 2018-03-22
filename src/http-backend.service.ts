@@ -17,9 +17,7 @@ import {
 } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
-import { map } from 'rxjs/operator/map';
-// import { map } from 'rxjs/operators';
-
+import 'rxjs/add/operator/map';
 import { STATUS } from './http-status-codes';
 
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
@@ -106,7 +104,7 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
-    return map.call(resOptions$, (opts: ResponseOptionsArgs) => {
+    return resOptions$.map((opts: ResponseOptionsArgs) => {
       return new Response(new HttpResponseOptions(opts));
     });
   }

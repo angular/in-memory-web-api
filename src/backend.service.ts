@@ -4,16 +4,13 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 
 import { of } from 'rxjs/observable/of';
 import { fromPromise } from 'rxjs/observable/fromPromise';
-import { isPromise } from 'rxjs/util/isPromise';
 
-import { concatMap } from 'rxjs/operator/concatMap';
-import { first } from 'rxjs/operator/first';
-// import { concatMap } from 'rxjs/operators';
-// import { first } from 'rxjs/operators';
+import 'rxjs/add/operator/concatMap';
+import 'rxjs/add/operator/first';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
-import { delay } from 'rxjs/operators';
 import { delayResponse } from './delay-response';
+import { isPromise } from './utils';
 
 import {
   HeadersCore,
@@ -59,7 +56,7 @@ export abstract class BackendService {
       this.dbReadySubject = new BehaviorSubject(false);
       this.resetDb();
     }
-    return first.call(this.dbReadySubject.asObservable(), (r: boolean) => r);
+    return this.dbReadySubject.asObservable().first((r: boolean) => r);
   }
 
   /**
@@ -88,7 +85,7 @@ export abstract class BackendService {
    */
   protected handleRequest(req: RequestCore): Observable<any> {
     //  handle the request when there is an in-memory database
-    return concatMap.call(this.dbReady, () => this.handleRequest_(req));
+    return this.dbReady.concatMap(() => this.handleRequest_(req));
   }
 
   protected handleRequest_(req: RequestCore): Observable<any> {
@@ -154,10 +151,6 @@ export abstract class BackendService {
   protected addDelay(response: Observable<any>): Observable<any> {
     const d = this.config.delay;
     return d === 0 ? response : delayResponse(response, d || 500);
-  }
-  protected addDelay0(response: Observable<any>): Observable<any> {
-    const d = this.config.delay;
-    return d === 0 ? response : delay.call(response, d || 500);
   }
 
   /**
@@ -261,7 +254,7 @@ export abstract class BackendService {
     switch (command) {
       case 'resetdb':
         resOptions.status = STATUS.NO_CONTENT;
-        return concatMap.call(this.resetDb(reqInfo), () =>
+        return this.resetDb(reqInfo).concatMap(() =>
           this.createResponse$(() => resOptions, false /* no latency delay */)
         );
 
@@ -687,7 +680,7 @@ export abstract class BackendService {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
     const db$ = db instanceof Observable ? db : isPromise(db) ? fromPromise(db) : of(db);
-    first.call(db$).subscribe((d: {}) => {
+    db$.first().subscribe((d: {}) => {
       this.db = d;
       this.dbReadySubject.next(true);
     });
