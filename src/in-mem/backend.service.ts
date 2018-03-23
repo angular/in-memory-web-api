@@ -667,7 +667,7 @@ export abstract class BackendService {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
     const db$ = db instanceof Observable ? db :
-           (db as any).then === 'function' ? from(db as Promise<any>) :
+           typeof (db as any).then === 'function' ? from(db as Promise<any>) :
            of(db);
     db$.pipe(first()).subscribe((d: {}) => {
       this.db = d;

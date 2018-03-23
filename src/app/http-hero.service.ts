@@ -72,7 +72,7 @@ export class HttpHeroService extends HeroService {
     );
   }
 
-  updateHero (hero: Hero): Observable<Hero> {
+  updateHero (hero: Hero): Observable<null | Hero> {
     return this.http.put(this.heroesUrl, hero, cudOptions).pipe(
       map(res => res.json()),
       catchError(this.handleError)
