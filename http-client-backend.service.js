@@ -10,7 +10,7 @@ var __extends = (this && this.__extends) || (function () {
 })();
 import { Inject, Injectable, Optional } from '@angular/core';
 import { HttpHeaders, HttpParams, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
-import { map } from 'rxjs/operator/map';
+import { map } from 'rxjs/operators';
 import { STATUS } from './http-status-codes';
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService } from './interfaces';
 import { BackendService } from './backend.service';
@@ -41,7 +41,7 @@ import { BackendService } from './backend.service';
  * export class AppModule { ... }
  * ```
  */
-var HttpClientBackendService = (function (_super) {
+var HttpClientBackendService = /** @class */ (function (_super) {
     __extends(HttpClientBackendService, _super);
     function HttpClientBackendService(inMemDbService, config, xhrFactory) {
         var _this = _super.call(this, inMemDbService, config) || this;
@@ -77,7 +77,7 @@ var HttpClientBackendService = (function (_super) {
         return map;
     };
     HttpClientBackendService.prototype.createResponse$fromResponseOptions$ = function (resOptions$) {
-        return map.call(resOptions$, function (opts) { return new HttpResponse(opts); });
+        return resOptions$.pipe(map(function (opts) { return new HttpResponse(opts); }));
     };
     HttpClientBackendService.prototype.createPassThruBackend = function () {
         try {
@@ -88,16 +88,16 @@ var HttpClientBackendService = (function (_super) {
             throw ex;
         }
     };
+    HttpClientBackendService.decorators = [
+        { type: Injectable },
+    ];
+    /** @nocollapse */
+    HttpClientBackendService.ctorParameters = function () { return [
+        { type: InMemoryDbService, },
+        { type: InMemoryBackendConfigArgs, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },
+        { type: XhrFactory, },
+    ]; };
     return HttpClientBackendService;
 }(BackendService));
 export { HttpClientBackendService };
-HttpClientBackendService.decorators = [
-    { type: Injectable },
-];
-/** @nocollapse */
-HttpClientBackendService.ctorParameters = function () { return [
-    { type: InMemoryDbService, },
-    { type: InMemoryBackendConfigArgs, decorators: [{ type: Inject, args: [InMemoryBackendConfig,] }, { type: Optional },] },
-    { type: XhrFactory, },
-]; };
 //# sourceMappingURL=http-client-backend.service.js.map

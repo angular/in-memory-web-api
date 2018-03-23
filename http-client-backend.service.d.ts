@@ -1,5 +1,5 @@
 import { HttpBackend, HttpEvent, HttpHeaders, HttpRequest, HttpResponse, HttpXhrBackend, XhrFactory } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
 import { BackendService } from './backend.service';
 /**

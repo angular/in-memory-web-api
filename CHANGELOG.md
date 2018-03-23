@@ -2,11 +2,20 @@
 >This in-memory-web-api exists primarily to support the Angular documentation.
 It is not supposed to emulate every possible real world web API and is not intended for production use.
 >
->Most importantly, it is ***always experimental***. 
+>Most importantly, it is ***always experimental***.
+
 We will make breaking changes and we won't feel bad about it 
 because this is a development tool, not a production product. 
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
+
+<a id="1.0.0-rc0"></a>
+## 1.0.0-rc0 (2018-03-22)
+
+Migrate to Angular v6 and RxJS v6
+
+**BREAKING CHANGE**
+This version depends on RxJS v6 and is not backward compatible with earlier RxJS versions.
 
 <a id="0.5.4"></a>
 ## 0.5.4 (2018-03-09)

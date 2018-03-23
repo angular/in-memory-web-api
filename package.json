@@ -1,6 +1,6 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.5.4",
+  "version": "1.0.0-rc0",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
@@ -30,7 +30,8 @@
   "peerDependencies": {
     "@angular/common": "^6.0.0-rc.0",
     "@angular/core": "^6.0.0-rc.0",
-    "@angular/http": "^6.0.0-rc.0"
+    "@angular/http": "^6.0.0-rc.0",
+    "rxjs": "^6.0.0-beta.1"
   },
   "devDependencies": {
     "@angular/animations": "6.0.0-rc.0",
