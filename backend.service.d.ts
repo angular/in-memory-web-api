@@ -1,5 +1,4 @@
-import { Observable } from 'rxjs/Observable';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable, BehaviorSubject } from 'rxjs';
 import { HeadersCore, RequestInfoUtilities, InMemoryDbService, InMemoryBackendConfigArgs, ParsedRequestUrl, PassThruBackend, RequestCore, RequestInfo, ResponseOptions, UriInfo } from './interfaces';
 /**
  * Base class for in-memory web api back-ends

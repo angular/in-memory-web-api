@@ -1,6 +1,6 @@
 import { Injector } from '@angular/core';
 import { Connection, ConnectionBackend, Headers, Request, Response } from '@angular/http';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
 import { BackendService } from './backend.service';
 /**

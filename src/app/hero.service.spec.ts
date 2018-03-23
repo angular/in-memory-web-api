@@ -1,8 +1,6 @@
 import { async, TestBed } from '@angular/core/testing';
 
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/do';
-import 'rxjs/add/operator/map';
+import { concatMap, tap, map } from 'rxjs/operators';
 
 import { failure } from '../testing';
 
@@ -62,14 +60,14 @@ export class HeroServiceCoreSpec {
       }));
 
       it('can add a hero', async(() => {
-        heroService.addHero('FunkyBob')
-          .do(hero => {
+        heroService.addHero('FunkyBob').pipe(
+          tap(hero => {
             // console.log(hero);
             expect(hero.name).toBe('FunkyBob');
-          })
+          }),
           // Get the new hero by its generated id
-          .concatMap(hero => heroService.getHero(hero.id))
-          .subscribe(
+          concatMap(hero => heroService.getHero(hero.id)),
+        ).subscribe(
           hero => {
             expect(hero.name).toBe('FunkyBob');
           },
@@ -111,15 +109,15 @@ export class HeroServiceCoreSpec {
 
       it('can update existing hero', async(() => {
         const id = 1;
-        heroService.getHero(id)
-          .concatMap(hero => {
+        heroService.getHero(id).pipe(
+          concatMap(hero => {
             hero.name = 'Thunderstorm';
             return heroService.updateHero(hero);
-          })
-          .concatMap(() => {
+          }),
+          concatMap(() => {
             return heroService.getHero(id);
           })
-          .subscribe(
+        ).subscribe(
           hero => {
             console.log(hero);
             expect(hero.name).toBe('Thunderstorm');

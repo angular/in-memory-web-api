@@ -12,12 +12,8 @@ import {
   HttpResponse
 } from '@angular/common/http';
 
-import { Observable } from 'rxjs/Observable';
-import { zip } from 'rxjs/observable/zip';
-
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/map';
-import 'rxjs/add/operator/zip';
+import { Observable, zip} from 'rxjs';
+import { concatMap, map } from 'rxjs/operators';
 
 import { failure } from '../testing';
 
@@ -43,15 +39,16 @@ export class TestHeaderInterceptor implements HttpInterceptor {
 
     const reqClone = req.clone({setHeaders: {'x-test-req': 'req-test-header'}});
 
-    return next.handle(reqClone)
-      .map(event => {
+    return next.handle(reqClone).pipe(
+      map(event => {
         if (event instanceof HttpResponse) {
           event = event.clone({
             headers: event.headers.set('x-test-res', 'res-test-header')
           });
         }
         return event;
-      });
+      })
+    );
   }
 }
 
@@ -258,9 +255,9 @@ describe('HttpClient Backend Service', () => {
 
       const id = 'g-u-i-d';
 
-      http.post('api/nobodies', { id, name: 'Noman' })
-        .concatMap(() => http.get<Nobody[]>('api/nobodies'))
-        .subscribe(
+      http.post('api/nobodies', { id, name: 'Noman' }).pipe(
+        concatMap(() => http.get<Nobody[]>('api/nobodies'))
+      ).subscribe(
           nobodies => {
             expect(nobodies.length).toBe(1, 'should a nobody');
             expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
@@ -283,40 +280,47 @@ describe('HttpClient Backend Service', () => {
         });
     }));
 
-    it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
+    describe('can reset the database', () => {
+      it('to empty (object db)', async(() => resetDatabaseTest('object')));
 
-    it('can reset the database to empty (observable db)', async(() => resetDatabaseTest('observable')));
+      it('to empty (observable db)', async(() => resetDatabaseTest('observable')));
 
-    it('can reset the database to empty (promise db)', async(() => resetDatabaseTest('promise')));
+      it('to empty (promise db)', async(() => resetDatabaseTest('promise')));
 
-    function resetDatabaseTest(returnType: string) {
-      // Observable of the number of heroes and nobodies
-      const sizes$ = zip(
-        http.get<Hero[]>('api/heroes'),
-        http.get<Hero[]>('api/nobodies'),
-        http.get<Hero[]>('api/stringers'),
-        (h, n, s) => ({
-          heroes:    h.length as number,
-          nobodies:  n.length as number,
-          stringers: s.length as number
-        }));
+      function resetDatabaseTest(returnType: string) {
+        // Observable of the number of heroes and nobodies
+        const sizes$ = zip(
+          http.get<Hero[]>('api/heroes'),
+          http.get<Hero[]>('api/nobodies'),
+          http.get<Hero[]>('api/stringers')
+        ).pipe(
+          map(results => {
+            const [h, n, s] = results;
+            return {
+              heroes:    h.length as number,
+              nobodies:  n.length as number,
+              stringers: s.length as number
+            };
+          })
+        );
 
-      // Add a nobody so that we have one
-      http.post('api/nobodies', { id: 42, name: 'Noman' })
-      // Reset database with "clear" option
-      .concatMap(() => http.post('commands/resetDb',
-        { clear: true, returnType }))
-      // get the number of heroes and nobodies
-      .concatMap(() => sizes$)
-      .subscribe(
-        sizes => {
-          expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
-          expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
-          expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
-        },
-        failure
-      );
-    }
+        // Add a nobody so that we have one
+        http.post('api/nobodies', { id: 42, name: 'Noman' }).pipe(
+          // Reset database with "clear" option
+          concatMap(() => http.post('commands/resetDb',
+            { clear: true, returnType })),
+          // get the number of heroes and nobodies
+          concatMap(() => sizes$)
+        ).subscribe(
+          sizes => {
+            expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
+            expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
+            expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
+          },
+          failure
+        );
+      }
+    });
   });
 
   ////////////////
@@ -398,9 +402,9 @@ describe('HttpClient Backend Service', () => {
     }));
 
     it('should use genId override to add new hero, "Maxinius"', async(() => {
-      http.post('api/heroes', { name: 'Maxinius' })
-      .concatMap(() => http.get<Hero[]>('api/heroes?name=Maxi'))
-      .subscribe(
+      http.post('api/heroes', { name: 'Maxinius' }).pipe(
+        concatMap(() => http.get<Hero[]>('api/heroes?name=Maxi'))
+      ).subscribe(
         heroes => {
           expect(heroes.length).toBe(1, 'should have found "Maxinius"');
           expect(heroes[0].name).toBe('Maxinius');
@@ -411,9 +415,9 @@ describe('HttpClient Backend Service', () => {
     }));
 
     it('should use genId override guid generator for a new nobody without an id', async(() => {
-      http.post('api/nobodies', { name: 'Noman' })
-        .concatMap(() => http.get<Nobody[]>('api/nobodies'))
-        .subscribe(
+      http.post('api/nobodies', { name: 'Noman' }).pipe(
+        concatMap(() => http.get<Nobody[]>('api/nobodies'))
+      ).subscribe(
           nobodies => {
             expect(nobodies.length).toBe(1, 'should a nobody');
             expect(nobodies[0].name).toBe('Noman', 'should be "Noman"');
@@ -423,43 +427,49 @@ describe('HttpClient Backend Service', () => {
         );
     }));
 
-    it('can reset the database to empty (object db)', async(() => resetDatabaseTest('object')));
+    describe('can reset the database', () => {
+      it('to empty (object db)', async(() => resetDatabaseTest('object')));
 
-    it('can reset the database to empty (observable db)', async(() => resetDatabaseTest('observable')));
+      it('to empty (observable db)', async(() => resetDatabaseTest('observable')));
 
-    it('can reset the database to empty (promise db)', async(() => resetDatabaseTest('promise')));
+      it('to empty (promise db)', async(() => resetDatabaseTest('promise')));
 
-    function resetDatabaseTest(returnType: string) {
-      // Observable of the number of heroes, nobodies and villains
-      const sizes$ = zip(
-        http.get<Hero[]>('api/heroes'),
-        http.get<Hero[]>('api/nobodies'),
-        http.get<Hero[]>('api/stringers'),
-        http.get<Hero[]>('api/villains'),
-        (h, n, s, v) => ({
-          heroes:    h.length as number,
-          nobodies:  n.length as number,
-          stringers: s.length as number,
-          villains:  v.length as number
-        }));
+      function resetDatabaseTest(returnType: string) {
+        // Observable of the number of heroes, nobodies and villains
+        const sizes$ = zip(
+          http.get<Hero[]>('api/heroes'),
+          http.get<Hero[]>('api/nobodies'),
+          http.get<Hero[]>('api/stringers'),
+          http.get<Hero[]>('api/villains')
+        ).pipe(
+            map(results => {
+              const [h, n, s, v] = results;
+              return {
+                heroes:    h.length as number,
+                nobodies:  n.length as number,
+                stringers: s.length as number,
+                villains:  v.length as number
+              };
+            })
+          );
 
-      // Add a nobody so that we have one
-      http.post('api/nobodies', { id: 42, name: 'Noman' })
-      // Reset database with "clear" option
-      .concatMap(() => http.post('commands/resetDb',
-        { clear: true, returnType }))
-      // count all the collections
-      .concatMap(() => sizes$)
-      .subscribe(
-        sizes => {
-          expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
-          expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
-          expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
-          expect(sizes.villains).toBeGreaterThan(0, 'reset should NOT clear villains');
-        },
-        failure
-      );
-    }
+        // Add a nobody so that we have one
+        http.post('api/nobodies', { id: 42, name: 'Noman' }).pipe(
+        // Reset database with "clear" option
+          concatMap(() => http.post('commands/resetDb', { clear: true, returnType })),
+          // count all the collections
+          concatMap(() => sizes$)
+        ).subscribe(
+          sizes => {
+            expect(sizes.heroes).toBe(0, 'reset should have cleared the heroes');
+            expect(sizes.nobodies).toBe(0, 'reset should have cleared the nobodies');
+            expect(sizes.stringers).toBe(0, 'reset should have cleared the stringers');
+            expect(sizes.villains).toBeGreaterThan(0, 'reset should NOT clear villains');
+          },
+          failure
+        );
+      }
+    });
   });
 
   ////////////////
@@ -648,9 +658,9 @@ describe('HttpClient Backend Service', () => {
     });
 
     it('can get heroes (encapsulated)', async(() => {
-      http.get<Data>('api/heroes')
-      .map(data => data.data as Hero[]) // unwrap data object
-      .subscribe(
+      http.get<Data>('api/heroes').pipe(
+        map(data => data.data as Hero[]) // unwrap data object
+      ).subscribe(
         heroes => {
           expect(heroes.length).toBeGreaterThan(0, 'should have data.heroes');
         },

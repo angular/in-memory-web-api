@@ -10,8 +10,8 @@ import {
   XhrFactory
 } from '@angular/common/http';
 
-import { Observable } from 'rxjs/Observable';
-import { map } from 'rxjs/operator/map';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { STATUS } from './http-status-codes';
 
@@ -97,8 +97,7 @@ export class HttpClientBackendService extends BackendService implements HttpBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<HttpResponse<any>> {
-    return map.call(resOptions$,
-      (opts: HttpResponseBase) => new HttpResponse<any>(opts));
+    return resOptions$.pipe(map((opts: HttpResponseBase) => new HttpResponse<any>(opts)));
   }
 
   protected createPassThruBackend() {

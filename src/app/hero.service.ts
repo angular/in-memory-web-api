@@ -1,5 +1,5 @@
 import { Hero }       from './hero';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 export abstract class HeroService {
   heroesUrl = 'api/heroes';  // URL to web api
