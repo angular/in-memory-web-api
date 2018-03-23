@@ -294,8 +294,7 @@ describe('HttpClient Backend Service', () => {
           http.get<Hero[]>('api/nobodies'),
           http.get<Hero[]>('api/stringers')
         ).pipe(
-          map(results => {
-            const [h, n, s] = results;
+          map(([h, n, s]) => {
             return {
               heroes:    h.length as number,
               nobodies:  n.length as number,
@@ -442,8 +441,7 @@ describe('HttpClient Backend Service', () => {
           http.get<Hero[]>('api/stringers'),
           http.get<Hero[]>('api/villains')
         ).pipe(
-            map(results => {
-              const [h, n, s, v] = results;
+            map(([h, n, s, v]) => {
               return {
                 heroes:    h.length as number,
                 nobodies:  n.length as number,
