@@ -8,7 +8,7 @@
     "start": "ng serve --aot --app 1",
 
     "// - TESTING": "Testing",
-    "test": "ng test",
+    "test": "ng test -sr",
     "test:integration":
     "npm run build && yarn link --frozen-lockfile --silent && ng test --progress=false --preserve-symlinks --app 1 -sr",
 
