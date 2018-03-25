@@ -1,16 +1,8 @@
-import { Observable } from 'rxjs/Observable';
-import { Observer } from 'rxjs/Observer';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-
-import { of } from 'rxjs/observable/of';
-import { fromPromise } from 'rxjs/observable/fromPromise';
-
-import 'rxjs/add/operator/concatMap';
-import 'rxjs/add/operator/first';
+import { Observable, Observer, BehaviorSubject, of, from } from 'rxjs';
+import { concatMap, first } from 'rxjs/operators';
 
 import { getStatusText, isSuccess, STATUS } from './http-status-codes';
 import { delayResponse } from './delay-response';
-import { isPromise } from './utils';
 
 import {
   HeadersCore,
@@ -56,7 +48,7 @@ export abstract class BackendService {
       this.dbReadySubject = new BehaviorSubject(false);
       this.resetDb();
     }
-    return this.dbReadySubject.asObservable().first((r: boolean) => r);
+    return this.dbReadySubject.asObservable().pipe(first((r: boolean) => r));
   }
 
   /**
@@ -85,7 +77,7 @@ export abstract class BackendService {
    */
   protected handleRequest(req: RequestCore): Observable<any> {
     //  handle the request when there is an in-memory database
-    return this.dbReady.concatMap(() => this.handleRequest_(req));
+    return this.dbReady.pipe(concatMap(() => this.handleRequest_(req)));
   }
 
   protected handleRequest_(req: RequestCore): Observable<any> {
@@ -254,8 +246,8 @@ export abstract class BackendService {
     switch (command) {
       case 'resetdb':
         resOptions.status = STATUS.NO_CONTENT;
-        return this.resetDb(reqInfo).concatMap(() =>
-          this.createResponse$(() => resOptions, false /* no latency delay */)
+        return this.resetDb(reqInfo).pipe(
+          concatMap(() => this.createResponse$(() => resOptions, false /* no latency delay */))
         );
 
       case 'config':
@@ -679,8 +671,9 @@ export abstract class BackendService {
   protected resetDb(reqInfo?: RequestInfo): Observable<boolean> {
     this.dbReadySubject.next(false);
     const db = this.inMemDbService.createDb(reqInfo);
-    const db$ = db instanceof Observable ? db : isPromise(db) ? fromPromise(db) : of(db);
-    db$.first().subscribe((d: {}) => {
+    const db$ =
+      db instanceof Observable ? db : typeof (db as any).then === 'function' ? from(db as Promise<any>) : of(db);
+    db$.pipe(first()).subscribe((d: {}) => {
       this.db = d;
       this.dbReadySubject.next(true);
     });

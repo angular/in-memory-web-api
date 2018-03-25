@@ -1,6 +1,6 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { HttpClientInMemoryWebApiModule } from '@xmlking/angular-in-memory-web-api';
+import { HttpClientInMemoryWebApiModule } from 'angular-in-memory-web-api';
 // import { HeroInMemDataService } from './hero/hero-in-mem-data.service';
 import { InMemHeroService } from './hero/in-mem-hero.service';
 

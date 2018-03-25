@@ -11,8 +11,9 @@ import {
   XhrFactory
 } from '@angular/common/http';
 
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { STATUS } from './http-status-codes';
 
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
@@ -94,7 +95,7 @@ export class HttpClientBackendService extends BackendService implements HttpBack
   protected createResponse$fromResponseOptions$(
     resOptions$: Observable<ResponseOptions>
   ): Observable<HttpResponse<any>> {
-    return resOptions$.map((opts: HttpResponseBase) => new HttpResponse<any>(opts));
+    return resOptions$.pipe(map((opts: HttpResponseBase) => new HttpResponse<any>(opts)));
   }
 
   protected createPassThruBackend() {

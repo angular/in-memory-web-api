@@ -1,4 +1,4 @@
-import { InMemoryDbService } from '@xmlking/angular-in-memory-web-api';
+import { InMemoryDbService } from 'angular-in-memory-web-api';
 
 export class InMemHeroService implements InMemoryDbService {
   createDb() {

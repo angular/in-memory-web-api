@@ -16,8 +16,9 @@ import {
   XSRFStrategy
 } from '@angular/http';
 
-import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/operator/map';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
 import { STATUS } from './http-status-codes';
 
 import { InMemoryBackendConfig, InMemoryBackendConfigArgs, InMemoryDbService, ResponseOptions } from './interfaces';
@@ -104,9 +105,11 @@ export class HttpBackendService extends BackendService implements ConnectionBack
   }
 
   protected createResponse$fromResponseOptions$(resOptions$: Observable<ResponseOptions>): Observable<Response> {
-    return resOptions$.map((opts: ResponseOptionsArgs) => {
-      return new Response(new HttpResponseOptions(opts));
-    });
+    return resOptions$.pipe(
+      map((opts: ResponseOptionsArgs) => {
+        return new Response(new HttpResponseOptions(opts));
+      })
+    );
   }
 
   protected createPassThruBackend() {

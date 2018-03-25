@@ -2,7 +2,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@xmlking/angular-in-memory-web-api": ["src/index.ts"],
+      "angular-in-memory-web-api": ["src/index.ts"],
       "@angular/*": ["node_modules/@angular/*"]
     },
     "module": "commonjs",

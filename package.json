@@ -1,21 +1,21 @@
 {
-  "name": "@xmlking/angular-in-memory-web-api",
-  "version": "0.5.11",
+  "name": "angular-in-memory-web-api",
+  "version": "0.6.1",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "index.js",
   "scripts": {
-    "//": "Start the applications",
-    "start": "ng serve --aot",
-    "start:integration": "ng serve --aot --app 1",
+    "// - APPS": "Start the applications",
+    "start": "ng serve --aot --app 1",
 
-    "//": "Testing",
+    "// - TESTING": "Testing",
     "test": "ng test",
-    "test:integration": "yarn build && yarn link --frozen-lockfile --silent && ng test --progress=false --preserve-symlinks --app 1 -sr --browsers ChromeHeadless",
+    "test:integration":
+    "npm run build && yarn link --frozen-lockfile --silent && ng test --progress=false --preserve-symlinks --app 1 -sr",
 
-    "//": "Building",
+    "// - BUILDING": "Building",
     "build": "ng-packagr -p package.json",
 
-    "//": "Dev Tools",
+    "// - DEV TOOLS": "Dev Tools",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
     "prettier": "prettier --write \"**/*.ts\""
   },
@@ -32,23 +32,22 @@
   "homepage": "https://github.com/angular/in-memory-web-api#readme",
   "peerDependencies": {
     "@angular/core": ">=2.3.1 <7.0.0 || >6.0.0-beta <7.0.0",
-    "@angular/common": ">=2.3.1 <7.0.0 || >6.0.0-beta <7.0.0",
-    "rxjs": "^5.6.0-forward-compat.0 || ^6.0.0-beta.0"
+    "rxjs": ">=6.0.0 || ^5.6.0-forward-compat.1 || ^6.0.0-beta.0"
   },
   "devDependencies": {
     "@angular/cli": "^1.7.3",
-    "@angular/common": "^5.1.3",
-    "@angular/compiler": "^5.1.3",
-    "@angular/compiler-cli": "^5.1.3",
-    "@angular/core": "^5.1.3",
-    "@angular/http": "^5.1.3",
-    "@angular/platform-browser": "^5.1.3",
-    "@angular/platform-browser-dynamic": "^5.1.3",
+    "@angular/core": "^6.0.0-rc.0",
+    "@angular/common": "^6.0.0-rc.0",
+    "@angular/compiler": "^6.0.0-rc.0",
+    "@angular/compiler-cli": "^6.0.0-rc.0",
+    "@angular/http": "^6.0.0-rc.0",
+    "@angular/platform-browser": "^6.0.0-rc.0",
+    "@angular/platform-browser-dynamic": "^6.0.0-rc.0",
     "@commitlint/cli": "^6.1.3",
     "@commitlint/config-conventional": "^6.1.3",
     "@types/jasmine": "^2.8.0",
     "@types/jasmine-ajax": "^3.1.37",
-    "husky": "^0.15.0-rc.8",
+    "husky": "^0.15.0-rc.13",
     "jasmine": "^2.8.0",
     "jasmine-ajax": "^3.3.1",
     "jasmine-core": "~2.8.0",
@@ -58,13 +57,14 @@
     "karma-coverage-istanbul-reporter": "^1.2.1",
     "karma-jasmine": "~1.1.0",
     "karma-jasmine-html-reporter": "^0.2.2",
+    "karma-junit-reporter": "^1.2.0",
     "lint-staged": "^7.0.0",
     "ng-packagr": "^2.2.0",
     "prettier": "^1.11.1",
-    "rxjs": "^5.6.0-forward-compat.0",
+    "rxjs": "^6.0.0-beta.1",
     "tsickle": "^0.27.2",
     "tslint": "^5.8.0",
-    "typescript": "~2.6.2",
+    "typescript": "~2.7.2",
     "zone.js": "^0.8.4"
   },
   "ngPackage": {
