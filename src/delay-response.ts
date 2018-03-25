@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 
 // Replaces use of RxJS delay. See v0.5.4.
 /** adds specified delay (in ms) to both next and error channels of the response observable */
