@@ -13,10 +13,8 @@ env:
 before_script:
   - sh -e /etc/init.d/xvfb start
 install:
-  - npm install -g gulp
   - npm install
 script:
   - npm run lint
-  - npm run tsc
-  - gulp build
-  - npm run test:once
+  - npm run build
+  - npm run test

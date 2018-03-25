@@ -6,7 +6,7 @@
     "module": "es2015",
     "types": [],
     "paths": {
-      "ngxs": ["src/index.ts"]
+      "in-memory-web-api": ["src/index.ts"]
     }
   },
   "include": ["integration/**/*.ts", "polyfills.ts"],

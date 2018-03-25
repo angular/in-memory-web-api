@@ -17,6 +17,8 @@ import { HeroInMemDataService } from '../integration/app/hero/hero-in-mem-data.s
 import { HeroInMemDataOverrideService } from '../integration/app/hero/hero-in-mem-data-override.service';
 import { HeroServiceCoreSpec } from '../integration/app/hero/hero.service.spec';
 
+import 'jasmine-ajax';
+
 describe('Http Backend Service', () => {
   const delay = 1; // some minimal simulated latency delay
 
