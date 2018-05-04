@@ -9,10 +9,16 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+
+<a id="0.6.1"></a>
+## 0.6.1 (2018-05-04)
+
+* update to Angular and RxJS v6 releases
+
 <a id="0.6.0"></a>
 ## 0.6.0 (2018-03-22)
 
-*Migrate to Angular v6 and RxJS v6*
+*Migrate to Angular v6 and RxJS v6 (rc and beta)*
 
 Note that this release is pinned to Angular "^6.0.0-rc.0" and RxJS "^6.0.0-beta.1".
 Will likely update again when they are official.
