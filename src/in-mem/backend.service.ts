@@ -438,10 +438,11 @@ export abstract class BackendService {
    */
   protected getLocation(url: string): UriInfo {
     if (!url.startsWith('http')) {
-      // get the document iff running in browser
+      // get the document if running in browser
       const doc: Document = (typeof document === 'undefined') ? undefined : document;
       // add host info to url before parsing.  Use a fake host when not in browser.
-      const base = doc ? doc.location.protocol + '//' + doc.location.host : 'http://fake';
+      const { location } = doc;
+      const base = location ? location.protocol + '//' + location.host : 'http://fake';
       url = url.startsWith('/') ? base + url : base + '/' + url;
     }
     return parseUri(url);
