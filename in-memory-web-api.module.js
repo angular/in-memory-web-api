@@ -91,8 +91,6 @@ var InMemoryWebApiModule = /** @class */ (function () {
     InMemoryWebApiModule.decorators = [
         { type: NgModule, args: [{},] },
     ];
-    /** @nocollapse */
-    InMemoryWebApiModule.ctorParameters = function () { return []; };
     return InMemoryWebApiModule;
 }());
 export { InMemoryWebApiModule };

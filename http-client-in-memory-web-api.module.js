@@ -92,8 +92,6 @@ var HttpClientInMemoryWebApiModule = /** @class */ (function () {
     HttpClientInMemoryWebApiModule.decorators = [
         { type: NgModule, args: [{},] },
     ];
-    /** @nocollapse */
-    HttpClientInMemoryWebApiModule.ctorParameters = function () { return []; };
     return HttpClientInMemoryWebApiModule;
 }());
 export { HttpClientInMemoryWebApiModule };
