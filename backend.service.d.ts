@@ -108,7 +108,7 @@ export declare abstract class BackendService {
      * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      */
     protected createResponseOptions$(resOptionsFactory: () => ResponseOptions): Observable<ResponseOptions>;
-    protected delete({collection, collectionName, headers, id, url}: RequestInfo): ResponseOptions;
+    protected delete({ collection, collectionName, headers, id, url }: RequestInfo): ResponseOptions;
     /**
      * Find first instance of item in collection by `item.id`
      * @param collection
@@ -135,7 +135,7 @@ export declare abstract class BackendService {
     protected genIdDefault<T extends {
         id: any;
     }>(collection: T[], collectionName: string): any;
-    protected get({collection, collectionName, headers, id, query, url}: RequestInfo): ResponseOptions;
+    protected get({ collection, collectionName, headers, id, query, url }: RequestInfo): ResponseOptions;
     /** Get JSON body from the request object */
     protected abstract getJsonBody(req: any): any;
     /**
@@ -187,8 +187,8 @@ export declare abstract class BackendService {
      * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
      */
     protected parseRequestUrl(url: string): ParsedRequestUrl;
-    protected post({collection, collectionName, headers, id, req, resourceUrl, url}: RequestInfo): ResponseOptions;
-    protected put({collection, collectionName, headers, id, req, url}: RequestInfo): ResponseOptions;
+    protected post({ collection, collectionName, headers, id, req, resourceUrl, url }: RequestInfo): ResponseOptions;
+    protected put({ collection, collectionName, headers, id, req, url }: RequestInfo): ResponseOptions;
     protected removeById(collection: any[], id: number): boolean;
     /**
      * Tell your in-mem "database" to reset.
