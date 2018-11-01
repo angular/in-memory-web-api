@@ -96,7 +96,7 @@ export class HeroInMemDataOverrideService extends HeroInMemDataService {
   // add a response header and report interception to console.log
   responseInterceptor(resOptions: ResponseOptions, reqInfo: RequestInfo) {
 
-    resOptions.headers.set('x-test', 'test-header');
+    resOptions.headers = resOptions.headers.set('x-test', 'test-header');
     const method = reqInfo.method.toUpperCase();
     const body = JSON.stringify(resOptions);
     console.log(`responseInterceptor: ${method} ${reqInfo.req.url}: \n${body}`);
