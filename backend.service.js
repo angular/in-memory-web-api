@@ -10,14 +10,7 @@ import { InMemoryBackendConfig, parseUri, removeTrailingSlash } from './interfac
  * Conforms mostly to behavior described here:
  * http://www.restapitutorial.com/lessons/httpmethods.html
  */
-var /**
- * Base class for in-memory web api back-ends
- * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected `InMemoryDbService` service.
- * Conforms mostly to behavior described here:
- * http://www.restapitutorial.com/lessons/httpmethods.html
- */
-BackendService = /** @class */ (function () {
+var BackendService = /** @class */ (function () {
     function BackendService(inMemDbService, config) {
         if (config === void 0) { config = {}; }
         this.inMemDbService = inMemDbService;
@@ -65,55 +58,7 @@ BackendService = /** @class */ (function () {
      *     which must return either an Observable of the response type
      *     for this http library or null|undefined (which means "keep processing").
      */
-    /**
-       * Process Request and return an Observable of Http Response object
-       * in the manner of a RESTy web api.
-       *
-       * Expect URI pattern in the form :base/:collectionName/:id?
-       * Examples:
-       *   // for store with a 'customers' collection
-       *   GET api/customers          // all customers
-       *   GET api/customers/42       // the character with id=42
-       *   GET api/customers?name=^j  // 'j' is a regex; returns customers whose name starts with 'j' or 'J'
-       *   GET api/customers.json/42  // ignores the ".json"
-       *
-       * Also accepts direct commands to the service in which the last segment of the apiBase is the word "commands"
-       * Examples:
-       *     POST commands/resetDb,
-       *     GET/POST commands/config - get or (re)set the config
-       *
-       *   HTTP overrides:
-       *     If the injected inMemDbService defines an HTTP method (lowercase)
-       *     The request is forwarded to that method as in
-       *     `inMemDbService.get(requestInfo)`
-       *     which must return either an Observable of the response type
-       *     for this http library or null|undefined (which means "keep processing").
-       */
-    BackendService.prototype.handleRequest = /**
-       * Process Request and return an Observable of Http Response object
-       * in the manner of a RESTy web api.
-       *
-       * Expect URI pattern in the form :base/:collectionName/:id?
-       * Examples:
-       *   // for store with a 'customers' collection
-       *   GET api/customers          // all customers
-       *   GET api/customers/42       // the character with id=42
-       *   GET api/customers?name=^j  // 'j' is a regex; returns customers whose name starts with 'j' or 'J'
-       *   GET api/customers.json/42  // ignores the ".json"
-       *
-       * Also accepts direct commands to the service in which the last segment of the apiBase is the word "commands"
-       * Examples:
-       *     POST commands/resetDb,
-       *     GET/POST commands/config - get or (re)set the config
-       *
-       *   HTTP overrides:
-       *     If the injected inMemDbService defines an HTTP method (lowercase)
-       *     The request is forwarded to that method as in
-       *     `inMemDbService.get(requestInfo)`
-       *     which must return either an Observable of the response type
-       *     for this http library or null|undefined (which means "keep processing").
-       */
-    function (req) {
+    BackendService.prototype.handleRequest = function (req) {
         var _this = this;
         //  handle the request when there is an in-memory database
         return this.dbReady.pipe(concatMap(function () { return _this.handleRequest_(req); }));
@@ -171,13 +116,7 @@ BackendService = /** @class */ (function () {
     /**
      * Add configured delay to response observable unless delay === 0
      */
-    /**
-       * Add configured delay to response observable unless delay === 0
-       */
-    BackendService.prototype.addDelay = /**
-       * Add configured delay to response observable unless delay === 0
-       */
-    function (response) {
+    BackendService.prototype.addDelay = function (response) {
         var d = this.config.delay;
         return d === 0 ? response : delayResponse(response, d || 500);
     };
@@ -186,17 +125,7 @@ BackendService = /** @class */ (function () {
      * This impl only supports RegExp queries on string properties of the collection
      * ANDs the conditions together
      */
-    /**
-       * Apply query/search parameters as a filter over the collection
-       * This impl only supports RegExp queries on string properties of the collection
-       * ANDs the conditions together
-       */
-    BackendService.prototype.applyQuery = /**
-       * Apply query/search parameters as a filter over the collection
-       * This impl only supports RegExp queries on string properties of the collection
-       * ANDs the conditions together
-       */
-    function (collection, query) {
+    BackendService.prototype.applyQuery = function (collection, query) {
         // extract filtering conditions - {propertyName, RegExps) - from query/search parameters
         var conditions = [];
         var caseSensitive = this.config.caseSensitiveSearch ? undefined : 'i';
@@ -222,13 +151,7 @@ BackendService = /** @class */ (function () {
     /**
      * Get a method from the `InMemoryDbService` (if it exists), bound to that service
      */
-    /**
-       * Get a method from the `InMemoryDbService` (if it exists), bound to that service
-       */
-    BackendService.prototype.bind = /**
-       * Get a method from the `InMemoryDbService` (if it exists), bound to that service
-       */
-    function (methodName) {
+    BackendService.prototype.bind = function (methodName) {
         var fn = this.inMemDbService[methodName];
         return fn ? fn.bind(this.inMemDbService) : undefined;
     };
@@ -279,41 +202,7 @@ BackendService = /** @class */ (function () {
      *   http.get('commands/config');
      *   http.post('commands/config', '{"delay":1000}');
      */
-    /**
-       * Commands reconfigure the in-memory web api service or extract information from it.
-       * Commands ignore the latency delay and respond ASAP.
-       *
-       * When the last segment of the `apiBase` path is "commands",
-       * the `collectionName` is the command.
-       *
-       * Example URLs:
-       *   commands/resetdb (POST) // Reset the "database" to its original state
-       *   commands/config (GET)   // Return this service's config object
-       *   commands/config (POST)  // Update the config (e.g. the delay)
-       *
-       * Usage:
-       *   http.post('commands/resetdb', undefined);
-       *   http.get('commands/config');
-       *   http.post('commands/config', '{"delay":1000}');
-       */
-    BackendService.prototype.commands = /**
-       * Commands reconfigure the in-memory web api service or extract information from it.
-       * Commands ignore the latency delay and respond ASAP.
-       *
-       * When the last segment of the `apiBase` path is "commands",
-       * the `collectionName` is the command.
-       *
-       * Example URLs:
-       *   commands/resetdb (POST) // Reset the "database" to its original state
-       *   commands/config (GET)   // Return this service's config object
-       *   commands/config (POST)  // Update the config (e.g. the delay)
-       *
-       * Usage:
-       *   http.post('commands/resetdb', undefined);
-       *   http.get('commands/config');
-       *   http.post('commands/config', '{"delay":1000}');
-       */
-    function (reqInfo) {
+    BackendService.prototype.commands = function (reqInfo) {
         var _this = this;
         var command = reqInfo.collectionName.toLowerCase();
         var method = reqInfo.method;
@@ -355,17 +244,7 @@ BackendService = /** @class */ (function () {
      * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      * @param withDelay - if true (default), add simulated latency delay from configuration
      */
-    /**
-       * Create a cold response Observable from a factory for ResponseOptions
-       * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
-       * @param withDelay - if true (default), add simulated latency delay from configuration
-       */
-    BackendService.prototype.createResponse$ = /**
-       * Create a cold response Observable from a factory for ResponseOptions
-       * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
-       * @param withDelay - if true (default), add simulated latency delay from configuration
-       */
-    function (resOptionsFactory, withDelay) {
+    BackendService.prototype.createResponse$ = function (resOptionsFactory, withDelay) {
         if (withDelay === void 0) { withDelay = true; }
         var resOptions$ = this.createResponseOptions$(resOptionsFactory);
         var resp$ = this.createResponse$fromResponseOptions$(resOptions$);
@@ -375,15 +254,7 @@ BackendService = /** @class */ (function () {
      * Create a cold Observable of ResponseOptions.
      * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
      */
-    /**
-       * Create a cold Observable of ResponseOptions.
-       * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
-       */
-    BackendService.prototype.createResponseOptions$ = /**
-       * Create a cold Observable of ResponseOptions.
-       * @param resOptionsFactory - creates ResponseOptions when observable is subscribed
-       */
-    function (resOptionsFactory) {
+    BackendService.prototype.createResponseOptions$ = function (resOptionsFactory) {
         var _this = this;
         return new Observable(function (responseObserver) {
             var resOptions;
@@ -398,9 +269,7 @@ BackendService = /** @class */ (function () {
             try {
                 resOptions.statusText = getStatusText(status);
             }
-            catch (e) {
-                /* ignore failure */ 
-            }
+            catch (e) { /* ignore failure */ }
             if (isSuccess(status)) {
                 responseObserver.next(resOptions);
                 responseObserver.complete();
@@ -428,17 +297,7 @@ BackendService = /** @class */ (function () {
      * @param collection
      * @param id
      */
-    /**
-       * Find first instance of item in collection by `item.id`
-       * @param collection
-       * @param id
-       */
-    BackendService.prototype.findById = /**
-       * Find first instance of item in collection by `item.id`
-       * @param collection
-       * @param id
-       */
-    function (collection, id) {
+    BackendService.prototype.findById = function (collection, id) {
         return collection.find(function (item) { return item.id === id; });
     };
     /**
@@ -447,19 +306,7 @@ BackendService = /** @class */ (function () {
      * else delegates to `genIdDefault`.
      * @param collection - collection of items with `id` key property
      */
-    /**
-       * Generate the next available id for item in this collection
-       * Use method from `inMemDbService` if it exists and returns a value,
-       * else delegates to `genIdDefault`.
-       * @param collection - collection of items with `id` key property
-       */
-    BackendService.prototype.genId = /**
-       * Generate the next available id for item in this collection
-       * Use method from `inMemDbService` if it exists and returns a value,
-       * else delegates to `genIdDefault`.
-       * @param collection - collection of items with `id` key property
-       */
-    function (collection, collectionName) {
+    BackendService.prototype.genId = function (collection, collectionName) {
         var genId = this.bind('genId');
         if (genId) {
             var id = genId(collection, collectionName);
@@ -476,19 +323,7 @@ BackendService = /** @class */ (function () {
      * @param collection - collection of items with `id` key property
      * @param collectionName - name of the collection
      */
-    /**
-       * Default generator of the next available id for item in this collection
-       * This default implementation works only for numeric ids.
-       * @param collection - collection of items with `id` key property
-       * @param collectionName - name of the collection
-       */
-    BackendService.prototype.genIdDefault = /**
-       * Default generator of the next available id for item in this collection
-       * This default implementation works only for numeric ids.
-       * @param collection - collection of items with `id` key property
-       * @param collectionName - name of the collection
-       */
-    function (collection, collectionName) {
+    BackendService.prototype.genIdDefault = function (collection, collectionName) {
         if (!this.isCollectionIdNumeric(collection, collectionName)) {
             throw new Error("Collection '" + collectionName + "' id type is non-numeric or unknown. Can only generate numeric ids.");
         }
@@ -520,13 +355,7 @@ BackendService = /** @class */ (function () {
     /**
      * Get location info from a url, even on server where `document` is not defined
      */
-    /**
-       * Get location info from a url, even on server where `document` is not defined
-       */
-    BackendService.prototype.getLocation = /**
-       * Get location info from a url, even on server where `document` is not defined
-       */
-    function (url) {
+    BackendService.prototype.getLocation = function (url) {
         if (!url.startsWith('http')) {
             // get the document iff running in browser
             var doc = (typeof document === 'undefined') ? undefined : document;
@@ -541,15 +370,7 @@ BackendService = /** @class */ (function () {
      * get or create the function that passes unhandled requests
      * through to the "real" backend.
      */
-    /**
-       * get or create the function that passes unhandled requests
-       * through to the "real" backend.
-       */
-    BackendService.prototype.getPassThruBackend = /**
-       * get or create the function that passes unhandled requests
-       * through to the "real" backend.
-       */
-    function () {
+    BackendService.prototype.getPassThruBackend = function () {
         return this.passThruBackend ?
             this.passThruBackend :
             this.passThruBackend = this.createPassThruBackend();
@@ -558,15 +379,7 @@ BackendService = /** @class */ (function () {
      * Get utility methods from this service instance.
      * Useful within an HTTP method override
      */
-    /**
-       * Get utility methods from this service instance.
-       * Useful within an HTTP method override
-       */
-    BackendService.prototype.getRequestInfoUtils = /**
-       * Get utility methods from this service instance.
-       * Useful within an HTTP method override
-       */
-    function () {
+    BackendService.prototype.getRequestInfoUtils = function () {
         var _this = this;
         return {
             createResponse$: this.createResponse$.bind(this),
@@ -584,9 +397,7 @@ BackendService = /** @class */ (function () {
         return collection.findIndex(function (item) { return item.id === id; });
     };
     /** Parse the id as a number. Return original value if not a number. */
-    /** Parse the id as a number. Return original value if not a number. */
-    BackendService.prototype.parseId = /** Parse the id as a number. Return original value if not a number. */
-    function (collection, collectionName, id) {
+    BackendService.prototype.parseId = function (collection, collectionName, id) {
         if (!this.isCollectionIdNumeric(collection, collectionName)) {
             // Can't confirm that `id` is a numeric type; don't parse as a number
             // or else `'42'` -> `42` and _get by id_ fails.
@@ -599,15 +410,7 @@ BackendService = /** @class */ (function () {
      * return true if can determine that the collection's `item.id` is a number
      * This implementation can't tell if the collection is empty so it assumes NO
      * */
-    /**
-       * return true if can determine that the collection's `item.id` is a number
-       * This implementation can't tell if the collection is empty so it assumes NO
-       * */
-    BackendService.prototype.isCollectionIdNumeric = /**
-       * return true if can determine that the collection's `item.id` is a number
-       * This implementation can't tell if the collection is empty so it assumes NO
-       * */
-    function (collection, collectionName) {
+    BackendService.prototype.isCollectionIdNumeric = function (collection, collectionName) {
         // collectionName not used now but override might maintain collection type information
         // so that it could know the type of the `id` even when the collection is empty.
         return !!(collection && collection[0]) && typeof collection[0].id === 'number';
@@ -629,41 +432,7 @@ BackendService = /** @class */ (function () {
      *
      * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
      */
-    /**
-       * Parses the request URL into a `ParsedRequestUrl` object.
-       * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
-       *
-       * Configuring the `apiBase` yields the most interesting changes to `parseRequestUrl` behavior:
-       *   When apiBase=undefined and url='http://localhost/api/collection/42'
-       *     {base: 'api/', collectionName: 'collection', id: '42', ...}
-       *   When apiBase='some/api/root/' and url='http://localhost/some/api/root/collection'
-       *     {base: 'some/api/root/', collectionName: 'collection', id: undefined, ...}
-       *   When apiBase='/' and url='http://localhost/collection'
-       *     {base: '/', collectionName: 'collection', id: undefined, ...}
-       *
-       * The actual api base segment values are ignored. Only the number of segments matters.
-       * The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `two/segments'
-       *
-       * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
-       */
-    BackendService.prototype.parseRequestUrl = /**
-       * Parses the request URL into a `ParsedRequestUrl` object.
-       * Parsing depends upon certain values of `config`: `apiBase`, `host`, and `urlRoot`.
-       *
-       * Configuring the `apiBase` yields the most interesting changes to `parseRequestUrl` behavior:
-       *   When apiBase=undefined and url='http://localhost/api/collection/42'
-       *     {base: 'api/', collectionName: 'collection', id: '42', ...}
-       *   When apiBase='some/api/root/' and url='http://localhost/some/api/root/collection'
-       *     {base: 'some/api/root/', collectionName: 'collection', id: undefined, ...}
-       *   When apiBase='/' and url='http://localhost/collection'
-       *     {base: '/', collectionName: 'collection', id: undefined, ...}
-       *
-       * The actual api base segment values are ignored. Only the number of segments matters.
-       * The following api base strings are considered identical: 'a/b' ~ 'some/api/' ~ `two/segments'
-       *
-       * To replace this default method, assign your alternative to your InMemDbService['parseRequestUrl']
-       */
-    function (url) {
+    BackendService.prototype.parseRequestUrl = function (url) {
         try {
             var loc = this.getLocation(url);
             var drop = this.config.rootPath.length;
@@ -711,12 +480,7 @@ BackendService = /** @class */ (function () {
     };
     // Create entity
     // Can update an existing entity too if post409 is false.
-    // Create entity
-    // Can update an existing entity too if post409 is false.
-    BackendService.prototype.post = 
-    // Create entity
-    // Can update an existing entity too if post409 is false.
-    function (_a) {
+    BackendService.prototype.post = function (_a) {
         var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, resourceUrl = _a.resourceUrl, url = _a.url;
         var item = this.clone(this.getJsonBody(req));
         // tslint:disable-next-line:triple-equals
@@ -760,12 +524,7 @@ BackendService = /** @class */ (function () {
     };
     // Update existing entity
     // Can create an entity too if put404 is false.
-    // Update existing entity
-    // Can create an entity too if put404 is false.
-    BackendService.prototype.put = 
-    // Update existing entity
-    // Can create an entity too if put404 is false.
-    function (_a) {
+    BackendService.prototype.put = function (_a) {
         var collection = _a.collection, collectionName = _a.collectionName, headers = _a.headers, id = _a.id, req = _a.req, url = _a.url;
         var item = this.clone(this.getJsonBody(req));
         // tslint:disable-next-line:triple-equals
@@ -808,15 +567,7 @@ BackendService = /** @class */ (function () {
      * Tell your in-mem "database" to reset.
      * returns Observable of the database because resetting it could be async
      */
-    /**
-       * Tell your in-mem "database" to reset.
-       * returns Observable of the database because resetting it could be async
-       */
-    BackendService.prototype.resetDb = /**
-       * Tell your in-mem "database" to reset.
-       * returns Observable of the database because resetting it could be async
-       */
-    function (reqInfo) {
+    BackendService.prototype.resetDb = function (reqInfo) {
         var _this = this;
         this.dbReadySubject.next(false);
         var db = this.inMemDbService.createDb(reqInfo);
@@ -831,12 +582,5 @@ BackendService = /** @class */ (function () {
     };
     return BackendService;
 }());
-/**
- * Base class for in-memory web api back-ends
- * Simulate the behavior of a RESTy web api
- * backed by the simple in-memory data store provided by the injected `InMemoryDbService` service.
- * Conforms mostly to behavior described here:
- * http://www.restapitutorial.com/lessons/httpmethods.html
- */
 export { BackendService };
 //# sourceMappingURL=backend.service.js.map

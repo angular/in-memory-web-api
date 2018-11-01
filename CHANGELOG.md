@@ -9,6 +9,11 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.7.0"></a>
+## 0.7.0 (2018-10-31)
+
+* update to support Angular v7.
+* no functional changes
 
 <a id="0.6.1"></a>
 ## 0.6.1 (2018-05-04)

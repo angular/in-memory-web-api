@@ -60,7 +60,7 @@ in the manner of a RESTy web api.
 It natively handles URI patterns in the form `:base/:collectionName/:id?`
 
 Examples:
-```
+```ts
   // for requests to an `api` base URL that gets heroes from a 'heroes' collection 
   GET api/heroes          // all heroes
   GET api/heroes/42       // the hero with id=42
@@ -143,7 +143,7 @@ to ensure that the in-memory backend provider supersedes the Angular version.
 
 * In production, you want HTTP requests to go to the real server and probably have no need for the _in-memory_ provider.
 CLI-based apps can exclude the provider in production builds like this:
-  ```javascript
+  ```ts
   imports: [
     HttpClientModule,
     environment.production ?
@@ -282,13 +282,13 @@ or reset the in-memory database.
 When the last segment of the _api base path_ is "commands", the `collectionName` is treated as the _command_.
 
 Example URLs:
-```
+```sh
   commands/resetdb   // Reset the "database" to its original state
   commands/config    // Get or update this service's config object
 ```
 
 Usage:
-```
+```sh
   http.post('commands/resetdb', undefined);
   http.get('commands/config');
   http.post('commands/config', '{"delay":1000}');
@@ -302,7 +302,7 @@ calls your `InMemoryDbService` data service's  [`createDb` method](#createDb) wi
 enabling the `createDb` logic to adjust its behavior per the client request.
 
 In the following example, the client includes a reset option in the command request body:
-```
+```ts
 http
   // Reset the database collections with the `clear` option
   .post('commands/resetDb', { clear: true }))
@@ -334,17 +334,17 @@ Read the source code for the complete story.
 Configuring the `apiBase` yields the most interesting changes to `parseRequestUrl` behavior:
 
 * For `apiBase=undefined` and `url='http://localhost/api/customers/42'`
-    ```
+    ```ts
     {apiBase: 'api/', collectionName: 'customers', id: '42', ...}
     ```
 
 *  For `apiBase='some/api/root/'` and `url='http://localhost/some/api/root/customers'`
-    ```
+    ```ts
     { apiBase: 'some/api/root/', collectionName: 'customers', id: undefined, ... }
     ```
 
 *  For `apiBase='/'` and `url='http://localhost/customers'`
-    ```
+    ```ts
     { apiBase: '/', collectionName: 'customers', id: undefined, ... }
     ```
 
