@@ -15,6 +15,7 @@ import { HttpHeroService } from '../app/http-hero.service';
 
 import { HeroInMemDataService } from '../app/hero-in-mem-data.service';
 import { HeroInMemDataOverrideService } from '../app/hero-in-mem-data-override.service';
+import { HeroInMemDataOverrideIdService } from '../app/hero-in-mem-data-override-id.service';
 import { HeroServiceCoreSpec } from '../app/hero.service.spec';
 
 class Nobody { id: string; name: string; }
@@ -426,6 +427,47 @@ describe('Http Backend Service', () => {
       );
     };
   });
+
+  ////////////////
+  describe('raw Angular Http w/ override id service', () => {
+
+      let http: Http;
+
+      beforeEach(() => {
+        TestBed.configureTestingModule({
+          imports: [
+            HttpModule,
+            HttpInMemoryWebApiModule.forRoot(HeroInMemDataOverrideIdService, { delay })
+          ]
+        });
+
+        http = TestBed.get(Http);
+      });
+
+      it('can get heroes', async(() => {
+        http.get('api/heroes')
+          .map(res => res.json() as Hero[])
+          .subscribe(
+          heroes => {
+            // console.log(heroes);
+            expect(heroes.length).toBeGreaterThan(0, 'should have heroes');
+          },
+          failure
+          );
+      }));
+
+      it('can get heroes by uuid', async(() => {
+        http.get('api/heroes/00000000-0000-0000-0000-000000000002')
+          .map(res => res.json() as Hero)
+          .subscribe(
+          hero => {
+            // console.log(heroes);
+            expect(hero.name).toEqual('Bombasto', 'should find hero Bombasto');
+          },
+          failure
+          );
+      }));
+    });
 
   ////////////////
 

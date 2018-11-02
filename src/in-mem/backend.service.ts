@@ -20,6 +20,10 @@ import {
   UriInfo
 } from './interfaces';
 
+export interface IDictionary {
+  [index: string]: string;
+}
+
 /**
  * Base class for in-memory web api back-ends
  * Simulate the behavior of a RESTy web api
@@ -28,6 +32,7 @@ import {
  * http://www.restapitutorial.com/lessons/httpmethods.html
  */
 export abstract class BackendService {
+  protected fieldIds = {} as IDictionary;
   protected config: InMemoryBackendConfigArgs = new InMemoryBackendConfig();
   protected db: Object;
   protected dbReadySubject: BehaviorSubject<boolean>;
@@ -372,7 +377,48 @@ export abstract class BackendService {
    * @param id
    */
   protected findById<T extends { id: any }>(collection: T[], id: any): T {
-    return collection.find((item: T) => item.id === id);
+    return collection.find((item: T) => this.getItemId(item) === id);
+  }
+
+  /**
+   * define for your in-mem database what is the name of your id field
+   * return the name of the id field
+   */
+  protected defineId(collectionName = 'default_id'): string {
+    const defineId = this.bind('defineId');
+    if (defineId) {
+      const id = defineId(collectionName);
+      if ((id !== undefined) && id !== '') { return id; }
+    }
+    return 'id';
+  }
+
+  /**
+   * return the key (by id property name) of item for a collection name 
+   * @param item 
+   * @param collectionName 
+   */
+  protected getItemId<T extends { id: any }>(item: T, collectionName = 'default_id'): any {
+    return item[this.fieldIds[collectionName]];
+  }
+
+  /**
+   * set the key by property name of a item for a collection
+   * @param item 
+   * @param id 
+   * @param collectionName 
+   */
+  protected setItemId<T extends { id: any }>(item: T, id: any, collectionName = 'default_id'): any {
+    return item[this.fieldIds[collectionName]] = id;
+  }
+
+  /**
+   * set the property name of the key of a collection
+   * @param id 
+   * @param collectionName 
+   */
+  protected setFieldId(id: any, collectionName = 'default_id') {
+    this.fieldIds[collectionName] = this.defineId(collectionName);
   }
 
   /**
@@ -405,7 +451,7 @@ export abstract class BackendService {
 
     let maxId = 0;
     collection.reduce((prev: any, item: any) => {
-      maxId = Math.max(maxId, typeof item.id === 'number' ? item.id : maxId);
+      maxId = Math.max(maxId, typeof this.getItemId(item) === 'number' ? this.getItemId(item) : maxId);
     }, undefined);
     return maxId + 1;
   }
@@ -484,7 +530,7 @@ export abstract class BackendService {
   protected abstract getRequestMethod(req: any): string;
 
   protected indexOf(collection: any[], id: number) {
-    return collection.findIndex((item: any) => item.id === id);
+    return collection.findIndex((item: any) => this.getItemId(item) === id);
   }
 
   /** Parse the id as a number. Return original value if not a number. */
@@ -579,9 +625,9 @@ export abstract class BackendService {
     const item = this.clone(this.getJsonBody(req));
 
     // tslint:disable-next-line:triple-equals
-    if (item.id == undefined) {
+    if (this.getItemId(item) == undefined) {
       try {
-        item.id = id || this.genId(collection, collectionName);
+        this.setItemId(item, id || this.genId(collection, collectionName));
       } catch (err) {
         const emsg: string = err.message || '';
         if (/id type is non-numeric/.test(emsg)) {
@@ -594,10 +640,10 @@ export abstract class BackendService {
       }
     }
 
-    if (id && id !== item.id) {
+    if (id && id !== this.getItemId(item)) {
       return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST, `Request id does not match item.id`);
     } else {
-      id = item.id;
+      id = this.getItemId(item);
     }
     const existingIx = this.indexOf(collection, id);
     const body = this.bodify(item);
@@ -612,8 +658,8 @@ export abstract class BackendService {
     } else {
       collection[existingIx] = item;
       return this.config.post204 ?
-          { headers, status: STATUS.NO_CONTENT } : // successful; no content
-          { headers, body, status: STATUS.OK }; // successful; return entity
+        { headers, status: STATUS.NO_CONTENT } : // successful; no content
+        { headers, body, status: STATUS.OK }; // successful; return entity
     }
   }
 
@@ -622,14 +668,14 @@ export abstract class BackendService {
   protected put({ collection, collectionName, headers, id, req, url }: RequestInfo): ResponseOptions {
     const item = this.clone(this.getJsonBody(req));
     // tslint:disable-next-line:triple-equals
-    if (item.id == undefined) {
+    if (this.getItemId(item) == undefined) {
       return this.createErrorResponseOptions(url, STATUS.NOT_FOUND, `Missing '${collectionName}' id`);
     }
-    if (id && id !== item.id) {
+    if (id && id !== this.getItemId(item)) {
       return this.createErrorResponseOptions(url, STATUS.BAD_REQUEST,
         `Request for '${collectionName}' id does not match item.id`);
     } else {
-      id = item.id;
+      id = this.getItemId(item);
     }
     const existingIx = this.indexOf(collection, id);
     const body = this.bodify(item);
@@ -673,6 +719,9 @@ export abstract class BackendService {
       this.db = d;
       this.dbReadySubject.next(true);
     });
+
+    this.setFieldId(this.defineId());
+
     return this.dbReady;
   }
 
