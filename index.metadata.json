@@ -1,1 +1,0 @@
-[{"__symbolic":"module","version":4,"metadata":{},"exports":[{"from":"./backend.service"},{"from":"./http-status-codes"},{"from":"./http-backend.service"},{"from":"./http-client-backend.service"},{"from":"./in-memory-web-api.module"},{"from":"./http-in-memory-web-api.module"},{"from":"./http-client-in-memory-web-api.module"},{"from":"./interfaces"}]}]
