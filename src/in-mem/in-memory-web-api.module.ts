@@ -1,7 +1,6 @@
 ////// For apps with both Http and HttpClient ////
 
 import { Injector, NgModule, ModuleWithProviders, Type } from '@angular/core';
-import { XHRBackend } from '@angular/http';
 import { HttpBackend, XhrFactory } from '@angular/common/http';
 
 import {
@@ -10,7 +9,6 @@ import {
   InMemoryDbService
 } from './interfaces';
 
-import { httpInMemBackendServiceFactory } from './http-in-memory-web-api.module';
 import { httpClientInMemBackendServiceFactory } from './http-client-in-memory-web-api.module';
 
 @NgModule({})
@@ -37,9 +35,6 @@ export class InMemoryWebApiModule {
         { provide: InMemoryDbService,  useClass: dbCreator },
         { provide: InMemoryBackendConfig, useValue: options },
 
-        { provide: XHRBackend,
-          useFactory: httpInMemBackendServiceFactory,
-          deps: [Injector, InMemoryDbService, InMemoryBackendConfig]},
 
         { provide: HttpBackend,
           useFactory: httpClientInMemBackendServiceFactory,

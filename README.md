@@ -152,58 +152,6 @@ CLI-based apps can exclude the provider in production builds like this:
   ]
   ```
 
-### Setup for the older Angular _Http_ module
-
-You can still use the in-memory web api with the older `Http` module.
-
-```ts
-import { HttpModule } from '@angular/http';
-import { HttpInMemoryWebApiModule } from 'angular-in-memory-web-api';
-
-import { InMemHeroService } from '../app/hero.service';
-
-@NgModule({
-imports: [
-  HttpModule,
-  HttpInMemoryWebApiModule.forRoot(InMemHeroService),
-  ...
-],
-...
-})
-export class AppModule { ... }
-```
-### Setup for both Angular HTTP modules
-
-Perhaps you have a hybrid app with BOTH Angular modules 
-because you're migrating to `HttpClient` from `Http`.
-Or perhaps you've used this library before and you don't have time 
-at this moment to re-do your module setup.
-
-There's a combo-module 
-(`InMemoryWebApiModule`) that prepares for both of them.
-It has the same syntax from pre-`v0.4.0` days and it should "_just work_"
-as long as you aren't using the [advanced features described below](#advanced-features).
-  
-```ts
-import { HttpModule } from '@angular/http';
-import { HttpClientModule } from '@angular/common/http';
-
-import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
-
-import { InMemHeroService } from '../app/hero.service';
-
-@NgModule({
-imports: [
-  HttpModule,
-  HttpClientModule,
-  InMemoryWebApiModule.forRoot(InMemHeroService),
-  ...
-],
-...
-})
-export class AppModule { ... }
-```
-
 # Examples
 The tests (`src/app/*.spec.ts` files) in the 
 [github repository](https://github.com/angular/in-memory-web-api/tree/master/src/app) 
