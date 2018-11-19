@@ -9,6 +9,16 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
+<a id="0.8.0"></a>
+## 0.8.0 (2018-12-06)
+
+* remove `@angular/http` support
+* no functional changes
+
+**BREAKING CHANGE**
+This version no longer supports any functionality for `@angular/http`. Please use
+`@angular/common/http` instead.
+
 <a id="0.7.0"></a>
 ## 0.7.0 (2018-10-31)
 

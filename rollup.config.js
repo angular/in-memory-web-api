@@ -1,6 +1,5 @@
 const globals = {
   '@angular/core': 'ng.core',
-  '@angular/http': 'ng.http',
   '@angular/common/http': 'ng.common.http',
   'rxjs': 'rxjs',
   'rxjs/operators': 'rxjs.operators'
