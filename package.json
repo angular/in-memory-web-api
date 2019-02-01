@@ -4,6 +4,8 @@
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
+  "typings": "index.d.ts",
+  "esm5": "index.js",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc -w",
