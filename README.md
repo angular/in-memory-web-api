@@ -355,7 +355,7 @@ For example, if you implemented a `get` method, the web api would be called like
 
 Your custom HTTP method must return either:
 
-* `Observable<Response>` - you handled the request and the response is available from this
+* `Observable<HttpResponse>` - you handled the request and the response is available from this
 observable.  It _should be "cold"_.
 
 * `null`/`undefined` - you decided not to intervene, 
