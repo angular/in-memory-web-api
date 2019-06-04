@@ -28,8 +28,8 @@
   },
   "homepage": "https://github.com/angular/in-memory-web-api#readme",
   "peerDependencies": {
-    "@angular/common": ">=6.0.0 <8.0.0",
-    "@angular/core": ">=6.0.0 <8.0.0",
+    "@angular/common": ">=8.0.0",
+    "@angular/core": ">=8.0.0",
     "rxjs": "^6.0.0"
   },
   "devDependencies": {
