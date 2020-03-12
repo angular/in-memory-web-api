@@ -29,19 +29,19 @@
   },
   "homepage": "https://github.com/angular/in-memory-web-api#readme",
   "peerDependencies": {
-    "@angular/common": ">=8.0.0",
-    "@angular/core": ">=8.0.0",
+    "@angular/common": ">=9.0.0",
+    "@angular/core": ">=9.0.0",
     "rxjs": "^6.0.0"
   },
   "devDependencies": {
-    "@angular/animations": "^8.0.0",
-    "@angular/common": "^8.0.0",
-    "@angular/compiler": "^8.0.0",
-    "@angular/compiler-cli": "^8.0.0",
-    "@angular/core": "^8.0.0",
-    "@angular/platform-browser": "^8.0.0",
-    "@angular/platform-browser-dynamic": "^8.0.0",
-    "@angular/platform-server": "^8.0.0",
+    "@angular/animations": "^9.0.0",
+    "@angular/common": "^9.0.0",
+    "@angular/compiler": "^9.0.0",
+    "@angular/compiler-cli": "^9.0.0",
+    "@angular/core": "^9.0.0",
+    "@angular/platform-browser": "^9.0.0",
+    "@angular/platform-browser-dynamic": "^9.0.0",
+    "@angular/platform-server": "^9.0.0",
     "@types/jasmine": "2.8.7",
     "@types/jasminewd2": "~2.0.3",
     "@types/jasmine-ajax": "^3.1.37",
@@ -76,11 +76,12 @@
     "rollup-stream": "^1.24.1",
     "rxjs": "^6.2.0",
     "systemjs": "0.21.3",
+    "tslib": "1.11.1",
     "tslint": "^5.10.0",
-    "typescript": "3.4.5",
+    "typescript": "3.7.5",
     "vinyl-source-stream": "^2.0.0",
     "webpack": "2.2.1",
     "yargs": "^11.0.0",
-    "zone.js": "^0.9.1"
+    "zone.js": "^0.10.2"
   }
 }
