@@ -15,7 +15,7 @@ export declare abstract class BackendService {
     private passThruBackend;
     protected requestInfoUtils: RequestInfoUtilities;
     constructor(inMemDbService: InMemoryDbService, config?: InMemoryBackendConfigArgs);
-    protected readonly dbReady: Observable<boolean>;
+    protected get dbReady(): Observable<boolean>;
     /**
      * Process Request and return an Observable of Http Response object
      * in the manner of a RESTy web api.

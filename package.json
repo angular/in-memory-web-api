@@ -1,6 +1,6 @@
 {
   "name": "angular-in-memory-web-api",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "An in-memory web api for Angular demos and tests",
   "main": "bundles/in-memory-web-api.umd.js",
   "module": "index.js",
@@ -45,7 +45,7 @@
     "@types/jasmine": "2.8.7",
     "@types/jasminewd2": "~2.0.3",
     "@types/jasmine-ajax": "^3.1.37",
-    "@types/node": "^8.10.0",
+    "@types/node": "^10.10.0",
     "canonical-path": "0.0.2",
     "concurrently": "^3.0.0",
     "core-js": "^2.4.1",
