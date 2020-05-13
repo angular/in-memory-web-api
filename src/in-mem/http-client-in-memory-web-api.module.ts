@@ -39,7 +39,8 @@ export class HttpClientInMemoryWebApiModule {
   * HttpInMemoryWebApiModule.forRoot(dbCreator);
   * HttpInMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
   */
-  static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
+  static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs):
+    ModuleWithProviders<HttpClientInMemoryWebApiModule> {
     return {
       ngModule: HttpClientInMemoryWebApiModule,
       providers: [
@@ -58,7 +59,8 @@ export class HttpClientInMemoryWebApiModule {
    * Same as `forRoot`.
    * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
    */
-  static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders {
+  static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs):
+    ModuleWithProviders<HttpClientInMemoryWebApiModule> {
     return HttpClientInMemoryWebApiModule.forRoot(dbCreator, options);
   }
 }

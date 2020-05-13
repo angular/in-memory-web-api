@@ -6,12 +6,8 @@ var del = require('del');
 var rollup = require('rollup-stream');
 var source = require('vinyl-source-stream');
 
-var path = require("path");
-
 var inMemSrc = './src/in-mem/';
 var jsCopySrc = ['*.js', '*.js.map', '*.d.ts', '*.metadata.json'].map(ext => inMemSrc + ext);
-
-gulp.task('default', ['help']);
 
 gulp.task('help', $.taskListing.withFilters(function (taskName) {
   var isSubTask = taskName.substr(0, 1) == "_";
@@ -21,22 +17,7 @@ gulp.task('help', $.taskListing.withFilters(function (taskName) {
   return shouldRemove;
 }));
 
-gulp.task('build', ['umd'], function(){
-  return gulp
-    .src(jsCopySrc)
-    .pipe(gulp.dest('./'));
-});
-
-gulp.task('ngc', ['clean'], function(done) {
-  runNgc('src/in-mem/', done);
-});
-
-// Uses rollup-stream plugin https://www.npmjs.com/package/rollup-stream
-gulp.task('umd', ['ngc'], function(done) {
-    return rollup('rollup.config.js')
-    .pipe(source('in-memory-web-api.umd.js'))
-    .pipe(gulp.dest('./bundles'));
-});
+gulp.task('default', gulp.series('help'));
 
 gulp.task('clean', function() {
   return Promise.all([
@@ -69,6 +50,23 @@ gulp.task('clean', function() {
   .then(() => console.log('Cleaned successfully'));
 });
 
+gulp.task('ngc', gulp.series('clean', function(done) {
+  runNgc('src/in-mem/', done);
+}));
+
+// Uses rollup-stream plugin https://www.npmjs.com/package/rollup-stream
+gulp.task('umd', gulp.series('ngc', function() {
+  return rollup('rollup.config.js')
+  .pipe(source('in-memory-web-api.umd.js'))
+  .pipe(gulp.dest('./bundles'));
+}));
+
+gulp.task('build', gulp.series('umd', function(){
+  return gulp
+    .src(jsCopySrc)
+    .pipe(gulp.dest('./'));
+}));
+
 /**
  * Bump the version
  * --type=pre will bump the prerelease version *.*.*-x
@@ -100,7 +98,7 @@ gulp.task('bump', function() {
 //////////
 
 function clean(path) {
-    log('Cleaning: ' + $.util.colors.blue(path));
+    log('Cleaning: ' + path);
     return del(path, {dryRun:false})
     .then(function(paths) {
       console.log('Deleted files and folders:\n', paths.join('\n'));
@@ -111,11 +109,11 @@ function log(msg) {
     if (typeof(msg) === 'object') {
         for (var item in msg) {
             if (msg.hasOwnProperty(item)) {
-                $.util.log($.util.colors.blue(msg[item]));
+                console.log(msg[item]);
             }
         }
     } else {
-        $.util.log($.util.colors.blue(msg));
+        console.log(msg);
     }
 }
 function runNgc(directory, done) {

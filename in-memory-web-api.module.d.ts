@@ -16,12 +16,12 @@ export declare class InMemoryWebApiModule {
     * InMemoryWebApiModule.forRoot(dbCreator);
     * InMemoryWebApiModule.forRoot(dbCreator, {useValue: {delay:600}});
     */
-    static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
+    static forRoot(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders<InMemoryWebApiModule>;
     /**
      *
      * Enable and configure the in-memory web api in a lazy-loaded feature module.
      * Same as `forRoot`.
      * This is a feel-good method so you can follow the Angular style guide for lazy-loaded modules.
      */
-    static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders;
+    static forFeature(dbCreator: Type<InMemoryDbService>, options?: InMemoryBackendConfigArgs): ModuleWithProviders<InMemoryWebApiModule>;
 }
