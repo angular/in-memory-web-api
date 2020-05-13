@@ -4,10 +4,16 @@ It is not supposed to emulate every possible real world web API and is not inten
 >
 >Most importantly, it is ***always experimental***.
 
-We will make breaking changes and we won't feel bad about it 
-because this is a development tool, not a production product. 
+We will make breaking changes and we won't feel bad about it
+because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
+
+<a id="0.10.0"></a>
+## 0.10.0 (2020-05-13)
+
+* update to support Angular v10.
+* no functional changes.
 
 <a id="0.9.0"></a>
 ## 0.9.0 (2019-06-20)
@@ -67,7 +73,7 @@ Added supporting `HeroService.searchHeroes(term: string)` and test.
 
 <a id="0.5.2"></a>
 ## 0.5.2 (2017-12-10)
-No longer modify the request data coming from client. Fixes #164 
+No longer modify the request data coming from client. Fixes #164
 
 <a id="0.5.1"></a>
 ## 0.5.1 (2017-10-21)
@@ -77,7 +83,7 @@ Support Angular v5.
 ## 0.5.0 (2017-10-05)
 **BREAKING CHANGE**: HTTP response data no longer wrapped in object w/ `data` property by default.
 
-In this release, the `dataEncapsulation` configuration default changed from `false` to `true`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!** 
+In this release, the `dataEncapsulation` configuration default changed from `false` to `true`. The HTTP response body holds the data values directly rather than an object that encapsulates those values, `{data: ...}`. This is a **breaking change that affects almost all existing apps!**
 
 Changing the default to `false` is a **breaking change**. Pre-existing apps that did not set this property explicitly will be broken because they expect encapsulation and are probably mapping
 the HTTP response results from the `data` property like this:
@@ -100,7 +106,7 @@ Now you just write `http.get<Hero[]>()` and you’ve got data (please add error 
 
 3. While you could have turned off encapsulation with configuration as of v.0.4, to do so took yet another step that you’d have to discover and explain.  A big reason for the in-mem web api is to make it easy to introduce and demonstrate HTTP operations in Angular. The _out-of-box_ experience is more important than avoiding a breaking change.
 
-4. The [security flaw](http://stackoverflow.com/questions/3503102/what-are-top-level-json-arrays-and-why-are-they-a-security-risk) 
+4. The [security flaw](http://stackoverflow.com/questions/3503102/what-are-top-level-json-arrays-and-why-are-they-a-security-risk)
 that prompted encapsulation seems to have been mitigated by all (almost all?) the browsers that can run an Angular (v2+) app. We don’t think it’s needed anymore.
 
 5. A most real world APIs today will not encapsulate; they’ll return the data in the body without extra ceremony.
@@ -150,7 +156,7 @@ You may return the database object (synchronous), an observable of it, or a prom
 
 The passthru feature was broken by 0.4.0
 - add passthru to both `Http` and `HttpClient`
-- test passThru feature with jasmine-ajax mock-ajax plugin 
+- test passThru feature with jasmine-ajax mock-ajax plugin
 to intercept Angular's attempt to call browser's XHR
 - update devDependency packages
 - update karma.conf with jasmine-ajax plugin
@@ -162,7 +168,7 @@ See PR #130.
 
 The 0.4.0 release was a major overhaul of this library.
 
-You don't have to change your existing application _code_ if your app uses this library without customizations. 
+You don't have to change your existing application _code_ if your app uses this library without customizations.
 
 But this release's **breaking changes** affect developers who used the customization features or loaded application files with SystemJS.
 
@@ -180,7 +186,7 @@ If you're loading application files with **SystemJS** (as you would in a plunker
   - dataEncapsulation (issue #112, pr#123)
   - post409
   - put404b
-* `POST commands/resetDb` passes the request to your `resetDb` method 
+* `POST commands/resetDb` passes the request to your `resetDb` method
 so you can optionally reset the database dynamically
 to arbitrary initial states (issue #128)
 * when HTTP method interceptor returns null/undefined, continue with service's default processing (pr #120)
@@ -197,7 +203,7 @@ to arbitrary initial states (issue #128)
 
 If you’re loading application files with **SystemJS** (as you would in a plunker), you’ll have to configure it to load Angular’s `umd.js` for `HttpModule` and the `tslib` package.
 
-To see how, look in the `map` section of the 
+To see how, look in the `map` section of the
 [`src/systemjs.config.js` for this project](https://github.com/angular/in-memory-web-api/blob/master/src/systemjs.config.js) for the following two _additional_ lines :
 
 ```
@@ -248,19 +254,19 @@ See PR #102.
 <a id="0.2.0"></a>
 ## 0.2.0 (2016-12-11)
 
-* BREAKING CHANGE: The observables returned by the `handleCollections` methods that process requests against the supplied in-mem-db collections are now "cold". 
+* BREAKING CHANGE: The observables returned by the `handleCollections` methods that process requests against the supplied in-mem-db collections are now "cold".
 That means that requests aren't processed until something subscribes to the observable ... just like real-world `Http` calls.
 
-  Previously, these request were "hot" meaning that the operation was performed immediately 
+  Previously, these request were "hot" meaning that the operation was performed immediately
   (e.g., an in-memory collection was updated) and _then_ we returned an `Observable<Response>`.
   That was a mistake! Fixing that mistake _might_ break your app which is why bumped the _minor_ version number from 1 to 2.
 
   We hope _very few apps are broken by this change_. Most will have subscribed anyway.
-  But any app that called an `http` method with fire-and-forget ... and didn't subscribe ... 
+  But any app that called an `http` method with fire-and-forget ... and didn't subscribe ...
   expecting the database to be updated (for example) will discover that the operation did ***not*** happen.
 
 * BREAKING CHANGE: `createErrorResponse` now requires the `Request` object as its first parameter
-so it can prepare a proper error message. 
+so it can prepare a proper error message.
 For example, a 404 `errorResponse.toString()` now shows the request URL.
 
 * Commands remain "hot" &mdash; processed immediately &mdash; as they should be.
@@ -313,9 +319,9 @@ It is `true` by default which means they do not return the entity (`status=204`)
   ```
   then delete from `packages`:
   ```
-  'angular-in-memory-web-api': {		
-    main: './index.js',		
-    defaultExtension: 'js'		
+  'angular-in-memory-web-api': {
+    main: './index.js',
+    defaultExtension: 'js'
   }
   ```
   You must ES import the in-mem module (typically in `AppModule`) like this:
