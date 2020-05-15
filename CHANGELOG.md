@@ -9,11 +9,17 @@ because this is a development tool, not a production product.
 We do try to tell you about such changes in this `CHANGELOG.md`
 and we fix bugs as fast as we can.
 
-<a id="0.10.0"></a>
-## 0.10.0 (2020-05-13)
+<a id="0.11.0"></a>
+## 0.11.0 (2020-05-13)
 
 * update to support Angular v10.
 * no functional changes.
+
+<a id="0.10.0"></a>
+## 0.11.0 (2020-03-13)
+
+* bad release... don't use... :-/
+
 
 <a id="0.9.0"></a>
 ## 0.9.0 (2019-06-20)
